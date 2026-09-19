@@ -5,76 +5,76 @@ description: Use for authorized security testing of desktop thick clients includ
 
 # Thick Client Security Testing
 
-## ACTION REQUIRED（读完后立刻执行）
+## ACTION REQUIRED (run immediately after reading)
 
-1. `NOW`: 读取 `../field-journal/precedent-pentest.md`
-2. `NOW`: 确认目标是 **桌面厚客户端**（Win/macOS/Linux GUI 或服务伴生），非纯 Web
-3. `NOW`: case-init；安装包来源与测试账号写入 scope
-4. `NEXT`: 工具（Burp 上游代理、进程监控、逆向工具）
-5. `ACT`: 信任边界图 → 本地面 → 网络面 → 更新/供应链
+1. `NOW`: Read `../field-journal/precedent-pentest.md`.
+2. `NOW`: Confirm that the target is a desktop thick client (Win/macOS/Linux GUI or companion service), not a Web-only target.
+3. `NOW`: Run case-init. Record the installer source and test account in scope.
+4. `NEXT`: Prepare tools (Burp upstream proxy, process monitor, and reverse-engineering tools).
+5. `ACT`: Map the trust boundary. Test the local surface, network surface, and update or supply-chain surface.
 
-## 适用场景
+## Applicable Scenarios
 
-- C/S 架构客户端、Electron/Qt/.NET WinForms/WPF
-- 本地配置/凭证存储、IPC、命名管道
-- 客户端强制校验绕过研究（授权）
-- 自动更新通道与代码签名验证
+- Client/server applications and Electron, Qt, .NET WinForms, or WPF clients
+- Local configuration or credential storage, IPC, and named pipes
+- Research into bypassing client-enforced checks (authorized)
+- Automatic update channels and code-signature verification
 
-## 工作流
+## Workflow
 
-### 1. 建边界
-
-```text
-□ 进程树、子进程、驱动/服务
-□ 监听端口与出站域名
-□ 本地敏感路径：%APPDATA%、Keychain、注册表
-```
-
-### 2. 本地攻击面
+### 1. Build the Boundary Map
 
 ```text
-□ 明文配置、硬编码密钥、调试开关
-□ DLL 劫持/搜索顺序（Windows）
-□ 数据库文件（SQLite）权限与加密
-□ IPC：谁可连接？是否鉴权？
+□ Process tree, child processes, drivers, and services
+□ Listening ports and outbound domains
+□ Sensitive local paths: %APPDATA%, Keychain, and the registry
 ```
 
-### 3. 网络面
+### 2. Local Attack Surface
 
 ```text
-□ 系统代理 / 应用自定义 TLS
-□ 证书钉扎 → 联合 mobile/js 方法学或 Frida
-□ API 越权：客户端隐藏的管理接口
+□ Plaintext configuration, hard-coded keys, and debug switches
+□ DLL hijacking and search order (Windows)
+□ Database file (SQLite) permissions and encryption
+□ IPC: who can connect? Is authentication enforced?
 ```
 
-### 4. 逆向验证
+### 3. Network Surface
 
 ```text
-□ .NET → dotnet-reverse；原生 → ida/ghidra；Electron → asar + js-reverse
+□ System proxy or application-specific TLS
+□ Certificate pinning -> combine mobile or JavaScript methodology with Frida
+□ API broken access control: management interfaces hidden by the client
 ```
 
-## 工具链
+### 4. Reverse-Engineering Verification
 
-| 工具 | 用途 |
+```text
+□ .NET -> dotnet-reverse; native -> ida/ghidra; Electron -> asar + js-reverse
+```
+
+## Toolchain
+
+| Tool | Purpose |
 |------|------|
-| Process Monitor / API Monitor | 行为 |
-| Burp / mitmproxy | 流量 |
-| dnSpy / IDA / Ghidra | 逆向 |
-| Sysinternals | Windows 面 |
-| asar / nexe 检测 | Electron |
+| Process Monitor / API Monitor | Behavior |
+| Burp / mitmproxy | Traffic |
+| dnSpy / IDA / Ghidra | Reverse engineering |
+| Sysinternals | Windows surface |
+| asar / nexe detection | Electron |
 
-## 参考
+## References
 
 - `references/thick-client-checklist.md`
 - `../dotnet-reverse/` `../ida-reverse/` `../js-reverse/` `../api-security/`
 
-## 路由上下文
+## Routing Context
 
-**上游**: MASTER R32  
-**下游**: 纯协议 `protocol-reverse`；供应链更新 `supply-chain-security`
+**Upstream**: MASTER R32
+**Downstream**: protocol-only work `protocol-reverse`; supply-chain updates `supply-chain-security`
 
-## 任务完成自检
+## Task Completion Self-Check
 
-- [ ] 是否画出信任边界？
-- [ ] 本地+网络面是否都覆盖？
-- [ ] Checklist？
+- [ ] Did I draw the trust boundary?
+- [ ] Did I cover both local and network surfaces?
+- [ ] Is the Checklist complete?

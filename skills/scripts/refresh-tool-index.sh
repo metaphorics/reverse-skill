@@ -348,9 +348,9 @@ PY
     echo ""
     echo "---"
     echo ""
-    echo "## 能力状态视图 (Capability Status)"
+    echo "## Capability status view (Capability Status)"
     echo ""
-    echo "| 能力 | 工具可用 | Ready | MCP 已注册 | 服务在线 | MCP HTTP | 可自动安装 | 安装方式 |"
+    echo "| Capability | Tool available | Ready | MCP registered | Service online | MCP HTTP | Auto-installable | Install method |"
     echo "|------|---------|-------|-----------|---------|----------|-----------|---------|"
   } >> "$OUTPUT_MD"
 
@@ -371,7 +371,7 @@ with open(sys.argv[2], 'a', encoding='utf-8') as out:
             f"{opt(r['mcp_http_verified'])} | {yn(r['can_auto_install'])} | "
             f"{r['bootstrap_kind'] or '—'} |\n"
         )
-    out.write("\n> ✓ = 是 | ✗ = 否 | — = 不适用或未检测。npm-mcp 的 Ready 使用 MCP 注册状态 + npx runtime；npx 本身不会让某个 MCP capability 变成工具可用。\n\n")
+    out.write("\n> ✓ = Yes | ✗ = No | — = Not applicable or not checked. npm-mcp Ready uses MCP registration status + npx runtime. npx alone does not make an MCP capability a tool available.\n\n")
 PY
 else
   CAP_RECORDS_TMP=""

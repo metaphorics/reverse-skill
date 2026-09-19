@@ -1,48 +1,48 @@
-# OWASP LLM & Agentic AI Top 10 (2025-2026)
+# OWASP LLM and Agentic AI Top 10 (2025-2026)
 
 ## OWASP Top 10 for LLM Applications v2.0 (2025)
 
-| # | 风险 | 核心问题 | 测试方向 |
+| # | Risk | Core issue | Test focus |
 |---|------|---------|---------|
-| LLM01 | Prompt Injection | 通过构造输入操控模型行为 | 直接注入、间接注入、编码绕过 |
-| LLM02 | Sensitive Information Disclosure | PII/API Key/训练数据泄漏 | 提示词提取、输出分析 |
-| LLM03 | Supply Chain | 投毒模型/库/数据集 | 模型来源验证、依赖扫描 |
-| LLM04 | Data & Model Poisoning | 训练/微调数据后门 | 数据溯源、行为异常检测 |
-| LLM05 | Improper Output Handling | 输出导致 XSS/SQLi/RCE | 下游系统注入测试 |
-| LLM06 | Excessive Agency | 工具/自主权过大导致实际危害 | 权限审计、人在回路测试 |
-| LLM07 | System Prompt Leakage | 提取隐藏指令/密钥/业务逻辑 | 级联提取、canary token |
-| LLM08 | Vector & Embedding Weaknesses | RAG 管道攻击、嵌入反转 | 检索投毒、语义相似度攻击 |
-| LLM09 | Misinformation | 幻觉在高风险场景构成安全风险 | 事实性验证、置信度校准 |
-| LLM10 | Unbounded Consumption | DoS/Denial-of-Wallet | Token 消耗测试、速率限制 |
+| LLM01 | Prompt Injection | Crafted input controls model behavior | Direct injection, indirect injection, encoding bypass |
+| LLM02 | Sensitive Information Disclosure | PII, API keys, or training data leak | Prompt extraction, output analysis |
+| LLM03 | Supply Chain | Poisoned models, libraries, or datasets | Model origin verification, dependency scanning |
+| LLM04 | Data and Model Poisoning | Backdoors in training or fine-tuning data | Data provenance, abnormal behavior detection |
+| LLM05 | Improper Output Handling | Output causes XSS, SQLi, or RCE | Downstream system injection tests |
+| LLM06 | Excessive Agency | Excessive tool access or autonomy causes harm | Permission audit, human-in-the-loop tests |
+| LLM07 | System Prompt Leakage | Hidden instructions, keys, or business logic are extracted | Cascading extraction, canary token |
+| LLM08 | Vector and Embedding Weaknesses | RAG pipeline attack or embedding inversion | Retrieval poisoning, semantic similarity attack |
+| LLM09 | Misinformation | Hallucinations create security risk in high-risk scenarios | Factuality checks, confidence calibration |
+| LLM10 | Unbounded Consumption | DoS or Denial-of-Wallet | Token consumption tests, rate limits |
 
 ## OWASP Top 10 for Agentic Applications (ASI 2026)
 
-| # | 风险 | 核心危害 | 测试方向 |
+| # | Risk | Core harm | Test focus |
 |---|------|---------|---------|
-| ASI01 | Agent Goal Hijack | 恶意输入/工具输出劫持目标 | 指令覆盖、目标篡改 |
-| ASI02 | Tool Misuse & Exploitation | 合法工具的非预期使用 | 工具链拼接、参数注入 |
-| ASI03 | Identity & Privilege Abuse | Agent 越权操作 | 凭证窃取、委派链测试 |
-| ASI04 | Agentic Supply Chain | MCP 描述符/第三方工具实时风险 | 动态供应链扫描 |
-| ASI05 | Unexpected Code Execution | 提示→工具→脚本 RCE 链 | 多层代码执行测试 |
-| ASI06 | Memory & Context Poisoning | 长期记忆/嵌入投毒 | 记忆持久化攻击 |
-| ASI07 | Insecure Inter-Agent Communication | 智能体间通信篡改 | 中间人、重放攻击 |
-| ASI08 | Cascading Failures | 单点故障触发系统级崩塌 | 故障传播测试 |
-| ASI09 | Human-Agent Trust Exploitation | 操纵人类操作员批准危险操作 | 权威偏差/紧迫感测试 |
-| ASI10 | Rogue Agents | Agent 自我复制/持续恶意行为 | 持久化后门检测 |
+| ASI01 | Agent Goal Hijack | Malicious input or tool output hijacks the goal | Instruction override, goal tampering |
+| ASI02 | Tool Misuse and Exploitation | Legitimate tools are used in unexpected ways | Tool-chain composition, parameter injection |
+| ASI03 | Identity and Privilege Abuse | The agent performs broken-access-control operations | Credential theft, delegation-chain tests |
+| ASI04 | Agentic Supply Chain | MCP descriptors or third-party tools create live risk | Dynamic supply-chain scanning |
+| ASI05 | Unexpected Code Execution | Prompt to tool to script RCE chain | Multi-layer code execution tests |
+| ASI06 | Memory and Context Poisoning | Long-term memory or embeddings are poisoned | Memory persistence attacks |
+| ASI07 | Insecure Inter-Agent Communication | Communication between agents is tampered with | Man-in-the-middle, request replay |
+| ASI08 | Cascading Failures | One failure triggers a system-wide collapse | Failure propagation tests |
+| ASI09 | Human-Agent Trust Exploitation | Human operators approve dangerous actions after manipulation | Authority-bias and urgency tests |
+| ASI10 | Rogue Agents | Agent self-replication or persistent malicious behavior | Persistence backdoor detection |
 
-## 实际数据分布
+## Actual Data Distribution
 
-真实评估中发现问题占比：
+The observed issue distribution in real assessments:
 - LLM01 Prompt Injection: ~45%
-- LLM06 Sensitive Info Disclosure: ~20%
+- LLM06 Sensitive Information Disclosure: ~20%
 - LLM08 Excessive Agency: ~15%
-- 其余 7 项: ~20%
+- The remaining 7 items: ~20%
 
-## 关键防御原则
+## Key Defense Principles
 
-1. 规划与执行分离 — 解释意图的模型 ≠ 执行动作的模型
-2. 绑定身份/目的/范围/时效 — 不使用宽泛的环境权限
-3. 记录一切 — 工具调用/记忆/通信作为一等安全遥测
-4. 爆炸半径控制 — 熔断/回滚/紧急停止优先于便利性
-5. 所有自然语言输入（含检索内容）视为不可信
-6. 输出同样不可信 — 渲染/执行/查询前先消毒
+1. Separate planning from execution. The model that explains intent must differ from the model that executes actions.
+2. Bind identity, purpose, scope, and time limit. Do not use broad environment permissions.
+3. Record everything. Treat tool calls, memory, and communication as first-class security telemetry.
+4. Control the blast radius. Prioritize circuit breakers, rollback, and emergency stop over convenience.
+5. Treat all natural-language input, including retrieved content, as untrusted.
+6. Treat output as untrusted too. Sanitize it before rendering, execution, or queries.

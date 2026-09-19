@@ -128,7 +128,7 @@ $cases = @(
     @{ Name = 'pentest'; Hint = 'nmap nuclei sqlmap ffuf pentest bug bounty'; Expect = 'pentest-tools' },
     @{ Name = 'llm'; Hint = 'LLM prompt inject jailbreak agent security garak'; Expect = 'llm-security' },
     @{ Name = 'zh-apk'; Hint = 'android apk packer decompile'; Expect = 'apk-reverse' },
-    @{ Name = 'zh-pentest'; Hint = 'penetration testing port scan sql injection'; Expect = 'pentest-tools' },
+    @{ Name = 'zh-pentest'; Hint = 'pentest port scan sql injection'; Expect = 'pentest-tools' },
     @{ Name = 'zh-js'; Hint = 'frontend signature js reverse encrypted param'; Expect = 'js-reverse' },
     @{ Name = 'evidence'; Hint = 'case review evidence chain traceability'; Expect = 'case-review' }
 )

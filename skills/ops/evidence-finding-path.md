@@ -1,11 +1,11 @@
-# Evidence → Finding → Path 证据链
+# Evidence → Finding → Path evidence chain
 
-> 灵感来自 Z3r0 Evidence Plane，落地为 **Markdown 字段契约**。  
-> reverse-skill 特色：与 `docs-generator` 报告模板、`field-journal` 脱敏回写、可复现命令绑定。
+> Inspired by the Z3r0 Evidence Plane and implemented as a **Markdown field contract**.  
+> reverse-skill binds this feature to `docs-generator` report templates, redacted `field-journal` records, and reproducible commands.
 
-## 1. Evidence（不可变观察）
+## 1. Evidence (immutable observation)
 
-每条证据独立一段或表行：
+Record each Evidence item in its own paragraph or table row:
 
 ```markdown
 ### E-{nnn}
@@ -18,29 +18,29 @@
 - repro_command: |
     {exact command}
 - raw_excerpt: |
-    {脱敏摘录}
+    {redacted excerpt}
 - linked_workitem: WI-{nnn} | n/a
 - supersedes: E-{nnn} | none
 ```
 
-**MUST**：Finding 引用的 Evidence 至少 1 条；`repro_command` 第三方可跑或标明离线限制。
+**MUST**: Every Finding MUST cite at least one Evidence item. The `repro_command` must be runnable by a third party or mark the offline restriction.
 
-**CLI helper**（写入 `work/<case>/evidence/E-*.md`）：
+**CLI helper** (writes to `work/<case>/evidence/E-*.md`):
 
 ```powershell
 powershell -File skills/scripts/append-evidence.ps1 -CaseRoot work/<case> `
   -Id E-001 -Title "..." -ReproCommand "..." -Severity info -Status observed
 ```
 
-When the evidence is a case-local file, pass `-ArtifactPath` to record a SHA-256 fixity value and a relative artifact path. Review the complete case graph before handoff:
+When the Evidence is a case-local file, pass `-ArtifactPath` to record a SHA-256 fixity value and a relative artifact path. Review the complete case graph before handoff:
 
 ```bash
 python3 skills/case-review/scripts/review_case.py work/<case> --verify-hashes --strict
 ```
 
-The review is read-only and checks scope fields, Evidence records, work item and timeline references, structured Findings, Paths, and artifact hash matches.
+The review is read-only. It checks scope fields, Evidence records, work item and timeline references, structured Findings, Paths, and artifact hash matches.
 
-## 2. Finding（安全/逆向结论）
+## 2. Finding (security or reverse-engineering conclusion)
 
 ```markdown
 ### F-{nnn}
@@ -59,17 +59,17 @@ The review is read-only and checks scope fields, Evidence records, work item and
 - optional_attack: {ATT&CK ID or empty}
 ```
 
-**MUST**：`evidence_ids` 非空；`status=validated` 时 confidence 不得为 low（除非标注 residual risk）。
+**MUST**: `evidence_ids` must not be empty. When `status=validated`, confidence MUST NOT be low unless the record marks residual risk.
 
-## 3. Path（攻击路径 / 调用路径 / 解题路径）
+## 3. Path (attack path, call path, or solve path)
 
-统一叫 **Path**，按任务类型解释：
+Use **Path** for every task type:
 
-| 任务 | Path 含义 |
+| Task | Path meaning |
 |------|-----------|
-| 渗透 / 攻击链 | 攻击路径步骤 |
-| 逆向 | 关键调用/数据流步骤 |
-| CTF | 解题步骤 |
+| Penetration testing / attack chain | Attack path steps |
+| Reverse engineering | Key call or data-flow steps |
+| CTF | Solve steps |
 
 ```markdown
 ### P-{nnn}
@@ -83,37 +83,37 @@ The review is read-only and checks scope fields, Evidence records, work item and
 - residual_risks:
 ```
 
-**MUST**：每步可关联 Evidence；攻击路径终点 Finding 若声明「已拿权限/数据」必须有 validated 证据。
+**MUST**: Each step must link to Evidence. An endpoint Finding that claims obtained privilege or data must have validated Evidence.
 
-## 4. 报告中的位置
+## 4. Location in reports
 
-`docs-generator` 安全报告 **MUST** 含：
+The `docs-generator` security report **MUST** contain:
 
-1. Scope 摘要（链到 case `scope.md`）  
-2. Evidence 表或章节  
-3. Findings 列表（含 evidence_ids）  
-4. 至少 1 条 Path（攻击/调用/解题）  
-5. Timeline 摘要（可选全文链到 `timeline.md`）
+1. Scope summary (link to the case `scope.md`)  
+2. Evidence table or section  
+3. Findings list (with evidence_ids)  
+4. At least one Path (attack/call/solve)  
+5. Timeline summary (optionally link the full text to `timeline.md`)
 
-详见 `docs-generator/references/security-report-templates.md` 中 **Evidence Chain** 节。
+See the **Evidence Chain** section in `docs-generator/references/security-report-templates.md`.
 
-## 5. field-journal 挂钩
+## 5. field-journal hook
 
-回写 journal 时 **SHOULD** 摘录：
+When recording a journal entry, **SHOULD** include:
 
-- 3 条内关键 Evidence id + 命令  
-- 1 条核心 Finding  
-- 可复用 Path 模式一句话  
+- Up to three key Evidence IDs and the command  
+- One core Finding  
+- One reusable Path pattern in one sentence  
 
-完整敏感内容只在用户项目报告中；journal **MUST** 脱敏（`anonymization.md`）。
+Keep complete sensitive content in the user project report. The journal **MUST** use redaction (`anonymization.md`).
 
-## 6. 与 Z3r0 的差异（特色）
+## 6. Difference from Z3r0 (feature)
 
 | Z3r0 | reverse-skill |
 |------|----------------|
-| PG 不可变行 + API | Markdown 文件 + hash 字段 |
-| UI 审阅队列 | 报告 + next-step 菜单 + journal |
-| ATT&CK 深度绑定 | 可选标签，不强制 UI |
+| Immutable PG rows + API | Markdown files + hash fields |
+| UI review queue | Report + next-step menu + journal |
+| Deep ATT&CK binding | Optional labels, no required UI |
 
 
 ## Validated sufficiency (Issue #77 / R4*)
@@ -128,4 +128,4 @@ Promotion to status=validated is stricter (decision cookbook):
 | **validated** | **SHOULD >=2 independent** Evidence (best: 1 static + 1 dynamic). A single Evidence item alone MUST NOT silently promote to validated — keep candidate/preliminary, or record residual_risk + human confirm. |
 | blocked promotion | record Evidence E-insufficient-evidence |
 
-Full recipes: [nalysis-decision-framework.md](analysis-decision-framework.md) (R4*, R1, R41, R44).
+Full recipes: [nalysis-decision-framework.md](analysis-decision-framework.md) (R4*, R1, R41, R44).

