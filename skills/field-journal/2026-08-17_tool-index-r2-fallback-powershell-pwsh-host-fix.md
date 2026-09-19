@@ -1,75 +1,82 @@
 # 2026-08-17 reverse-skill
 
-## 场景分类
-工具链与环境（引导阶段缺陷修复）
+## Scenario
 
-## 目标概述
-修复本机引导过程中的三类被层层掩盖的缺陷：tool-index 把 radare2 主分析器 `r2` 误报为 no；多个测试脚本硬编码 `powershell` 子进程调用在仅装 PowerShell 7+ 的机器上失败；以及被该失败掩盖的 pin gate StrictMode 属性访问 bug。
+Toolchain and environment, bootstrap-stage defect repair
 
-## Scope 摘要（脱敏）
-- auth_basis: own_system（本仓库自身）
-- network_profile: offline / 无外部目标 ACT
-- asset_types: [本地脚本与工具索引]
+## Target summary
 
-## 角色
+Repair three defects hidden by successive failures in the local bootstrap process. The tool index reported the radare2 main analyzer `r2` as unavailable. Multiple test scripts hardcoded `powershell` subprocess calls and failed on machines with only PowerShell 7+. That failure hid a pin-gate StrictMode property-access bug.
+
+## Scope summary (redacted)
+
+- auth_basis: own_system (this repository)
+- network_profile: offline / no external target activity
+- asset_types: [local repository and tool reference]
+
+## Roles
+
 - lead_role: lead
 - specialists: [bootstrap, test-infra]
 
-## 完整执行链路
+## Execution record
 
-1. 按 `README_AI.md` 第 0 节执行引导：`refresh-tool-index.ps1` 生成 tool-index.md（37 工具）。
-2. 读 `tool-index.md` 发现异常：`r2`（radare2 主分析器）= no，但同目录 `rabin2/rasm2/radiff2/rahash2/rax2/r2pm` 全部 = yes。
-3. 列 `C:\Users\{username}\Tools\radare2\bin` 确认：存在 `r2.bat`（21 字节，内容 `@"%~dp0\radare2" %*`）与 `radare2.exe`，**无 `r2.exe`**。
-4. 读 `lib/ToolDiscovery.ps1:131-141`，`r2` 的 Fallbacks 只找 `r2.exe`，漏掉 `r2.bat`/`radare2.exe`。对比 `jadx`/`apktool`/`analyzeHeadless` 都为 `.bat` 工具配了 fallback。
-5. 修复：给 `r2` Fallbacks 补 `r2.bat` 与 `radare2.exe` 路径（覆盖 `%USERPROFILE%\Tools\radare2\bin`、根目录、`C:\Tools\` 三套位置），保留原 `r2.exe` fallback 兼容其他机器。
-6. 重跑 `refresh-tool-index.ps1`，`r2` 转 yes，路径 `r2.bat`，版本 `radare2 6.2.0`，来源 `FallbackPath`。
-7. 跑 `smoke.ps1` 仍 FAIL：`verify-routing-coherence exit 1`。直接跑 verify 看错误，定位到 `verify-routing-coherence.ps1:257` 硬编码 `& powershell`，本机无 `powershell`（只有 `pwsh` 7.6.4）。
-8. grep 全仓 `.ps1` 的 `powershell\s(-NoProfile|-ExecutionPolicy|-File|-Command)`，发现 5 个脚本共 20+ 处硬编码 `& powershell` 子进程调用（verify 7 处 / test-p0-friction 18 处 / test-routing 1 处 / case-init 1 处；其余为注释示例）。
-9. 发现 `smoke.ps1:31-46` 已正确用 `$SmokeHostExe`（当前进程路径优先 → pwsh → Windows PowerShell 路径兜底）。提取该已验证逻辑为共享函数 `Resolve-ReverseHostExe`，新建 `lib/HostRuntime.ps1`，解析顺序：当前进程 → `pwsh` → `powershell` → `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`。
-10. 4 个子脚本 dot-source `HostRuntime.ps1` 并定义 `$HostExe`，`replaceAll` 把 `& powershell -NoProfile -ExecutionPolicy Bypass -File` → `& $HostExe -NoProfile -ExecutionPolicy Bypass -File`；`test-p0-friction.ps1:244` 的 `cmd /c "powershell ..."` 单独改为 `cmd /c "`"$HostExe`" ..."`（路径可能含空格需引号包裹）。
-11. 重跑 smoke，verify 走过 257，但暴露 `verify-routing-coherence.ps1:414` pin gate 在 `Set-StrictMode -Version Latest` 下访问 `$cap.pinnedVersion` 等不存在属性报错——这是被 powershell bug 掩盖至今的预存在 bug。
-12. 修复 414：把 `$cap` 转 hashtable（`$capMap`），用索引访问不存在的 key 返回 `$null` 不报错，pin gate 语义不变。
-13. 重跑 smoke → ALL PASS（VERIFY_EXIT=0 / PARSE 11/11 / ROUTE 9/9）。
-14. 跑 `test-routing.ps1` → 166/166 ALL PASS。
-15. 跑 `test-p0-friction.ps1` → 大部分过，但 `:343` 与 `:364` 又遇 `Start-Process -FilePath 'powershell.exe'`（之前 grep 模式 `powershell\s+(-NoProfile...)` 漏了 `powershell.exe` 字面）。
-16. grep `powershell\.exe`，确认仅 test-p0-friction 的 343/364 两处是硬编码 Start-Process（其余为兼容查找或 fallback 路径），`replaceAll` 改为 `Start-Process -FilePath $HostExe`。
-17. 重跑 `test-p0-friction.ps1` → ALL PASS（FAIL_COUNT=0）。三套件全绿。
+1. Follow section 0 of `README_AI.md` for bootstrap. `refresh-tool-index.ps1` generates `tool-index.md` with 37 tools.
+2. Read `tool-index.md` and find the anomaly: `r2` (the radare2 main analyzer) is `no`, while `rabin2`, `rasm2`, `radiff2`, `rahash2`, `rax2`, and `r2pm` in the same directory are all `yes`.
+3. List `C:\Users\{username}\Tools\radare2\bin`. Confirm `r2.bat` (21 bytes, content `@"%~dp0\radare2" %*`) and `radare2.exe` exist, but **`r2.exe` does not**.
+4. Read `lib/ToolDiscovery.ps1:131-141`. The `r2` fallbacks search only for `r2.exe`, so they miss `r2.bat` and `radare2.exe`. Compare `jadx`, `apktool`, and `analyzeHeadless`, which already define fallbacks for `.bat` tools.
+5. Repair the `r2` fallbacks with `r2.bat` and `radare2.exe` paths. Cover `%USERPROFILE%\Tools\radare2\bin`, the root directory, and `C:\Tools\`. Keep the original `r2.exe` fallback for other machines.
+6. Rerun `refresh-tool-index.ps1`. `r2` becomes `yes`, with path `r2.bat`, version `radare2 6.2.0`, and source `FallbackPath`.
+7. Run `smoke.ps1`. It still fails because `verify-routing-coherence` exits 1. Run verify directly. Find hardcoded `& powershell` at `verify-routing-coherence.ps1:257`. This host has only `pwsh` 7.6.4 and no `powershell`.
+8. Search all `.ps1` files for `powershell\s(-NoProfile|-ExecutionPolicy|-File|-Command)`. Find more than 20 hardcoded `& powershell` subprocess calls in 5 scripts: 7 in verify, 18 in test-p0-friction, 1 in test-routing, and 1 in case-init. The rest are comment examples.
+9. Find that `smoke.ps1:31-46` already uses `$SmokeHostExe`, preferring the current process path, then `pwsh`, then the Windows PowerShell path. Extract this verified logic into the shared `Resolve-ReverseHostExe` function. Create `lib/HostRuntime.ps1` with this order: current process, `pwsh`, `powershell`, then `%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`.
+10. Dot-source `HostRuntime.ps1` in four child scripts and define `$HostExe`. Replace `& powershell -NoProfile -ExecutionPolicy Bypass -File` with `& $HostExe -NoProfile -ExecutionPolicy Bypass -File`. Separately change `test-p0-friction.ps1:244` from `cmd /c "powershell ..."` to `cmd /c "`"$HostExe`" ..."`, because paths may contain spaces.
+11. Rerun smoke. Verify passes 257 checks but exposes another failure at `verify-routing-coherence.ps1:414`: under `Set-StrictMode -Version Latest`, the pin gate reads nonexistent properties such as `$cap.pinnedVersion`. This is a pre-existing bug that the PowerShell failure had hidden.
+12. Repair line 414. Convert `$cap` to a hashtable (`$capMap`). Indexing a missing key returns `$null` without an error. Keep the pin-gate semantics unchanged.
+13. Rerun smoke. All checks pass (`VERIFY_EXIT=0 / PARSE 11/11 / ROUTE 9/9`).
+14. Run `test-routing.ps1`. It passes 166/166.
+15. Run `test-p0-friction.ps1`. Most checks pass, but lines 343 and 364 hit `Start-Process -FilePath 'powershell.exe'`. The earlier search pattern `powershell\s+(-NoProfile...)` missed the `powershell.exe` literal.
+16. Search `powershell\.exe`. Confirm that only the two `Start-Process` calls in test-p0-friction are hardcoded. The other matches are compatibility lookups or fallback paths. Replace both with `Start-Process -FilePath $HostExe`.
+17. Rerun `test-p0-friction.ps1`. It passes (`FAIL_COUNT=0`). All three suites are green.
 
-## Evidence 链摘要（脱敏）
-> 本次为本仓库自身引导修复，无外部目标 ACT，不产出 case 目录下的 evidence 文件。以下为可复现验证命令（等价 Evidence）。
+## Evidence chain summary (redacted)
 
-| E-id | severity | status | source_type | 可复用命令模式 | 关联 Finding |
+> This repair concerns the repository's own bootstrap. It has no external target activity and produces no evidence files under a case directory. The following reproducible validation commands are equivalent evidence.
+
+| E-id | severity | status | source_type | Reusable command pattern | Related finding |
 |------|----------|--------|-------------|----------------|--------------|
-| E-r2 | info | validated | command | `pwsh -File skills/scripts/refresh-tool-index.ps1` 后 tool-index.md 中 `r2` 行 = yes | F-r2 |
+| E-r2 | info | validated | command | `pwsh -File skills/scripts/refresh-tool-index.ps1` then the `r2` line in `tool-index.md` is `yes` | F-r2 |
 | E-smoke | info | validated | command | `pwsh -File skills/scripts/smoke.ps1` → `OVERALL: ALL PASS` | F-host |
 | E-route | info | validated | command | `pwsh -File skills/scripts/test-routing.ps1` → `166/166 ALL PASS` | F-host |
 | E-p0 | info | validated | command | `pwsh -File skills/scripts/test-p0-friction.ps1` → `OVERALL: ALL PASS` | F-host |
 
-## Finding / Path 摘要
-- top_finding: 三类缺陷层层掩盖——`r2` fallback 遗漏 `.bat` 入口 → `verify` 硬编码 `powershell` 失败中断 → 掩盖 pin gate StrictMode 属性访问 bug；grep 兼容扫描又漏 `powershell.exe` 字面。
+## Finding and path summary
+
+- top_finding: Three defects hid one another. The `r2` fallback missed the `.bat` entry. Hardcoded `powershell` then stopped verify. That failure hid the pin-gate StrictMode property-access bug. The compatibility search also missed the `powershell.exe` literal.
 - path_type: solve
-- path_one_liner: 用共享 `Resolve-ReverseHostExe`（当前进程优先）统一子进程入口、为 `r2` 补 `.bat`/`radare2.exe` fallback、用 hashtable 安全访问 PSCustomObject 可选属性。
+- path_one_liner: unify subprocess entry through `Resolve-ReverseHostExe` with current-process priority, add `.bat` and `radare2.exe` fallbacks for `r2`, and safely access optional PSCustomObject properties through a hashtable
 
-## 踩坑记录
+## Pitfalls
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Resolution | Time |
 |------|------|---------|------|
-| tool-index 把 `r2` 标 no，但同目录其他 r2* 工具 yes | `ToolDiscovery.ps1` 的 `r2` Fallbacks 只找 `r2.exe`，而 radare2 Windows 发行版用 `r2.bat` 包装 `radare2.exe`，无 `r2.exe` | 补 `r2.bat` 与 `radare2.exe` 路径 fallback | 短 |
-| smoke 仍 FAIL：verify exit 1 | verify 内部硬编码 `& powershell`，本机仅装 pwsh 7+，无 `powershell` | 新建 `lib/HostRuntime.ps1` 的 `Resolve-ReverseHostExe`，4 脚本替换为 `& $HostExe` | 中 |
-| verify 修好 powershell 后又失败在 414 | 被 257 的 powershell bug 掩盖的预存在 bug：StrictMode 下访问 `$cap.pinnedVersion` 等不存在属性报错 | `$cap` 转 hashtable `$capMap`，索引访问不报错 | 短 |
-| test-p0-friction 在 343/364 又失败 | `Start-Process -FilePath 'powershell.exe'` 硬编码；之前 grep 模式 `powershell\s+(-NoProfile...)` 漏了 `powershell.exe` 字面 | grep `powershell\.exe` 补全，改用 `$HostExe` | 短 |
-| test-p0-friction 输出大量 `Exception: case-init.ps1:54` | 测试 14b 故意用非法 CaseName 触发 case-init 抛异常，属预期 | 无需处理，最终 FAIL_COUNT=0 即通过 | — |
+| The tool index marked `r2` as `no`, while other r2 tools in the same directory were `yes` | `ToolDiscovery.ps1` searched only for `r2.exe`. The Windows radare2 distribution uses an `r2.bat` wrapper for `radare2.exe` and has no `r2.exe` | Add `r2.bat` and `radare2.exe` fallback paths | Short |
+| Smoke still failed because verify exited 1 | Verify hardcoded `& powershell`. The host had only pwsh 7+ and no `powershell` | Create `lib/HostRuntime.ps1` with `Resolve-ReverseHostExe`. Replace four scripts with `& $HostExe` | Medium |
+| Verify failed again at line 414 after the PowerShell repair | A pre-existing bug hidden by the line-257 PowerShell failure accessed missing properties under StrictMode | Convert `$cap` to `$capMap` and use indexing | Short |
+| test-p0-friction failed again at lines 343 and 364 | `Start-Process -FilePath 'powershell.exe'` was hardcoded. The earlier search pattern missed the literal | Search `powershell\.exe` and use `$HostExe` | Short |
+| test-p0-friction printed many `Exception: case-init.ps1:54` lines | Test 14b intentionally uses an invalid CaseName to trigger the case-init exception | No action. The final `FAIL_COUNT=0` is the pass condition | — |
 
-## 工具链发现
-- **radare2 Windows 发行版结构**：主程序是 `radare2.exe`，`r2.bat`（`@"%~dp0\radare2" %*`）是其批处理包装器，**没有 `r2.exe`**。任何按 `r2.exe` 探测的工具扫描都会误报。同目录 `rabin2.exe`/`rasm2.exe` 等是独立 `.exe`，可正常探测。
-- **PowerShell 7+ 单装环境**：本机 `pwsh` 7.6.4（路径 `C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.4.0_x64__8wekyb3d8bbwe\pwsh.exe`），**无 `powershell` / `powershell.exe`**。所有 `& powershell ...` 子进程调用在此环境直接失败。
-- **StrictMode 属性访问**：`Set-StrictMode -Version Latest` 下访问 `PSCustomObject` 不存在的属性会抛错；用 hashtable 索引访问不存在的 key 返回 `$null`，是 pin gate 这类"可选属性多"场景的安全写法。
-- **grep 兼容扫描盲区**：用 `powershell\s+(-NoProfile...)` 只能抓 `& powershell -File` 形式，漏掉 `Start-Process -FilePath 'powershell.exe'` 与 `cmd /c "powershell ..."`。兼容性扫描应同时覆盖 `powershell\s` 与 `powershell\.exe` 两类。
+## Tool findings
 
-## 关键代码/命令
+- **Windows radare2 distribution**: the main program is `radare2.exe`. `r2.bat` (`@"%~dp0\radare2" %*`) is its batch wrapper. **`r2.exe` does not exist**. A tool scan that checks only `r2.exe` reports a false negative. `rabin2.exe` and `rasm2.exe` in the same directory are independent `.exe` files and can be probed normally.
+- **PowerShell 7+ only environment**: this host has pwsh 7.6.4 at `C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.4.0_x64__8wekyb3d8bbwe\pwsh.exe`, but **no `powershell` or `powershell.exe`**. Every `& powershell ...` subprocess call fails directly in this environment.
+- **StrictMode property access**: under `Set-StrictMode -Version Latest`, reading a missing PSCustomObject property throws. Hashtable indexing of a missing key returns `$null`, which is safe for gates with many optional properties.
+- **Compatibility-search blind spot**: `powershell\s+(-NoProfile...)` catches only the `& powershell -File` form. It misses `Start-Process -FilePath 'powershell.exe'` and `cmd /c "powershell ..."`. Compatibility scans must cover both `powershell\s` and `powershell\.exe`.
+
+## Key code and commands
 
 ```powershell
-# lib/HostRuntime.ps1 —— 统一子进程 PowerShell 入口（当前进程优先）
+# lib/HostRuntime.ps1, unified PowerShell subprocess entry with current-process priority
 function Resolve-ReverseHostExe {
     [CmdletBinding()] [OutputType([string])] param()
     $hostExe = $null
@@ -81,17 +88,17 @@ function Resolve-ReverseHostExe {
     return $hostExe
 }
 
-# ToolDiscovery.ps1 r2 Fallbacks —— 补 .bat/.exe 入口
+# ToolDiscovery.ps1 r2 fallbacks, add .bat and .exe entries
 Fallbacks = @(
     @{ Type = 'command'; Value = 'r2' },
     @{ Type = 'command'; Value = 'radare2' },
     @{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\radare2\bin\r2.bat') },
     @{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\radare2\bin\radare2.exe') },
     @{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\radare2\bin\r2.exe') }
-    # ... 根目录与 C:\Tools 镜像
+    # ... root and C:\Tools mirrors
 )
 
-# verify-routing-coherence.ps1:412 —— pin gate 安全属性访问
+# verify-routing-coherence.ps1:412, safe pin-gate property access
 foreach ($cap in $mc.capabilities) {
     $capMap = @{}
     foreach ($prop in $cap.PSObject.Properties) { $capMap[$prop.Name] = $prop.Value }
@@ -101,44 +108,49 @@ foreach ($cap in $mc.capabilities) {
 }
 ```
 
-## 对本包的改进建议
-- **兼容性扫描脚本化**：在 `verify-routing-coherence.ps1` 或独立 lint 中，扫描所有 `.ps1` 的子进程调用，禁止裸 `powershell` / `powershell.exe`，统一要求经 `Resolve-ReverseHostExe`。本次靠手工 grep，易漏（已踩 `powershell.exe` 盲区）。
-- **tool catalog 的 `.bat` 约定**：Windows 上 `jadx`/`apktool`/`r2`/`analyzeHeadless` 都是 `.bat` 包装 `.exe`，catalog 应为每个这类工具同时配 `.bat` 与对应 `.exe` fallback，避免逐个踩坑。
-- **CI 应包含"仅 pwsh"矩阵**：在 GitHub Actions 的 `windows-latest` 上，若不预装 Windows PowerShell 5.1，本类 bug 会被暴露。当前 `smoke.ps1` 已用 `$SmokeHostExe` 做对了，但子脚本没复用。
-- **StrictMode 下遍历 PSCustomObject**：pin gate 这类"对象 schema 宽松"的检查，统一用 hashtable 转换访问，或提供 `Get-SafeProp` 辅助函数。
+## Improvement suggestions for this package
 
-## 可复用的模式/脚本片段
-- `Resolve-ReverseHostExe`：任何脚本需要启动子 PowerShell 进程时，dot-source `lib/HostRuntime.ps1` 后 `& $HostExe -NoProfile -ExecutionPolicy Bypass -File <script> ...`，兼容 pwsh-only / powershell-only / 混装环境。
-- `$capMap` 转换：遍历 `PSCustomObject` 属性到 hashtable 后索引访问，规避 StrictMode 属性不存在异常。
-- `r2.bat` → `radare2.exe` 透传：版本检测 `r2.bat -v` 能正确返回 `radare2 6.2.0`，证明 `.bat` 包装器透传参数有效，可放心用作 catalog 入口。
+- **Script compatibility scans**: in `verify-routing-coherence.ps1` or a separate lint, scan subprocess calls in every `.ps1`. Reject bare `powershell` and `powershell.exe`. Require `Resolve-ReverseHostExe`. This run used manual grep and missed the `powershell.exe` case.
+- **`.bat` tool-catalog convention**: on Windows, `jadx`, `apktool`, `r2`, and `analyzeHeadless` use `.bat` wrappers around `.exe` files. Give each tool both `.bat` and matching `.exe` fallbacks.
+- **pwsh-only CI matrix**: if `windows-latest` does not preinstall Windows PowerShell 5.1, this class of bug will surface. `smoke.ps1` already uses `$SmokeHostExe`, but the child scripts did not reuse it.
+- **PSCustomObject traversal under StrictMode**: for checks with loose object schemas, consistently convert to a hashtable before access, or provide a `Get-SafeProp` helper.
 
-## 进化动作
-- [x] 更新了 tool-index（r2 转为 yes，路径 r2.bat）
-- [x] 新增 `skills/scripts/lib/HostRuntime.ps1`
-- [x] 修复 `ToolDiscovery.ps1` r2 Fallbacks
-- [x] 修复 `verify-routing-coherence.ps1` powershell 硬编码 + pin gate StrictMode
-- [x] 修复 `case-init.ps1` / `test-routing.ps1` / `test-p0-friction.ps1` powershell 硬编码
-- [ ] 更新了路由矩阵（无）
-- [ ] 更新了 bootstrap-manifest（无）
-- [ ] 新增了 pitfalls 记录（本条即）
+## Reusable patterns and script fragments
 
-## 环境信息
-- OS: Windows（win32）
-- Shell/Host: pwsh 7.6.4（`C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.4.0_x64__8wekyb3d8bbwe\pwsh.exe`）；本机无 `powershell` / `powershell.exe`
-- radare2: 6.2.0 +1 abi:132 @ windows-x86_64（安装于 `C:\Users\{username}\Tools\radare2\bin\`）
-- 仓库根: `D:\Sources\reverse-skill`
+- `Resolve-ReverseHostExe`: when a script needs a child PowerShell process, dot-source `lib/HostRuntime.ps1`, then call `& $HostExe -NoProfile -ExecutionPolicy Bypass -File <script> ...`. This supports pwsh-only, powershell-only, and mixed environments.
+- `$capMap` conversion: copy PSCustomObject properties into a hashtable, then use index access to avoid missing-property exceptions under StrictMode.
+- `r2.bat` → `radare2.exe` forwarding: `r2.bat -v` returns `radare2 6.2.0`, proving that the wrapper forwards arguments and can be used as the catalog entry.
 
-## 脱敏要求
-本次为本仓库自身脚本修复，无真实目标域名/IP/凭据，无需脱敏。
+## Follow-up actions
 
-## 索引同步（提交前最后一步）
+- [x] Update the tool index (`r2` becomes yes, path `r2.bat`)
+- [x] Add `skills/scripts/lib/HostRuntime.ps1`
+- [x] Repair `ToolDiscovery.ps1` r2 fallbacks
+- [x] Repair the hardcoded PowerShell call and pin-gate StrictMode in `verify-routing-coherence.ps1`
+- [x] Repair hardcoded PowerShell calls in `case-init.ps1`, `test-routing.ps1`, and `test-p0-friction.ps1`
+- [ ] Update the routing matrix (none)
+- [ ] Update the bootstrap manifest (none)
+- [x] Add the pitfall record (this entry)
 
-写完本日志后，同步更新 `_index.md`：
-1. 「工具链与环境」小节新增一行 ✓
-2. 「高频成功模式」追加本文件名（PowerShell 子进程入口统一）✓
-3. 「实体倒排」追加本文件名（reverse-skill 引导脚本）✓
-4. 更新「统计」总数与最近更新日期 ✓
+## Environment
+
+- OS: Windows (win32)
+- Shell/host: pwsh 7.6.4 (`C:\Program Files\WindowsApps\Microsoft.PowerShell_7.6.4.0_x64__8wekyb3d8bbwe\pwsh.exe`); no `powershell` or `powershell.exe` on this host
+- radare2: 6.2.0 +1 abi:132 @ windows-x86_64 (installed at `C:\Users\{username}\Tools\radare2\bin\`)
+- Repository root: `D:\Sources\reverse-skill`
+
+## Redaction requirements
+
+This repair concerns the repository's own scripts. It has no real target domain, IP, or credential, so no redaction is needed.
+
+## Index synchronization (last step before commit)
+
+After writing this journal, update `_index.md`:
+1. Add one line to the "Toolchain and environment" section.
+2. Add this file to "High-frequency success patterns" for unified PowerShell subprocess entry.
+3. Add this file to "Entity inverted index" for reverse-skill bootstrap scripts.
+4. Update the total count and last-updated date.
 
 ---
-<!-- [进化统计] 本包累计完成项目: 19 | 本次新增模式: 1 (Resolve-ReverseHostExe 子进程入口统一) | 本次修复工具链问题: 3 (r2 fallback / powershell 硬编码 / pin gate StrictMode) -->
-<!-- [社区贡献] 本修复为仓库自身引导缺陷修复，符合 CONTRIBUTING.md 的修复类 PR；完成後询问用户是否提交。 -->
+<!-- [Evolution statistics] Completed projects in this package: 19 | New patterns this time: 1 (unified Resolve-ReverseHostExe subprocess entry) | Toolchain issues fixed this time: 3 (r2 fallback / hardcoded powershell / pin-gate StrictMode) -->
+<!-- [Community contribution] This repair fixes a repository bootstrap defect and qualifies as a repair PR under CONTRIBUTING.md. Ask the user whether to submit it. -->

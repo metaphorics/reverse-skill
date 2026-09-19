@@ -1,42 +1,42 @@
-# 2026-07-20 Windows 逆向工具链完整自举
+# 2026-07-20 full Windows reverse-engineering toolchain bootstrap
 
-## 场景分类
+## Scenario
 
-其他 / 工具链与环境
+Other, toolchain and environment
 
-## 目标概述
+## Target summary
 
-在 Windows 24H2 主机上安装并验证覆盖原生、托管、Android、固件、协议、取证、浏览器和 MCP 的逆向工程工具链。
+Install and verify a reverse-engineering toolchain on a Windows 24H2 host. The toolchain covers native, managed, Android, firmware, protocol, forensics, browser, and MCP tools.
 
-## 完整执行链路
+## Execution record
 
-1. 读取共享 tool-index，先复用已安装工具。
-2. 运行通用 PATH 探针，按缺口补齐静态、动态、固件和协议工具。
-3. 对大文件从可信清单提取 URL 与 SHA-256，使用禁用 IPv6 的 aria2 直连下载。
-4. 为便携工具建立 `{user_profile}\Tools\reverse-bin` 统一入口。
-5. 构建并注册 Ghidra、IDA、JS、浏览器流量和 Burp MCP。
-6. 使用真实 PE/APK/.NET/PYC/WASM/固件夹具验证工具，不只运行版本命令。
-7. 刷新共享 tool-index，并输出正式安装报告和流程图。
+1. Read the shared tool index and reuse installed tools first.
+2. Run the common PATH probe. Fill gaps in static, dynamic, firmware, and protocol tools.
+3. For large files, extract URLs and SHA-256 values from a trusted manifest. Download directly with aria2 with IPv6 disabled.
+4. Create a unified entry point for portable tools at `{user_profile}\Tools\reverse-bin`.
+5. Build and register Ghidra, IDA, JS, browser-traffic, and Burp MCP tools.
+6. Verify the tools with real PE, APK, .NET, PYC, WASM, and firmware fixtures. Do not run version commands only.
+7. Refresh the shared tool index and output a formal installation report and flowchart.
 
-## 踩坑记录
+## Pitfalls
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Resolution | Time |
 |---|---|---|---|
-| winget 大文件下载长时间无进度 | Delivery Optimization 与默认 IPv6 路径不稳定 | 从 winget 元数据取官方 URL/散列，使用 `aria2c --disable-ipv6=true` | 高 |
-| anything-analyzer SQLite ABI 不匹配 | 普通 `pnpm rebuild better-sqlite3` 构建成 Node ABI，而 Electron 需要 Electron ABI | 使用项目的 `pnpm run postinstall` | 中 |
-| WSL 服务 1053，系统功能不存在 | Windows 镜像裁剪掉 WSL、VirtualMachinePlatform、Hyper-V 功能包 | 保留真实 Linux 命令缺口，改用 Windows 原生工具与 QEMU full-system | 中 |
-| Dr. Memory 版本正常但注入崩溃 | Windows 11 24H2 build 26100 兼容性问题 | 记录上游 issue，使用 AppVerifier/PageHeap/UMDH/CDB/Frida | 中 |
-| Codex TOML 无法加载 | 历史项目路径乱码造成缺引号、无效转义和重复键 | 仅修复表头语法并校验 `codex mcp list` | 低 |
-| Burp MCP 注册后无工具 | Burp GUI 尚未加载扩展，9876 未监听 | 构建固定 JAR，记录 GUI 加载条件 | 低 |
+| winget large-file download showed no progress for a long time | Delivery Optimization and the default IPv6 path were unstable | Get the official URL and hash from winget metadata. Use `aria2c --disable-ipv6=true` | High |
+| anything-analyzer SQLite ABI mismatch | Ordinary `pnpm rebuild better-sqlite3` built the Node ABI, but Electron needs the Electron ABI | Use the project's `pnpm run postinstall` | Medium |
+| WSL service 1053 and missing system features | The Windows image removed WSL, VirtualMachinePlatform, and Hyper-V feature packages | Record the real Linux command gaps. Use Windows-native tools and QEMU full-system instead | Medium |
+| Dr. Memory version worked but injection crashed | Compatibility issue with Windows 11 24H2 build 26100 | Record the upstream issue. Use AppVerifier, PageHeap, UMDH, CDB, or Frida | Medium |
+| Codex TOML would not load | An old project path contained garbled text, causing a missing quote, invalid escape, and duplicate key | Fix only the table-header syntax and validate with `codex mcp list` | Low |
+| Burp MCP registered with no tools | The Burp GUI had not loaded the extension, so 9876 was not listening | Build a fixed JAR and record the GUI load condition | Low |
 
-## 工具链发现
+## Tool findings
 
-- 通用探针最终为 57/64；7 个缺口全部属于 Linux 用户态或内核能力。
-- Windows SDK Debugging Tools 是 Dr. Memory 不兼容时的重要补充：CDB、GFlags、UMDH、NTSD、KD。
-- MCP 应分别验证“stdio/HTTP 初始化”和“GUI 后端在线”；注册成功不等于工具可调用。
-- IDA Free 可用于本地交互分析，但不能替代合法 IDA Pro 的 idalib/Hex-Rays MCP 后端。
+- The common probe found 57 of 64 tools. All 7 gaps required Linux userland or kernel capabilities.
+- Windows SDK Debugging Tools are important supplements when Dr. Memory is incompatible. They provide CDB, GFlags, UMDH, NTSD, and KD.
+- Verify MCP tools separately for stdio/HTTP initialization and a live GUI backend. Successful registration does not mean that a tool can be called.
+- IDA Free supports local interactive analysis, but it cannot replace the legal IDA Pro idalib or Hex-Rays MCP backend.
 
-## 关键代码/命令
+## Key code and commands
 
 ```powershell
 python "{skill_root}\scripts\toolchain_probe.py" --format markdown
@@ -46,38 +46,38 @@ codex mcp list
 cdb -g -G C:\Windows\System32\where.exe cmd
 ```
 
-## 对本包的改进建议
+## Improvement suggestions for this package
 
-- 将 Dr. Memory、CDB、GFlags、UMDH、DTC、SquashFS、flashrom 和 Frida Trace 纳入 Windows tool-index catalog。
-- capability 状态应区分 `installed`、`bridge-ready`、`backend-online`、`runtime-verified`。
-- 为裁剪版 Windows 增加明确的 Linux-only 缺口说明，不生成同名伪包装器。
+- Add Dr. Memory, CDB, GFlags, UMDH, DTC, SquashFS, flashrom, and Frida Trace to the Windows tool-index catalog.
+- Distinguish `installed`, `bridge-ready`, `backend-online`, and `runtime-verified` capability states.
+- Add a clear Linux-only gap note for reduced Windows editions. Do not generate same-name wrappers that are not real tools.
 
-## 可复用的模式/脚本片段
+## Reusable pattern
 
-大文件下载固定模式：先从官方包元数据核对版本、URL 和 SHA-256，再用 aria2 禁用 IPv6 下载；下载后同时验证散列和 Authenticode（如适用）。
+For large-file downloads, first verify the version, URL, and SHA-256 from official package metadata. Then use aria2 with IPv6 disabled. After download, verify both the hash and Authenticode when applicable.
 
-## 进化动作
+## Follow-up actions
 
-- [ ] 更新了路由矩阵
-- [x] 更新了 tool-index
-- [ ] 更新了 bootstrap-manifest
-- [ ] 更新了子 skill 文档
-- [x] 新增了 pitfalls 记录
-- [ ] 无需更新
+- [ ] Update the routing matrix
+- [x] Update the tool index
+- [ ] Update the bootstrap manifest
+- [ ] Update the child skill documentation
+- [x] Add the pitfall record
+- [ ] No update needed
 
-## 环境信息
+## Environment
 
-- OS: Windows NT build 26100.4946，24H2，x64
-- 工具版本: 详见本机正式安装报告与 tool-index
-- 目标平台/版本: Windows 原生工具链，并覆盖 Android、Linux/ELF 静态分析与 full-system 仿真
+- OS: Windows NT build 26100.4946, 24H2, x64
+- Tool versions: see the formal local installation report and tool index
+- Target platform/version: Windows-native toolchain, covering Android, Linux/ELF static analysis, and full-system emulation
 
-## 脱敏要求
+## Redaction requirements
 
-本记录不含真实目标、凭据、令牌、内部 URL 或用户名；路径均使用占位符。
+This record contains no real target, credential, token, internal URL, or username. Paths use placeholders.
 
-## 索引同步
+## Index synchronization
 
-已更新 `_index.md` 的统计与“工具链与环境”分类。
+The `_index.md` statistics and the "Toolchain and environment" category were updated.
 
 ---
-<!-- [社区贡献] 本地记录已完成。 -->
+<!-- [Community contribution] The local record is complete. -->

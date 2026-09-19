@@ -1,148 +1,148 @@
-# 社区进化：向主仓库贡献经验
+# Community evolution: contribute experience to the main repository
 
-## 机制说明
+## Mechanism
 
-每次你完成一个项目并生成 field-journal 条目后，AI 会询问：
+After you complete a project and create a field-journal entry, the AI asks:
 
 ```
-✅ 经验已记录到 field-journal/
+✅ Experience recorded in field-journal/
 
-📤 是否将本次经验贡献到社区主仓库？
-- 数据已按模板要求脱敏（域名/IP/Token/PII 已替换）
-- 只会提交 field-journal/ 目录下的新文件
-- 不会提交你的 tool-index、scope、findings 等私有文件
-- 贡献后其他用户也能复用你的经验
+📤 Do you want to contribute this experience to the community main repository?
+- Data was redacted according to the template (domain/IP/Token/PII replaced)
+- Only new files under field-journal/ will be submitted
+- Your tool index, scope, findings, and other private files will not be submitted
+- Other users can reuse the experience after contribution
 
-回复"是"提交，回复"否"跳过。
+Reply "yes" to submit. Reply "no" to skip.
 ```
 
-## 贡献流程
+## Contribution process
 
 ```text
-1. AI 生成 field-journal 条目（已脱敏）
-2. AI 询问用户是否贡献
-3. 用户同意 → AI 执行以下步骤：
-   a. 检查脱敏是否完整（二次确认无真实域名/IP/Token）
-   b. 检查是否与主仓库已有条目重复（只读 _index.md，~200 token）
-   c. 如果不重复 → 创建 PR 到主仓库
-   d. PR 标题格式：[field-journal] YYYY-MM-DD 场景类型 - 关键词
-4. GitHub Actions 自动审核：
-   - ✓ 只修改了 field-journal/*.md
-   - ✓ 无 prompt injection 特征
-   - ✓ 无未脱敏的 API key/token
-   - ✓ 无可执行代码
-   - ✓ 文件大小 < 50KB
-5. 审核通过 → 自动合并（无需仓库维护者手动操作）
-6. 审核失败 → 自动评论说明原因，PR 保持 open 等待修正
+1. AI creates a field-journal entry (redacted).
+2. AI asks whether the user wants to contribute it.
+3. The user agrees. AI performs these steps:
+   a. Check that redaction is complete (confirm again that no real domain, IP, or Token remains).
+   b. Check for duplicates in the main repository (read only _index.md, about 200 tokens).
+   c. If no duplicate exists, create a PR against the main repository.
+   d. Use this PR title format: [field-journal] YYYY-MM-DD scenario type - keywords
+4. GitHub Actions performs an automatic review:
+   - ✓ Only field-journal/*.md changed
+   - ✓ No prompt-injection indicators
+   - ✓ No unredacted API key or token
+   - ✓ No executable code
+   - ✓ File size < 50KB
+5. The review passes. Merge automatically without manual repository-maintainer action.
+6. The review fails. Add an automatic comment with the reason. Keep the PR open for correction.
 ```
 
-### 安全保障
+### Security controls
 
-| 威胁 | 防护 |
+| Threat | Control |
 |------|------|
-| 修改非 journal 文件 | Actions 检查 changed files 白名单 |
-| Prompt injection | 正则检测 "ignore previous"/"you are now" 等特征 |
-| 恶意代码伪装 | 检测 `#!/`、`import`、`exec(`、`eval(` 等 |
-| 未脱敏 token | 正则检测 AWS key/npm token/GitHub token 模式 |
-| 垃圾数据 | 单文件 50KB 上限 |
-| 大量垃圾 PR | GitHub 自带 rate limit + 可以加 CODEOWNERS 审核 |
+| A non-journal file changes | Actions checks the changed-file allowlist |
+| Prompt injection | Regex checks for indicators such as "ignore previous" and "you are now" |
+| Malicious code disguised as prose | Check for `#!/`, `import`, `exec(`, `eval(`, and similar forms |
+| Unredacted token | Regex checks for AWS key, npm token, and GitHub token patterns |
+| Junk data | Limit each file to 50KB |
+| Many junk PRs | Use the GitHub rate limit and add CODEOWNERS review when needed |
 
-## 技术实现
+## Technical implementation
 
-### 方式 1：GitHub CLI（推荐）
+### Method 1: GitHub CLI (recommended)
 
 ```bash
-# 1. Fork 主仓库（如果还没 fork）
-gh repo fork &lt;你的GitHub用户名&gt;/&lt;仓库名&gt; --clone=false
+# 1. Fork the main repository (if you have not forked it)
+gh repo fork &lt;your-github-username&gt;/&lt;repository-name&gt; --clone=false
 
-# 2. 在本地创建贡献分支
+# 2. Create a contribution branch locally
 git checkout -b contribute/journal-YYYY-MM-DD-keyword
 
-# 3. 只添加 field-journal 文件
+# 3. Add only field-journal files
 git add skills/field-journal/YYYY-MM-DD_*.md
 git add skills/field-journal/_index.md
 
-# 4. 提交
-git commit -m "[field-journal] 场景类型: 关键词摘要"
+# 4. Commit
+git commit -m "[field-journal] scenario type: keyword summary"
 
-# 5. 推送到 fork
+# 5. Push to the fork
 git push origin contribute/journal-YYYY-MM-DD-keyword
 
-# 6. 创建 PR
-gh pr create --repo &lt;你的GitHub用户名&gt;/&lt;仓库名&gt; \
-  --title "[field-journal] YYYY-MM-DD 场景类型 - 关键词" \
-  --body "## 贡献内容\n- 场景：xxx\n- 关键词：xxx\n- 脱敏确认：✓\n\n## 数据安全声明\n本条目已按模板要求完成脱敏，不包含真实目标信息。"
+# 6. Create the PR
+gh pr create --repo &lt;your-github-username&gt;/&lt;repository-name&gt; \
+  --title "[field-journal] YYYY-MM-DD scenario type - keywords" \
+  --body "## Contribution\n- Scenario: xxx\n- Keywords: xxx\n- Redaction confirmed: ✓\n\n## Data safety statement\nThis entry was redacted according to the template and contains no real target information."
 ```
 
-### 方式 2：直接推送（如果用户有主仓库写权限）
+### Method 2: Direct push (when the user has write access to the main repository)
 
 ```bash
 git checkout -b contribute/journal-YYYY-MM-DD-keyword
 git add skills/field-journal/YYYY-MM-DD_*.md
 git add skills/field-journal/_index.md
-git commit -m "[field-journal] 场景类型: 关键词摘要"
+git commit -m "[field-journal] scenario type: keyword summary"
 git push origin contribute/journal-YYYY-MM-DD-keyword
-gh pr create --repo &lt;你的GitHub用户名&gt;/&lt;仓库名&gt; \
-  --title "[field-journal] YYYY-MM-DD 场景类型 - 关键词" \
-  --body "脱敏确认：✓"
+gh pr create --repo &lt;your-github-username&gt;/&lt;repository-name&gt; \
+  --title "[field-journal] YYYY-MM-DD scenario type - keywords" \
+  --body "Redaction confirmed: ✓"
 ```
 
-## 去重规则（低 Token 消耗）
+## Deduplication rule (low token cost)
 
-AI 在提交前**只需要读 `_index.md` 一个文件**进行去重，不需要读每个 journal 条目的完整内容。
+Before submitting, the AI only needs to read `_index.md` for deduplication. It does not need to read every journal entry in full.
 
-### 去重流程
+### Deduplication process
 
 ```text
-1. 读取主仓库的 field-journal/_index.md（通常只有几十行）
-2. 提取本次条目的：场景分类 + 关键词列表
-3. 在 _index.md 中搜索同类场景下的已有条目
-4. 关键词匹配：
-   - 重叠 ≥ 3 个关键词 → 视为重复，不提交
-   - 重叠 1-2 个关键词 → 可能是变体，可以提交
-   - 无重叠 → 全新场景，直接提交
+1. Read field-journal/_index.md in the main repository (usually only a few dozen lines).
+2. Extract the scenario category and keyword list from the new entry.
+3. Search _index.md for existing entries in the same scenario category.
+4. Match keywords:
+   - Overlap of 3 or more keywords: treat as a duplicate and do not submit.
+   - Overlap of 1 or 2 keywords: likely a variant and may be submitted.
+   - No overlap: new scenario and may be submitted directly.
 ```
 
-### 为什么这样够用
+### Why this is enough
 
-- `_index.md` 格式是固定的：`- [日期] 简称 — 关键词: k1, k2, k3`
-- 每条只有一行，100 条经验也就 100 行
-- AI 只需要做字符串匹配，不需要理解完整内容
-- Token 消耗：读 _index.md ≈ 200-500 token（vs 读所有 journal ≈ 10000+ token）
+- `_index.md` has a fixed format: `- [date] short name — keywords: k1, k2, k3`
+- Each entry uses one line. Even 100 experiences use only 100 lines.
+- The AI needs string matching only. It does not need to understand the full content.
+- Token cost: read `_index.md` in about 200–500 tokens, compared with 10,000+ tokens for every journal.
 
-### 如果 _index.md 不可用
+### If `_index.md` is unavailable
 
-如果无法获取主仓库的 _index.md（网络问题等），直接提交，由主仓库维护者人工去重。
+If a network problem prevents access to the main repository's `_index.md`, submit directly. The main repository maintainer will deduplicate it manually.
 
-## 只允许提交的文件
+## Files allowed in a submission
 
-**白名单**（只有这些文件可以出现在 PR 中）：
-- `skills/field-journal/YYYY-MM-DD_*.md`（新的经验条目）
-- `skills/field-journal/_index.md`（索引更新）
+**Allowlist** (only these files may appear in a PR):
+- `skills/field-journal/YYYY-MM-DD_*.md` (new experience entries)
+- `skills/field-journal/_index.md` (index update)
 
-**黑名单**（绝对不能出现在 PR 中）：
-- `tool-index.*`（包含用户本机路径）
-- `pentest-tools/templates/scope.md`（包含目标信息）
-- `pentest-tools/templates/findings.md`（包含漏洞详情）
-- `pentest-tools/templates/progress.md`（包含操作记录）
-- `.claude/`（用户配置）
-- `.kiro/`（用户配置）
-- 任何 `.env`、`*.key`、`*.pem` 文件
+**Blocklist** (never include these files in a PR):
+- `tool-index.*` (contains local user paths)
+- `pentest-tools/templates/scope.md` (contains target information)
+- `pentest-tools/templates/findings.md` (contains vulnerability details)
+- `pentest-tools/templates/progress.md` (contains operation records)
+- `.claude/` (user configuration)
+- `.kiro/` (user configuration)
+- Any `.env`, `*.key`, or `*.pem` file
 
-## 脱敏二次检查
+## Second redaction check
 
-AI 在提交前必须扫描待提交文件，确认不包含：
+Before submission, the AI must scan the files to submit and confirm that they contain no:
 
-- [ ] 真实域名（非 `example.com`/`target.example.com`）
-- [ ] 真实 IP（非 `10.x.x.x`/`192.168.x.x`）
-- [ ] Token/Cookie/API Key 原文
-- [ ] 手机号/邮箱/用户名原文
-- [ ] 公司名/产品名（如果是 SRC 目标）
+- [ ] Real domain (other than `example.com` or `target.example.com`)
+- [ ] Real IP (other than `10.x.x.x` or `192.168.x.x`)
+- [ ] Original Token, Cookie, or API Key
+- [ ] Original phone number, email, or username
+- [ ] Company or product name when the target is an SRC target
 
-如果发现任何一项未脱敏，停止提交并提示用户修改。
+If any item is not redacted, stop the submission and ask the user to revise it.
 
-## 对用户的价值
+## Value to the user
 
-- 你贡献的经验会帮助其他用户避免踩同样的坑
-- 主仓库的 field-journal 越丰富，所有用户的 AI 越聪明
-- 你的贡献会在 _index.md 中保留（匿名，只有场景和关键词）
+- Your experience helps other users avoid the same pitfalls.
+- A richer main-repository field journal makes the AI more useful to every user.
+- Your contribution remains in `_index.md` anonymously, with only the scenario and keywords.

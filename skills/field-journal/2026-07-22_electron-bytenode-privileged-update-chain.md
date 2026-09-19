@@ -1,47 +1,47 @@
-# 2026-07-22 Electron Bytenode 特权更新链分析
+# 2026-07-22 Electron Bytenode privileged update-chain analysis
 
-## 场景分类
+## Scenario
 
-二进制分析 / Electron / Bytenode / 更新链安全审计
+Binary analysis, Electron, Bytenode, and update-chain security audit
 
-## 目标概述
+## Target summary
 
-对一个 Windows x86 Electron 桌面应用完成从 NSIS 安装器、ASAR、Bytenode JSC 到原生游戏 SDK 和远程渲染页面的跨层逆向，确认权限边界、IPC 能力及更新包信任模型。
+Cross-layer reverse engineering was performed on a Windows x86 Electron desktop application. The analysis started with the NSIS installer, continued through ASAR and Bytenode JSC, and reached the native game SDK and remote-rendered page. The privilege boundary, IPC capabilities, and update-package trust model were confirmed.
 
-## 完整执行链路
+## Execution record
 
-1. 对 `{electron_app}` 外层 PE 做 SHA-256、Authenticode、manifest、节区、overlay 和缓解措施检查，确认安装器类型与提权级别。
-2. 用 7-Zip 只读展开 NSIS，定位内层归档并重建文件清单；继续提取原始 `app.asar`，保留逻辑偏移、大小和逐文件哈希。
-3. 从 `package.json`、运行时资源和 JSC 字符串识别 Electron 22.0.0、Node 16.17.1 与 Bytenode 1.5.7；区分原始提取目录和既有修改目录。
-4. 使用样本自带 Electron 的 `ELECTRON_RUN_AS_NODE=1` 模式加载 `main.jsc` 与 `preload.jsc`，解决宿主 Node/V8 ABI 不兼容。
-5. 在探针中 mock Electron、网络、文件写入、归档、FFI、子进程和退出；记录窗口选项、21 个主进程 IPC handler、29 个 preload bridge 成员及生命周期回调。
-6. 冻结 `{remote_ui_domain}` 的静态资源快照，追踪 `https://{update_api_domain}/api/user/v1/check_ver` 返回的 `updateUrl` 如何进入本地 `checkUpdates`。
-7. 以 loopback HTTP fixture 驱动更新 handler，确认 URL 接收、下载、解压和 detached updater 启动序列；把未出现的白名单、哈希、包签名和 Authenticode 校验分别记录为“在受控路径中未观察到”。
-8. 对 `{native_game_sdk}` 的导出、导入、字符串、PE 防护、签名和关键地址做静态复核，区分 ABI 转发、回调 FIFO、状态看门狗与第三方平台安装分支。
-9. 对服务、驱动、hosts、根证书、代理和平台注册表操作采用“条件性能力”措辞；只在具备调用链证据时描述能力，不推断本次运行已经执行。
-10. 输出正式报告、三张数据流图、结构化 IOC、复现命令和证据索引，并在结论中分离高置信静态事实、受控动态事实与远程快照时效边界。
+1. Check the outer PE for `{electron_app}` with SHA-256, Authenticode, manifest, sections, overlay, and mitigation controls. Confirm the installer type and privilege level.
+2. Expand the NSIS package read-only with 7-Zip. Locate the inner archive and rebuild the file inventory. Extract the original `app.asar` while preserving logical offsets, sizes, and per-file hashes.
+3. Identify Electron 22.0.0, Node 16.17.1, and Bytenode 1.5.7 from `package.json`, runtime resources, and JSC strings. Separate the original extraction directory from an existing modified directory.
+4. Use the sample's bundled Electron in `ELECTRON_RUN_AS_NODE=1` mode to load `main.jsc` and `preload.jsc`. This avoids host Node/V8 ABI incompatibility.
+5. Mock Electron, network, file writes, archives, FFI, subprocesses, and exit behavior in a probe. Record window options, 21 main-process IPC handlers, 29 preload bridge members, and lifecycle callbacks.
+6. Freeze a static asset snapshot of `{remote_ui_domain}`. Trace how the `updateUrl` returned by `https://{update_api_domain}/api/user/v1/check_ver` enters local `checkUpdates`.
+7. Drive the update handler with a loopback HTTP fixture. Confirm URL receipt, download, extraction, and detached updater startup. Record the absent allowlist, hash, package-signature, and Authenticode checks separately as "not observed on the controlled path".
+8. Review the exports, imports, strings, PE protections, signature, and key addresses of `{native_game_sdk}` statically. Distinguish ABI forwarding, callback FIFO, state watchdog, and third-party platform installation branches.
+9. Describe service, driver, hosts, root-certificate, proxy, and platform-registry operations as conditional capabilities. State that a capability ran only when the call-chain evidence supports it. Do not infer execution from static capability alone.
+10. Output a formal report, three data-flow diagrams, structured IOCs, reproduction commands, and an evidence index. Separate high-confidence static facts, controlled dynamic facts, and the validity boundary of the remote snapshot in the conclusion.
 
-## 踩坑记录
+## Pitfalls
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Resolution | Time |
 |---|---|---|---|
-| 宿主 Node 直接加载 JSC 失败 | Bytenode 字节码绑定特定 V8/Node ABI | 使用样本 Electron 的 RunAsNode 模式执行 | 中 |
-| 启动探针后定时器和退出逻辑干扰结果 | 主进程包含生命周期回调、看门狗和 `process.exit` | 增加 `--run-timeouts`，mock 定时器、退出与四类 app 回调 | 中 |
-| 更新 handler 需要同时触发网络、写盘和子进程路径 | 单纯枚举 handler 只能证明注册，不能证明数据流 | 增加 `--update-url` fixture，全链记录参数和副作用 | 中 |
-| 分析目录存在既有修改产物 | 修改后的 ASAR/JSC 会污染原始结论 | 仅将 `{sample_dir}`、`{extracted_original_dir}` 作为原始证据源 | 低 |
-| 双签名 DLL 的状态容易误判 | 每条签名的证书、时间戳和当前验证状态可能不同 | 使用 `signtool verify /pa /all /v` 逐签名检查 | 低 |
-| Native 字符串显示高权限系统能力 | 字符串和导入并不代表当前路径已执行 | 结合 xref/调用链，并标注“条件性能力” | 中 |
-| 远程 UI 会持续变化 | 当前 chunk 和 API 行为不是永久固定资产 | 保存带日期的资源快照、哈希和抓取时间 | 低 |
+| Host Node could not load JSC directly | Bytenode bytecode binds to a specific V8/Node ABI | Run the probe in the sample Electron's RunAsNode mode | Medium |
+| Timers and exit logic interfered after the probe started | The main process includes lifecycle callbacks, a watchdog, and `process.exit` | Add `--run-timeouts`. Mock timers, exit, and four classes of app callback | Medium |
+| The update handler needed network, disk, and subprocess paths at once | Handler enumeration proves registration only, not data flow | Add an `--update-url` fixture and record parameters and side effects across the full chain | Medium |
+| The analysis directory contained existing modified artifacts | A modified ASAR/JSC could pollute the original conclusion | Use only `{sample_dir}` and `{extracted_original_dir}` as original evidence sources | Low |
+| Dual-signed DLL status was easy to misclassify | Each signature can have a different certificate, timestamp, and current validation state | Use `signtool verify /pa /all /v` for each signature | Low |
+| Native strings suggested high-privilege system capabilities | Strings and imports do not prove that the current path ran | Combine xrefs and call chains. Mark the result as a conditional capability | Medium |
+| The remote UI continued to change | The current chunk and API behavior were not permanent assets | Save dated resource snapshots, hashes, and fetch times | Low |
 
-## 工具链发现
+## Tool findings
 
-- 样本自带 Electron 是执行 Bytenode JSC 的最稳定 ABI 容器；`ELECTRON_RUN_AS_NODE=1` 可在不启动业务 GUI 的情况下运行探针。
-- Electron 模块 mock 需要覆盖 `app.whenReady/on/quit`、`BrowserWindow`、`ipcMain.handle/on`、`shell`、`session` 和 `webContents`，否则只会得到不完整注册面。
-- 更新链验证应同时记录输入 URL、请求库、目标文件、解压目录和最终 `spawn` 参数，才能建立 renderer 到 updater 的证据闭环。
-- PE 签名审计应将“证书存在”“证书在有效期内”“有可信时间戳”“当前链验证成功”分开描述。
-- 大型第三方 DLL 宜先用导入/导出和字符串做能力分区，再对服务、网络、证书和进程创建等高风险分支做地址级复核。
+- The sample's Electron is the most stable ABI container for executing Bytenode JSC. `ELECTRON_RUN_AS_NODE=1` runs a probe without starting the business GUI.
+- Electron mocks must cover `app.whenReady/on/quit`, `BrowserWindow`, `ipcMain.handle/on`, `shell`, `session`, and `webContents`. Otherwise the registered surface is incomplete.
+- Update-chain verification must record the input URL, request library, target file, extraction directory, and final `spawn` parameters to build an evidence chain from renderer to updater.
+- PE signature audits must separately report that a certificate exists, that it is within its validity period, that it has a trusted timestamp, and that current chain validation succeeds.
+- For a large third-party DLL, first partition capabilities with imports, exports, and strings. Then review high-risk service, network, certificate, and process-creation branches by address.
 
-## 关键代码/命令
+## Key code and commands
 
 ```powershell
 $env:ELECTRON_RUN_AS_NODE = '1'
@@ -63,39 +63,39 @@ $env:__COMPAT_LAYER = 'RunAsInvoker'
 signtool verify /pa /all /v '{native_game_sdk}'
 ```
 
-## 对本包的改进建议
+## Improvement suggestions for this package
 
-1. 在 Electron/JS 逆向路线中增加 Bytenode ABI 决策树：宿主 Node 失败后优先使用目标 Electron 的 RunAsNode 模式。
-2. 增加通用 Electron mock 覆盖矩阵和 IPC 注册/调用一致性检查脚本。
-3. 在更新器审计模板中固定检查 URL 约束、传输协议、manifest 签名、包哈希、签名链、解压穿越和最终执行参数。
-4. 报告模板增加“条件性能力”和“已观察行为”的强制分栏，降低从 imports/strings 过度推断的风险。
+1. Add a Bytenode ABI decision tree to the Electron/JS reverse-engineering path. After host Node fails, try the target Electron RunAsNode mode first.
+2. Add a generic Electron mock coverage matrix and an IPC registration/call consistency script.
+3. Make the updater audit template check URL constraints, transport protocol, manifest signature, package hash, signature chain, archive traversal, and final execution parameters.
+4. Add mandatory "conditional capability" and "observed behavior" columns to the report template. This reduces over-inference from imports and strings.
 
-## 可复用的模式/脚本片段
+## Reusable patterns and script fragments
 
-1. **三层可信边界**：原始安装器 -> 原始 ASAR/JSC -> 远程页面快照，每层分别建立哈希和时间戳。
-2. **注册面与执行面分离**：先枚举 IPC/preload API，再对高风险 handler 使用 mock fixture 调用并捕获副作用。
-3. **更新链五元组**：`source URL -> downloader -> archive path -> extractor -> executable`，每个节点都保存证据。
-4. **Native 能力分级**：导入/字符串为线索，xref/调用链为能力证据，真实动态事件才作为已执行事实。
-5. **签名四态模型**：签名存在性、证书有效期、时间戳、当前信任验证分别报告。
+1. **Three-layer trust boundary**: original installer → original ASAR/JSC → remote page snapshot. Build a hash and timestamp at each layer.
+2. **Separate registration and execution surfaces**: enumerate IPC and preload APIs first. Then call high-risk handlers with mock fixtures and capture side effects.
+3. **Five-part update chain**: `source URL -> downloader -> archive path -> extractor -> executable`. Save evidence for every node.
+4. **Native capability levels**: imports and strings are leads, xrefs and call chains are capability evidence, and real dynamic events are executed facts.
+5. **Four-state signature model**: report signature existence, certificate validity, timestamp, and current trust validation separately.
 
-## 进化动作
+## Follow-up actions
 
-- [x] 新增了 pitfalls 记录
-- [x] 更新了经验索引
-- [ ] 更新了路由矩阵
-- [ ] 更新了 tool-index
-- [ ] 更新了 bootstrap-manifest
-- [ ] 更新了子 skill 文档
+- [x] Add the pitfall record
+- [x] Update the experience index
+- [ ] Update the routing matrix
+- [ ] Update the tool index
+- [ ] Update the bootstrap manifest
+- [ ] Update the child skill documentation
 
-## 环境信息
+## Environment
 
 - OS: Windows 11 x64
-- 工具版本: Electron 22.0.0, Node 16.17.1, Bytenode 1.5.7, Python 3.12
-- 目标平台/版本: Windows x86 / Electron desktop app
+- Tool versions: Electron 22.0.0, Node 16.17.1, Bytenode 1.5.7, Python 3.12
+- Target platform/version: Windows x86 / Electron desktop app
 
-## 脱敏要求
+## Redaction requirements
 
-本文仅保留通用版本、API 路径结构、数量级和分析方法。样本名、发布者、真实域名、案件目录、哈希、配置密钥、token 与用户标识均已替换或省略；未附带样本文件。
+This record keeps only generic versions, API path structure, scale, and analysis methods. The sample name, publisher, real domains, case directory, hashes, configuration keys, tokens, and user identifiers were replaced or omitted. No sample file is attached.
 
 ---
-<!-- [社区贡献] 完成后询问用户是否 PR 到主仓库。流程见 CONTRIBUTE-BACK.md -->
+<!-- [Community contribution] Ask the user whether to open a PR against the main repository after completion. See CONTRIBUTE-BACK.md for the process. -->
