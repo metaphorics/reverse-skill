@@ -438,102 +438,102 @@ Two-server phishing infrastructure impersonating a government agency. Full victi
 
 ---
 
-## 分析前预判：文件伪装与名字欺骗
+## Pre-analysis Prediction: File Disguise and Name Deception
 
-### 文件后缀不可信
+### File Extensions Are Unreliable
 
-**核心原则：永远用 `file` 命令或 magic bytes 判断文件类型，不要相信后缀名。**
+**Core rule: Always use the `file` command or magic bytes to identify the file type. Do not trust the file extension.**
 
-常见伪装手法：
+Common disguise methods:
 
-| 伪装后缀 | 实际类型 | 目的 |
+| Disguised extension | Actual type | Purpose |
 |---------|---------|------|
-| `.sh` | ELF 二进制 | 让人以为是脚本，降低警惕 |
-| `.txt` | PE/ELF | 绕过简单的文件类型过滤 |
-| `.jpg`/`.png` | 可执行文件或压缩包 | 隐藏在图片中 |
-| `.dll` | 实际是 .NET assembly | 混淆分析方向 |
-| `.so` | 实际是加密 payload | 需要先解密 |
-| 无后缀 | 任何类型 | Linux 下常见 |
+| `.sh` | ELF binary | Make people think it is a script and lower their guard |
+| `.txt` | PE/ELF | Bypass simple file type filters |
+| `.jpg`/`.png` | Executable file or archive | Hide it in an image |
+| `.dll` | Actually a .NET assembly | Confuse the analysis direction |
+| `.so` | Actually an encrypted payload | Decrypt it first |
+| No extension | Any type | Common on Linux |
 
 ```bash
-# 正确做法：用 file 命令
+# Correct approach: use the file command
 file suspicious_file.sh
-# 输出: ELF 64-bit LSB executable, ARM aarch64...
+# Output: ELF 64-bit LSB executable, ARM aarch64...
 
-# 用 xxd 看 magic bytes
+# Use xxd to view the magic bytes
 xxd suspicious_file.sh | head -1
 # 7f454c46 = ELF magic
 ```
 
-### 文件名不可信
+### File Names Are Unreliable
 
-**"DriverLoader" 不一定加载驱动，"Updater" 不一定更新。**
+**"DriverLoader" does not always load a driver. "Updater" does not always update.**
 
-常见名字欺骗：
+Common name deception:
 
-| 文件名暗示 | 实际行为 |
+| Name implication | Actual behavior |
 |-----------|---------|
-| `DriverLoader` | 可能是 ptrace 注入器 / 进程 hook |
-| `SystemService` | 可能是后门 / C2 agent |
-| `Updater` / `Update` | 可能是 dropper / 下载器 |
-| `Helper` / `Assistant` | 可能是提权工具 |
-| `lib*.so` | 可能是注入 payload |
+| `DriverLoader` | May be a ptrace injector / process hook |
+| `SystemService` | May be a backdoor / C2 agent |
+| `Updater` / `Update` | May be a dropper / downloader |
+| `Helper` / `Assistant` | May be a privilege escalation tool |
+| `lib*.so` | May be an injection payload |
 
-**分析时应该：**
-- 忽略文件名暗示，按实际代码行为判断
-- 关注 `mmap`、`ptrace`、`/proc/self/mem` 等系统调用
-- 如果看到"加载驱动"但没有 `insmod`/`init_module` 调用，说明名不副实
+**During analysis:**
+- Ignore the name implication. Judge the file by its actual code behavior.
+- Focus on system calls such as `mmap`, `ptrace`, and `/proc/self/mem`.
+- If you see "load driver" but no `insmod`/`init_module` call, the name is misleading.
 
-### 静态分析不够时的动态补充
+### Dynamic Analysis When Static Analysis Is Not Enough
 
-纯静态分析只能看到代码骨架。以下场景必须配合动态分析：
+Static analysis alone can see only the code structure. Use dynamic analysis in the following cases:
 
-| 场景 | 推荐动态方法 |
+| Scenario | Recommended Dynamic Method |
 |------|-------------|
-| 代码有解密/解压逻辑 | 在解密后下断点，dump 明文 |
-| 大量间接调用（函数指针表） | strace/ltrace 跟踪实际调用 |
-| 疑似反调试 | 先 strace 看 ptrace 调用 |
-| 内嵌 shellcode/payload | QEMU 用户态模拟执行 |
-| 网络通信协议未知 | tcpdump/Wireshark 抓包 |
+| The code has decryption or decompression logic | Set a breakpoint after decryption and dump the plaintext |
+| Many indirect calls, such as a function pointer table | Use strace/ltrace to trace actual calls |
+| Suspected anti-debugging | First use strace to check ptrace calls |
+| Embedded shellcode or payload | Use QEMU user-mode emulation to execute it |
+| Unknown network communication protocol | Use tcpdump/Wireshark for packet capture |
 
 ```bash
-# strace 跟踪系统调用（重点关注）
+# Use strace to trace system calls (focus on relevant calls)
 strace -f -e trace=open,mmap,ptrace,execve,connect ./binary
 
-# ltrace 跟踪库函数调用
+# Use ltrace to trace library function calls
 ltrace -f ./binary
 
-# QEMU 用户态模拟（不需要真实设备）
+# QEMU user-mode emulation (no real device needed)
 qemu-aarch64 -strace ./binary_arm64
 
-# 检查反调试：看是否 ptrace 自追踪
+# Check for anti-debugging: see whether it self-traces with ptrace
 strace ./binary 2>&1 | grep ptrace
-# 如果看到 ptrace(PTRACE_TRACEME, ...) 说明有反调试
+# If you see ptrace(PTRACE_TRACEME, ...) it indicates anti-debugging
 ```
 
-### 进程注入/保护壳类样本的常见模式
+### Common Patterns in Process Injection and Packer Protection Samples
 
-这类样本（如 `LinYuDriverLoader`）通常：
+These samples, such as `LinYuDriverLoader`, usually:
 
-1. **不是真正加载内核驱动**（需要 root 权限，大多数场景没有）
-2. **实际行为是进程注入**：
-   - `ptrace` attach 到目标进程
-   - 通过 `/proc/<pid>/mem` 读写目标内存
-   - `mmap` 映射 shellcode 到目标进程空间
-3. **内嵌加密 payload**：
-   - 运行时解密一段 shellcode
-   - 解密后的 payload 才是真正的 hook 代码
-4. **反调试保护**：
-   - `ptrace(PTRACE_TRACEME)` 自追踪
-   - 时间检测（`clock_gettime` 前后对比）
-   - `/proc/self/status` 检查 TracerPid
+1. **Do not actually load a kernel driver** (root privileges are required, but most scenarios do not have them)
+2. **Actually perform process injection**:
+   - `ptrace` attach to the target process
+   - Read and write target memory through `/proc/<pid>/mem`
+   - Map shellcode into the target process space with `mmap`
+3. **Contain an encrypted payload**:
+   - Decrypt a shellcode block at run time
+   - The decrypted payload is the actual hook code
+4. **Use anti-debugging protection**:
+   - `ptrace(PTRACE_TRACEME)` self-tracing
+   - Time check (compare values before and after `clock_gettime`)
+   - Check TracerPid in `/proc/self/status`
 
-**分析策略**：
+**Analysis strategy**:
 ```text
-1. file 命令确认真实类型
-2. strings 看有没有明显的路径/库名/错误信息
-3. rabin2 -I 看架构/编译器/保护
-4. 静态找 mmap/ptrace/open 调用
-5. 如果有解密逻辑 → 动态跑到解密后 dump
-6. 如果有反调试 → 先 patch 掉或用 LD_PRELOAD 绕过
+1. Use the file command to confirm the actual type
+2. Use strings to check for obvious paths, library names, or error messages
+3. Use rabin2 -I to check the architecture, compiler, and protections
+4. Statically find mmap, ptrace, and open calls
+5. If there is decryption logic → run dynamically until after decryption, then dump
+6. If there is anti-debugging → patch it out first or bypass it with LD_PRELOAD
 ```

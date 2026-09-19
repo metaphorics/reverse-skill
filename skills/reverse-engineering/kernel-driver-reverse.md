@@ -1,49 +1,49 @@
-# 内核驱动逆向参考
+# Kernel Driver Reverse Engineering Reference
 
-> 覆盖 Windows/Linux 内核驱动逆向、Rootkit 分析、C/C++ 二进制模式识别。
+> Covers Windows/Linux kernel driver reverse engineering, Rootkit analysis, and C/C++ binary pattern recognition.
 
 ---
 
-## Windows 驱动逆向
+## Windows Driver Reverse Engineering
 
-### 驱动类型
+### Driver Types
 
-| 类型 | 特征 | 分析重点 |
+| Type | Features | Analysis Focus |
 |------|------|---------|
-| WDM (Windows Driver Model) | 老式驱动，手动管理 IRP | DriverEntry → 设备创建 → Dispatch 例程 |
-| KMDF (Kernel Mode Driver Framework) | 现代框架，事件驱动 | EvtDriverDeviceAdd → Queue → I/O 回调 |
-| WDF (Windows Driver Foundation) | KMDF + UMDF 统称 | 看 WdfDriverCreate 调用 |
-| Minifilter | 文件系统过滤驱动 | FltRegisterFilter → Pre/Post 回调 |
+| WDM (Windows Driver Model) | Legacy driver, manual IRP management | DriverEntry → device creation → Dispatch routines |
+| KMDF (Kernel Mode Driver Framework) | Modern framework, event-driven | EvtDriverDeviceAdd → Queue → I/O callbacks |
+| WDF (Windows Driver Foundation) | General term for KMDF + UMDF | Check calls to WdfDriverCreate |
+| Minifilter | File system filter driver | FltRegisterFilter → Pre/Post callbacks |
 
-### WDM 驱动分析流程
+### WDM Driver Analysis Process
 
 ```text
-1. 找 DriverEntry（入口点）
-   - IDA 自动识别，或搜索 IoCreateDevice / IoCreateSymbolicLink
+1. Find DriverEntry (entry point)
+   - Let IDA identify it automatically, or search for IoCreateDevice / IoCreateSymbolicLink
 
-2. 找设备名和符号链接
-   - IoCreateDevice → DeviceName（如 \Device\MyDriver）
-   - IoCreateSymbolicLink → SymLink（如 \DosDevices\MyDriver）
+2. Find the device name and symbolic link
+   - IoCreateDevice → DeviceName (such as \Device\MyDriver)
+   - IoCreateSymbolicLink → SymLink (such as \DosDevices\MyDriver)
 
-3. 找 Dispatch 例程
+3. Find the Dispatch routine
    - DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL] = DispatchIoctl
-   - 这是用户态通过 DeviceIoControl 调用的入口
+   - User-mode code calls this entry point through DeviceIoControl
 
-4. 分析 IOCTL 处理
-   - switch(IoControlCode) 分发不同功能
-   - IOCTL 编码：CTL_CODE(DeviceType, Function, Method, Access)
+4. Analyze IOCTL handling
+   - switch(IoControlCode) dispatches different functions
+   - IOCTL encoding: CTL_CODE(DeviceType, Function, Method, Access)
    - Method: METHOD_BUFFERED / METHOD_IN_DIRECT / METHOD_OUT_DIRECT / METHOD_NEITHER
 
-5. 找漏洞
-   - 用户可控缓冲区未验证长度 → 溢出
-   - METHOD_NEITHER 直接使用用户指针 → 任意读写
-   - 未检查 IOCTL 权限 → 非特权用户可调用
+5. Find vulnerabilities
+   - The length of a user-controlled buffer is not validated → overflow
+   - METHOD_NEITHER directly uses a user pointer → arbitrary read/write
+   - IOCTL permissions are not checked → unprivileged users can call it
 ```
 
-### IOCTL 编码解析
+### IOCTL Encoding Analysis
 
 ```python
-# 解析 IOCTL code
+# Parse IOCTL code
 def decode_ioctl(code):
     device_type = (code >> 16) & 0xFFFF
     access = (code >> 14) & 0x3
@@ -55,244 +55,244 @@ def decode_ioctl(code):
     
     return f"DevType=0x{device_type:X} Func=0x{function:X} Method={methods[method]} Access={access_types[access]}"
 
-# 示例
+# Example
 decode_ioctl(0x80002034)
 # DevType=0x8000 Func=0x80D Method=BUFFERED Access=ANY
 ```
 
-### IDA 插件
+### IDA Plugins
 
-| 插件 | 用途 | 链接 |
+| Plugin | Use | Link |
 |------|------|------|
-| **Driver Buddy Reloaded** | 自动识别 IOCTL、Dispatch、设备名 | https://github.com/VoidSec/DriverBuddyReloaded |
-| **WinDbg + IDA** | 内核调试 + 静态分析配合 | 内置 |
-| **FLIRT/Lumina** | 识别 WDK 库函数 | IDA 内置 |
+| **Driver Buddy Reloaded** | Automatically identifies IOCTL, Dispatch, and device names | https://github.com/VoidSec/DriverBuddyReloaded |
+| **WinDbg + IDA** | Kernel debugging + static analysis | Built-in |
+| **FLIRT/Lumina** | Identifies WDK library functions | Built into IDA |
 
-### 参考文章
+### Reference Articles
 
-- [Windows Drivers RE Methodology (VoidSec)](https://voidsec.com/windows-drivers-reverse-engineering-methodology/) — 最完整的 WDM 驱动逆向方法论
-- [Driver Reversing 101](https://eversinc33.com/posts/driver-reversing.html) — WDM vs KMDF 对比
-- [Methodology of Reversing Vulnerable Killer Drivers](https://whiteknightlabs.com/2025/10/28/methodology-of-reversing-vulnerable-killer-drivers/) — 漏洞驱动分析
+- [Windows Drivers RE Methodology (VoidSec)](https://voidsec.com/windows-drivers-reverse-engineering-methodology/) — Full WDM driver reverse engineering methodology
+- [Driver Reversing 101](https://eversinc33.com/posts/driver-reversing.html) — WDM vs KMDF comparison
+- [Methodology of Reversing Vulnerable Killer Drivers](https://whiteknightlabs.com/2025/10/28/methodology-of-reversing-vulnerable-killer-drivers/) — Vulnerable driver analysis
 
 ---
 
-## Linux 内核模块逆向
+## Linux Kernel Module Reverse Engineering
 
-### LKM (Loadable Kernel Module) 结构
+### LKM (Loadable Kernel Module) Structure
 
 ```text
-关键函数：
-- init_module / module_init → 模块加载时执行
-- cleanup_module / module_exit → 模块卸载时执行
+Key functions:
+- init_module / module_init → Execute when the module loads
+- cleanup_module / module_exit → Execute when the module unloads
 
-关键结构：
-- struct file_operations → 字符设备的 open/read/write/ioctl
-- struct net_device_ops → 网络设备操作
-- struct block_device_operations → 块设备操作
+Key structures:
+- struct file_operations → open/read/write/ioctl for character devices
+- struct net_device_ops → network device operations
+- struct block_device_operations → block device operations
 ```
 
-### 分析流程
+### Analysis Process
 
 ```text
-1. 确认是内核模块
-   file module.ko → "ELF 64-bit ... relocatable"（注意是 relocatable 不是 executable）
+1. Confirm that it is a kernel module
+   file module.ko → "ELF 64-bit ... relocatable" (note that it is relocatable, not executable)
 
-2. 找 init/exit 函数
+2. Find the init/exit functions
    readelf -s module.ko | grep -E "init_module|cleanup_module"
-   或在 .modinfo section 找模块信息
+   Or find the module information in the .modinfo section
 
-3. 找 file_operations 结构
-   搜索 register_chrdev / cdev_add / misc_register
-   → 找到 fops 结构体 → 定位 ioctl/read/write 处理函数
+3. Find the file_operations structure
+   Search for register_chrdev / cdev_add / misc_register
+   → Find the fops structure → Locate the ioctl/read/write handler functions
 
-4. 分析 ioctl 处理
-   unlocked_ioctl / compat_ioctl 函数
-   → switch(cmd) 分发
+4. Analyze the ioctl handler
+   unlocked_ioctl / compat_ioctl functions
+   → Dispatch with switch(cmd)
 
-5. 找 Rootkit 行为
-   - 修改 sys_call_table → syscall hook
-   - 修改 /proc 文件系统 → 隐藏进程/文件
-   - 注册 netfilter hook → 隐藏网络连接
-   - 修改 VFS 层 → 隐藏文件
+5. Find rootkit behavior
+   - Modify sys_call_table → syscall hook
+   - Modify the /proc filesystem → hide processes/files
+   - Register a netfilter hook → hide network connections
+   - Modify the VFS layer → hide files
 ```
 
-### Rootkit 常见技术
+### Common Rootkit Techniques
 
-| 技术 | 特征 | 检测方法 |
+| Technology | Feature | Detection method |
 |------|------|---------|
-| syscall table hook | 修改 `sys_call_table` 条目 | 对比内存中的表与磁盘上的 vmlinux |
-| VFS hook | 修改 `file_operations` 函数指针 | 检查 fops 指针是否指向内核代码段外 |
-| Netfilter hook | `nf_register_net_hook` | 遍历 netfilter hook 链表 |
-| kprobe/ftrace hook | 注册 kprobe 或 ftrace 回调 | 检查 ftrace 注册列表 |
-| eBPF rootkit | 加载恶意 BPF 程序 | `bpftool prog list` |
-| DKOM | 直接修改内核对象（进程链表） | 遍历 task_struct 链表对比 /proc |
+| syscall table hook | Modify `sys_call_table` entries | Compare the table in memory with the table in the vmlinux file |
+| VFS hook | Modify `file_operations` function pointers | Check if the fops pointer points outside the kernel code section |
+| Netfilter hook | `nf_register_net_hook` | Traverse the Netfilter hook list |
+| kprobe/ftrace hook | Register a kprobe or ftrace callback | Check the ftrace registration list |
+| eBPF rootkit | Load a malicious BPF program | `bpftool prog list` |
+| DKOM | Modify kernel objects directly (process list) | Traverse the task_struct list and compare it with /proc |
 
-### 工具
+### Tools
 
-| 工具 | 用途 |
+| Tool | Purpose |
 |------|------|
-| `crash` | 内核 dump 分析 |
-| `volatility3` | 内存取证（Linux profile） |
-| `dmesg` / `journalctl` | 内核日志 |
-| `lsmod` / `/proc/modules` | 已加载模块列表 |
-| `modinfo` | 模块元信息 |
-| `strace` | 系统调用跟踪（用户态视角） |
+| `crash` | Analyze kernel dumps |
+| `volatility3` | Linux memory forensics |
+| `dmesg` / `journalctl` | Kernel logs |
+| `lsmod` / `/proc/modules` | List of loaded modules |
+| `modinfo` | Module metadata |
+| `strace` | Trace system calls from user space |
 
 ---
 
-## C/C++ 逆向模式识别
+## C/C++ Reverse Engineering Pattern Recognition
 
-### C 语言常见模式
+### Common C Language Patterns
 
-| 源码模式 | 反汇编特征 |
+| Source Code Pattern | Disassembly Features |
 |---------|-----------|
-| `if-else` | `cmp` + `jcc`（条件跳转） |
-| `switch-case` | 跳转表（`jmp [rax*8 + table]`）或连续 `cmp` |
-| `for` 循环 | `cmp` + `jl/jle` + 循环体 + `inc/add` + `jmp` 回跳 |
-| `while` 循环 | 条件判断在循环顶部 |
-| `do-while` | 条件判断在循环底部 |
-| 函数指针调用 | `call rax` 或 `call [reg+offset]` |
-| `struct` 访问 | `[reg+固定偏移]`（如 `[rdi+0x10]`） |
-| `malloc` + 使用 | `call malloc` → 返回值存入寄存器 → 后续用该寄存器+偏移访问 |
-| 字符串比较 | `call strcmp` 或 `repe cmpsb` |
+| `if-else` | `cmp` + `jcc` (conditional jump) |
+| `switch-case` | Jump table (`jmp [rax*8 + table]`) or consecutive `cmp` instructions |
+| `for` loop | `cmp` + `jl/jle` + loop body + `inc/add` + `jmp` back to the loop |
+| `while` loop | Condition check at the top of the loop |
+| `do-while` | Condition check at the bottom of the loop |
+| Function pointer call | `call rax` or `call [reg+offset]` |
+| `struct` access | `[reg+fixed offset]` (such as `[rdi+0x10]`) |
+| `malloc` + use | `call malloc` → store the return value in a register → access with that register+offset later |
+| String comparison | `call strcmp` or `repe cmpsb` |
 
-### C++ 特有模式
+### C++-specific patterns
 
-| 源码模式 | 反汇编特征 |
+| Source-code pattern | Disassembly feature |
 |---------|-----------|
-| **虚函数调用** | `mov rax, [rcx]`（取 vtable）→ `call [rax+offset]`（调用虚函数） |
-| **构造函数** | 分配内存 → 写入 vtable 指针 → 初始化成员 |
-| **析构函数** | 清理成员 → 可能调用 `operator delete` |
-| **this 指针** | 第一个参数（rcx/rdi）是对象指针 |
-| **继承** | vtable 中包含父类虚函数 + 子类覆盖 |
-| **多重继承** | 对象内有多个 vtable 指针（偏移不同） |
-| **RTTI** | vtable 前面有 `type_info` 指针 |
-| **异常处理** | `__cxa_throw` / `_CxxThrowException` |
-| **STL 容器** | `std::vector`: `{begin, end, capacity}` 三指针结构 |
-| **std::string** | 小字符串优化（SSO）：短串内联，长串堆分配 |
+| **Virtual function call** | `mov rax, [rcx]` (get vtable) → `call [rax+offset]` (call virtual function) |
+| **Constructor** | Allocate memory → write the vtable pointer → initialize members |
+| **Destructor** | Clean up members → possibly call `operator delete` |
+| **this pointer** | The first parameter (`rcx/rdi`) is the object pointer |
+| **Inheritance** | The vtable contains parent-class virtual functions + child-class overrides |
+| **Multiple inheritance** | The object contains multiple vtable pointers at different offsets |
+| **RTTI** | A `type_info` pointer is before the vtable |
+| **Exception handling** | `__cxa_throw` / `_CxxThrowException` |
+| **STL container** | `std::vector`: three-pointer structure `{begin, end, capacity}` |
+| **std::string** | Small-string optimization (SSO): store short strings inline and allocate long strings on the heap |
 
-### vtable 逆向方法
+### Vtable reverse-engineering method
 
 ```text
-1. 找 vtable
-   - 搜索连续的函数指针数组（在 .rodata 或 .rdata 段）
-   - 构造函数中 `mov [rcx], offset vtable` 写入 vtable 指针
+1. Find the vtable
+   - Search for a contiguous array of function pointers (in the .rodata or .rdata section)
+   - In the constructor, `mov [rcx], offset vtable` writes the vtable pointer
 
-2. 确定类层次
-   - vtable 前 -8 偏移处通常是 RTTI 指针（如果未 strip）
-   - 多个 vtable 共享前几个条目 → 继承关系
+2. Determine the class hierarchy
+   - The offset -8 before the vtable usually contains the RTTI pointer (if it was not stripped)
+   - Multiple vtables sharing their first few entries → inheritance relationship
 
-3. 标注虚函数
-   - vtable[0] 通常是析构函数（或 deleting destructor）
-   - 后续按偏移标注：vtable[1] = func1, vtable[2] = func2...
+3. Label virtual functions
+   - vtable[0] is usually the destructor (or deleting destructor)
+   - Label subsequent entries by offset: vtable[1] = func1, vtable[2] = func2...
 
-4. IDA 中操作
-   - 在 vtable 地址创建 struct（每个字段是函数指针）
-   - 对 `call [rax+offset]` 添加注释标明调用的虚函数
+4. Work in IDA
+   - Create a struct at the vtable address (each field is a function pointer)
+   - Add a comment to `call [rax+offset]` identifying the virtual function being called
 ```
 
-### 结构体恢复
+### Structure recovery
 
 ```text
-方法 1：从访问模式推断
+Method 1: Infer from access patterns
   mov eax, [rdi+0x00]  → field_0: int/ptr (4/8 bytes)
   mov ecx, [rdi+0x08]  → field_8: int/ptr
   movss xmm0, [rdi+0x10] → field_10: float
 
-方法 2：从 sizeof 推断
-  call malloc(0x30) → 结构体大小 0x30 (48 bytes)
+Method 2: Infer from sizeof
+  call malloc(0x30) → structure size 0x30 (48 bytes)
   
-方法 3：从构造函数推断
-  构造函数会初始化所有字段 → 字段类型和偏移一目了然
+Method 3: Infer from the constructor
+  The constructor initializes all fields → field types and offsets are immediately clear
 
-方法 4：用 IDA 的 "Create struct" 功能
-  选中访问模式 → Edit → Struct → Create struct from selection
+Method 4: Use IDA's "Create struct" function
+  Select the access pattern → Edit → Struct → Create struct from selection
 ```
 
 ---
 
-## 常见编译器特征
+## Common compiler features
 
-| 编译器 | 识别特征 |
+| Compiler | Identification feature |
 |--------|---------|
-| MSVC | `_security_cookie` 检查、`__fastcall` 调用约定、Rich Header |
-| GCC | `__stack_chk_fail`、`-fstack-protector`、`.note.GNU-stack` |
-| Clang/LLVM | 类似 GCC 但优化模式不同、`__asan_*`（如果开了 sanitizer） |
-| MinGW | GCC 特征 + Windows API 调用 |
-| AOSP Clang | Android 特有的 `__android_log_print`、PGO 标记 |
+| MSVC | `_security_cookie` check, `__fastcall` calling convention, Rich Header |
+| GCC | `__stack_chk_fail`, `-fstack-protector`, `.note.GNU-stack` |
+| Clang/LLVM | Similar to GCC but with different optimization patterns, `__asan_*` (if the sanitizer is enabled) |
+| MinGW | GCC features + Windows API calls |
+| AOSP Clang | Android-specific `__android_log_print`, PGO markers |
 
-### 优化级别识别
+### Optimization Level Identification
 
-| 优化级别 | 特征 |
+| Optimization Level | Characteristics |
 |---------|------|
-| -O0 | 大量冗余 mov、每个变量都在栈上、函数不内联 |
-| -O1 | 基本优化、部分变量在寄存器 |
-| -O2 | 循环展开、函数内联、尾调用优化 |
-| -O3 / -Os | 激进内联、向量化（SIMD）、代码难读 |
-| PGO | 热路径优化、冷代码分离到 `.text.cold` |
-| LTO | 跨模块内联、全局死代码消除 |
+| -O0 | Many redundant mov instructions, every variable on the stack, no function inlining |
+| -O1 | Basic optimization, some variables in registers |
+| -O2 | Loop unrolling, function inlining, tail-call optimization |
+| -O3 / -Os | Aggressive inlining, vectorization (SIMD), hard-to-read code |
+| PGO | Hot-path optimization, move cold code to `.text.cold` |
+| LTO | Cross-module inlining, global dead-code elimination |
 
 ---
 
-## 内核调试环境
+## Kernel Debugging Environment
 
 ### Windows
 
 ```text
-调试器：WinDbg Preview
-连接方式：网络调试（推荐）或串口
+Debugger: WinDbg Preview
+Connection method: network debugging (recommended) or serial
 
-被调试机设置：
+Debugged machine setup:
 bcdedit /debug on
 bcdedit /dbgsettings net hostip:192.168.x.x port:50000
 
-调试机连接：
+Debugger connection:
 WinDbg → File → Attach to Kernel → Net → Port:50000 Key:xxx
 
-常用命令：
-!analyze -v          # 自动分析崩溃
-lm                   # 列出已加载模块
-!drvobj \Driver\xxx  # 查看驱动对象
-dt nt!_DRIVER_OBJECT # 显示结构体
-bp module!function   # 下断点
+Common commands:
+!analyze -v          # Automatically analyze the crash
+lm                   # List loaded modules
+!drvobj \Driver\xxx  # View the driver object
+dt nt!_DRIVER_OBJECT # Display the structure
+bp module!function   # Set a breakpoint
 ```
 
 ### Linux
 
 ```text
-调试器：GDB + QEMU 或 kgdb
+Debugger: GDB + QEMU or kgdb
 
-QEMU 内核调试：
+QEMU kernel debugging:
 qemu-system-x86_64 -kernel bzImage -s -S ...
 gdb vmlinux -ex "target remote :1234"
 
-常用命令：
-info threads         # 内核线程
-lx-symbols           # 加载内核符号（需要 scripts/gdb/）
-p init_task          # 查看 init 进程
-lx-dmesg             # 内核日志
+Common commands:
+info threads         # Kernel threads
+lx-symbols           # Load kernel symbols (requires scripts/gdb/)
+p init_task          # View the init process
+lx-dmesg             # Kernel log
 ```
 
 ---
 
-## Agent 动作锚点（Issue #65 U–AV）
+## Agent Action Anchors (Issue #65 U–AV)
 
-与 `references/nonpe-format-cookbook.md` §5 对齐（短表，不替代上文流程）：
+Align with `references/nonpe-format-cookbook.md` §5 (short table, does not replace the preceding workflow):
 
-| ID | 动作 | Evidence |
+| ID | Action | Evidence |
 |----|------|----------|
-| AG | `DriverEntry` 短 → 扫 `MajorFunction` 非空槽，优先 DEVICE_CONTROL/CREATE | `E-driver-irp-handlers` |
-| AH | 建立 IOCTL 控制码 → handler 表与 METHOD_* | `E-driver-ioctl` |
-| AI | 疑 BYOVD：对照公开脆弱驱动列表；记名/哈希/签名与调用意图；**不写 exploit 步骤** | `E-driver-byovd` |
+| AG | `DriverEntry` is short → scan non-empty `MajorFunction` slots, prioritize DEVICE_CONTROL/CREATE | `E-driver-irp-handlers` |
+| AH | Establish the IOCTL control-code → handler table and METHOD_* | `E-driver-ioctl` |
+| AI | Suspect BYOVD: compare with public vulnerable-driver lists; record the name/hash/signature and call intent; **do not write exploit steps** | `E-driver-byovd` |
 
-## 参考资源
+## Reference Resources
 
-| 资源 | 说明 | 链接 |
+| Resource | Description | Link |
 |------|------|------|
-| VoidSec 驱动逆向方法论 | Windows WDM 驱动完整分析流程 | https://voidsec.com/windows-drivers-reverse-engineering-methodology/ |
-| Elastic Rootkit 系列 | Linux Rootkit 分类+检测 | https://security-labs.elastic.co/security-labs/linux-rootkits-1-hooked-on-linux |
-| Driver Buddy Reloaded | IDA 驱动分析插件 | https://github.com/VoidSec/DriverBuddyReloaded |
-| LOLDrivers | 已知漏洞驱动列表 | https://www.loldrivers.io/ |
-| Windows Driver Samples | 微软官方驱动示例 | https://github.com/microsoft/Windows-driver-samples |
-| Linux Kernel Module Programming | 内核模块开发教程 | https://sysprog21.github.io/lkmpg/ |
-| Trail of Bits - Devirtualizing C++ | vtable 逆向方法 | https://blog.trailofbits.com/2017/02/13/devirtualizing-c-with-binary-ninja/ |
+| VoidSec Driver Reverse Engineering Methodology | Complete Windows WDM driver analysis workflow | https://voidsec.com/windows-drivers-reverse-engineering-methodology/ |
+| Elastic Rootkit Series | Linux Rootkit classification and detection | https://security-labs.elastic.co/security-labs/linux-rootkits-1-hooked-on-linux |
+| Driver Buddy Reloaded | IDA driver analysis plugin | https://github.com/VoidSec/DriverBuddyReloaded |
+| LOLDrivers | List of known vulnerable drivers | https://www.loldrivers.io/ |
+| Windows Driver Samples | Official Microsoft driver samples | https://github.com/microsoft/Windows-driver-samples |
+| Linux Kernel Module Programming | Kernel module development tutorial | https://sysprog21.github.io/lkmpg/ |
+| Trail of Bits - Devirtualizing C++ | vtable reverse engineering method | https://blog.trailofbits.com/2017/02/13/devirtualizing-c-with-binary-ninja/ |

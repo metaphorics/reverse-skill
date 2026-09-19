@@ -1,71 +1,71 @@
 ---
 name: go-rust-reverse
-description: Use for reverse engineering stripped Go and Rust binaries including runtime recognition, pclntab/moduel data recovery, panic strings, and idiomatic decompilation recovery.
+description: Use to reverse engineer Go and Rust binaries with symbols removed. Identify runtime features, recover pclntab and module data, analyze panic strings, and recover language-specific code patterns from decompiled code.
 ---
 
 # Go / Rust Binary Reverse Engineering
 
-## ACTION REQUIRED（读完后立刻执行）
+## ACTION REQUIRED (Execute immediately after reading)
 
-1. `NOW`: 读取 `../field-journal/precedent-reverse.md`
-2. `NOW`: 确认样本为 Go/Rust 编译产物（`file`/字符串/运行时特征）
-3. `NEXT`: GoReSym / 相关插件是否可用
-4. `ACT`: 运行时识别 → 符号/元数据恢复 → 业务逻辑
+1. `NOW`: Read `../field-journal/precedent-reverse.md`
+2. `NOW`: Confirm that the sample was compiled from Go or Rust (use `file`, strings, and runtime features)
+3. `NEXT`: Check if GoReSym / related plugins are available
+4. `ACT`: Identify the runtime → recover symbols/metadata → analyze application logic
 
-## 适用场景
+## When to Use
 
-- 剥离符号的 Go 恶意软件/工具
-- Rust 发行二进制、panic 字符串驱动分析
-- 与通用 ida/ghidra 互补的语言专用方法
+- Analyze Go malware/tools with symbols removed
+- Analyze Rust release binaries with panic strings
+- Use language-specific methods with general ida/ghidra methods
 
-## 工作流
+## Workflow
 
 ### Go
 
 ```text
-□ 识别 go.buildid、runtime 符号残留、pclntab
-□ GoReSym / redress / IDA Go 插件恢复函数名
-□ 注意 interface、slice、string 结构在反编译中的形态
-□ 网络/加密库路径：crypto/* net/http
+□ Identify go.buildid, remaining runtime symbols, and pclntab
+□ Use GoReSym / redress / IDA Go plugins to recover function names
+□ Examine interface, slice, and string structures in decompiled code
+□ Examine network/cryptographic library paths: crypto/* net/http
 ```
 
 ### Rust
 
 ```text
-□ panic 字符串、rust_begin_unwind、crate 路径暗示
-□ 范型实例化导致的代码膨胀；先定位字符串 xref
-□ 异步/tokio 状态机需结合交叉引用
+□ Examine panic strings, rust_begin_unwind, and crate paths for evidence
+□ Generic instantiation increases code size; first locate string xref references
+□ Use cross-references to analyze asynchronous/tokio state machines
 ```
 
-### 动态
+### Dynamic Analysis
 
 ```text
-□ 仍可用 Frida；注意 Go 栈与调度
-□ 优先日志与配置字符串驱动断点
+□ You can still use Frida; examine the Go stack and scheduling
+□ First use log and configuration strings to select breakpoints
 ```
 
-## 工具链
+## Tools
 
-| 工具 | 用途 |
+| Tool | Use |
 |------|------|
-| GoReSym | Go 元数据 |
-| IDA/Ghidra + Go/Rust 插件 | 反编译 |
-| radare2 | 快速字符串 |
-| strings / rabin2 | 分诊 |
+| GoReSym | Recover Go metadata |
+| IDA/Ghidra + Go/Rust plugins | Decompile code |
+| radare2 | Find strings quickly |
+| strings / rabin2 | Make an initial assessment |
 
-## 参考
+## References
 
 - `references/go-rust-notes.md`
 - `../reverse-engineering/go-reverse.md` `../ida-reverse/` `../ghidra-reverse/`
 - seed: `field-journal/seed-002_go-malware-stripped.md`
 
-## 路由上下文
+## Routing Context
 
-**上游**: MASTER R33  
-**下游**: 恶意样本流程 `malware-analysis`；通用 RE `reverse-engineering`
+**Upstream**: MASTER R33  
+**Downstream**: Malware sample workflow `malware-analysis`; general RE `reverse-engineering`
 
-## 任务完成自检
+## Task Completion Check
 
-- [ ] 是否恢复关键函数名或等价映射？
-- [ ] 是否标注语言运行时证据？
-- [ ] Checklist？
+- [ ] Confirm that you recovered key function names or an equivalent mapping.
+- [ ] Confirm that you recorded evidence of the language runtime.
+- [ ] Complete the checklist.
