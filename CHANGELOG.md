@@ -6,6 +6,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+### Changed
+- **Repository converted to English-only (2026-09-20)** — every Chinese string is now Plain English (user-facing docs) or ASD-STE100 (agent contracts); unneeded jargon is purged from the English corpus.
+- **Chinese doc twins removed** — `README_zh.md`, `RULES_zh.md`, `skills/routing_zh.md`, `docs/OVERVIEW_zh.md`, and `docs/UV-AND-DOWNLOAD-SECURITY_zh.md` are deleted after porting unique sections; `docs/QUICKSTART_zh.md` moved to `docs/QUICKSTART.md`.
+- **Router keywords English-only** — Chinese trigger alternations are gone from `routing.json`, the benchmark, and the RULES trigger lists; Chinese task text now falls back to R0.
+- **CN dictionaries fully translated** — fingerprint and credential entries state matches in English; string-level matching against Chinese-language pages loses fidelity by design.
+- **Payload and evidence bytes preserved** — functional payloads, captured output, and technique bytes stay verbatim with documented per-line exemptions.
+
 ### Added
 - **CI runs remaining unwired suites** — `test-p0-friction.ps1` on the Windows leg of `routing-tests` (Windows PowerShell 5.1); `case-review/tests/test_review_case.py` in the Linux `case-contract` job. `test-workflow-title-safety.ps1` was already wired.
 - **Binary Ninja route and skill** — added `binary-ninja-reverse` for HLIL/MLIL/LLIL, Python API, and an explicitly enabled loopback community MCP bridge; Binary Ninja remains a manual commercial dependency.

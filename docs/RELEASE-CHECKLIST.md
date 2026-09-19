@@ -9,7 +9,7 @@
 3. [ ] Update the VERSION file to `x.y.z`.
 4. [ ] For a milestone release such as v1.0.0 or v1.1.0, update `docs/RELEASE_NOTES_v<x.y.z>.md`.
 5. [ ] Create the tag with `git tag v<x.y.z>` and push tags with `git push --tags`.
-6. [ ] Confirm that CI passes after the push. Check the 173 routing cases, coherence, pin gate, and version check.
+6. [ ] Confirm that CI passes after the push. Check the 175 routing cases, coherence, pin gate, and version check.
 
 ## Metadata Synchronization
 

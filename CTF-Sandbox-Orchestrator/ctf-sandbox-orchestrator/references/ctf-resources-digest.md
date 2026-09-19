@@ -89,7 +89,7 @@
 
 ### Common Payload Pattern
 ```python
-# ret2libc 模板
+# ret2libc template
 from pwn import *
 elf = ELF('./vuln')
 libc = ELF('./libc.so.6')
