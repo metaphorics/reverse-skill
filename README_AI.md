@@ -1,6 +1,6 @@
 # Cybersecurity Skills Router — AI Agent Bootstrap
 
-> ⚡ **For AI agents only.** If you are a human reader, go back to [README.md](README.md) (English) or [README_zh.md](README_zh.md) (中文).
+> ⚡ **For AI agents only.** Human readers: return to [README.md](README.md).
 
 This file contains the bootstrap instructions, deployment routing, and behavior chain for AI agents. If you are an AI agent (Claude Code, Codex CLI, Cursor, Cline, Windsurf, Kiro, etc.), **execute section 0 immediately** after finishing this file.
 
@@ -149,7 +149,7 @@ At present, it is recommended to understand the whole package as two layers:
     ├── scripts\                  # Tool-index refresh and shared scripts
     ├── field-journal\            # Auto-evolving experience logs
     ├── apk-reverse\              # APK reverse engineering
-    ├── attack-chain\             # Multi-stage attack-chain orchestration
+    ├── attack-chain\             # Multi-stage attack-chain coordination
     ├── binary-diff\              # Cross-version symbol migration
     ├── browser-automation\       # Browser + desktop automation (Playwright + OpenReverse)
     ├── diagram-generator\        # Diagram generation (Mermaid / Graphviz / PlantUML)

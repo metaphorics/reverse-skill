@@ -2,7 +2,7 @@
   <img src="reverse-skill.png" alt="reverse-skill" width="140" />
 </p>
 <h1 align="center">reverse-skill</h1>
-<h3 align="center">Cybersecurity Skills Router · 逆向技能路由包</h3>
+<h3 align="center">Cybersecurity Skills Router · Reverse-Engineering Skills Package</h3>
 
 <p align="center"><em style="font-family: Georgia, serif; font-size: 1.2em; color: #777;">Navigate the dark waters, sail against the stream.</em></p>
 
@@ -35,7 +35,6 @@
 </p>
 
 <p align="center">
-  🌐 <a href="README_zh.md">中文</a> ·
   <a href="https://reverse.apivix.com/">Project website</a> ·
   <a href="https://reverse.apivix.com/docs/">Online tutorial</a>
 </p>
@@ -167,6 +166,10 @@ Then refresh the tool index per platform:
 
 Check [skills/tool-index.md](skills/tool-index.md) to see detected tools.
 
+### Initial use
+
+After you clone the repository, ask the AI to read [README_AI.md](README_AI.md). It will route tasks and check tools for the current environment.
+
 Platform-specific docs:
 - **Kali Linux** → [kali/README-kali.md](kali/README-kali.md)
 - **Ubuntu/Debian** → [docs/platforms/linux.md](docs/platforms/linux.md)
@@ -192,7 +195,7 @@ Platform-specific docs:
 | HTTP capture / request replay | anything-analyzer, Reqable MCP + `js-reverse/` |
 | Malware / YARA | `skills/malware-analysis/` |
 | Penetration testing / scanning | `skills/pentest-tools/` |
-| Attack chain / red-team orchestration | `skills/attack-chain/` |
+| Attack chain / red-team coordination | `skills/attack-chain/` |
 | Case evidence review / report handoff | `skills/case-review/` |
 | CTF competition | `CTF-Sandbox-Orchestrator/` (42 sub-skills) |
 | Firmware / IoT | `skills/firmware-pentest/` |
@@ -251,8 +254,8 @@ For Codex, the repository also exposes an optional adapter plugin at [`plugins/r
 
 ```
 .
-├── README.md / README_zh.md / README_AI.md
-├── RULES.md / RULES_zh.md
+├── README.md / README_AI.md
+├── RULES.md
 ├── skills/
 │   ├── MASTER-ROUTING.md / SKILL.md / routing.md
 │   ├── ops/                   # ops contracts
@@ -331,4 +334,4 @@ See [Security Policy](SECURITY.md), [Installation and Download Security Guidance
 
 ## Community quick start and issue triage
 
-See [Quick Start](docs/QUICKSTART_zh.md) and [Community Issue Triage](docs/COMMUNITY-ISSUE-TRIAGE.md) for installation, client integration, and how community issues are classified. Installation/archive security details remain in [Installation and Download Security Guidance](docs/UV-AND-DOWNLOAD-SECURITY.md).
+See [Quick Start](docs/QUICKSTART.md) and [Community Issue Triage](docs/COMMUNITY-ISSUE-TRIAGE.md) for installation, client integration, and how community issues are classified. Installation/archive security details remain in [Installation and Download Security Guidance](docs/UV-AND-DOWNLOAD-SECURITY.md).

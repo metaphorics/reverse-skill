@@ -13,8 +13,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - **IDA MCP HTTP stall** — `run-supervisor.py` patches stock `idalib_supervisor` onto `ThreadingHTTPServer` and accepts Streamable HTTP GET `/mcp` (patch failure is skipped, supervisor still starts). Keep-alive deadlock is **time since last healthy `tools/list`**, not process `CreationDate`; `open.ps1` holds `opening.lock` so in-flight opens are never `-Force`d. New `recover.ps1` is an immediate `-Force` path. Never `taskkill`s `ida.exe`.
-- **Broken internal doc links + guard** — removed a dangling `phishing-case-study.md` reference and redirected the missing payloader `反弹shell.md` index entry to its tracked raw data. Added `skills/scripts/verify-doc-links.py`, wired into CI, so internal Markdown links are checked from Git index blobs even when Defender quarantines a working-tree payload file.
-- **Windows PowerShell 5.1 encoding** — added a UTF-8 BOM to five non-ASCII `.ps1` scripts (`skills/scripts/verify-doc-facts.ps1`, `apk-reverse/scripts/frida-run.ps1`, `apk-reverse/scripts/rebuild-sign-install.ps1`, `ida-reverse/scripts/start.ps1`, `radare2/scripts/recon.ps1`). Without a BOM, PS 5.1 parses these files as the system ANSI codepage and garbles their Chinese / em-dash string literals; `verify-doc-facts.ps1` was failing four checks under 5.1 (CI only ran it under `pwsh`, which defaults to UTF-8). CI now guards every non-ASCII `.ps1` for a BOM.
+- **Broken internal doc links + guard** — removed a dangling `phishing-case-study.md` reference and redirected the missing payloader entry for the historical Chinese-named reverse-shell file to its tracked raw data. Added `skills/scripts/verify-doc-links.py`, wired into CI, so internal Markdown links are checked from Git index blobs even when Defender quarantines a working-tree payload file.
+- **Windows PowerShell 5.1 encoding** — added a UTF-8 BOM to five non-ASCII `.ps1` scripts (`skills/scripts/verify-doc-facts.ps1`, `apk-reverse/scripts/frida-run.ps1`, `apk-reverse/scripts/rebuild-sign-install.ps1`, `ida-reverse/scripts/start.ps1`, `radare2/scripts/recon.ps1`). Without a BOM, PS 5.1 parses these files as the system ANSI codepage and garbles their non-ASCII / em-dash string literals; `verify-doc-facts.ps1` was failing four checks under 5.1 (CI only ran it under `pwsh`, which defaults to UTF-8). CI now guards every non-ASCII `.ps1` for a BOM.
 - **Evidence-consolidation test fixed + two suites wired into CI** — `test-consolidate-evidence.ps1` printed its success marker but leaked exit 1: it ran `review_case.py --verify-hashes` on a case whose consolidation had (by design) rewritten `E-001.md`, so hash fixity could never pass. Dropped `--verify-hashes`, added an explicit exit-code assertion, and wired both it and `test-bootstrap-codex-encoding.ps1` into the Windows leg of `routing-tests` (both shipped in the repo but were never run by CI).
 
 ### Changed
@@ -30,7 +30,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Added
 - **Routing single source of truth** — `skills/config/routing.json` (R0–R39 keyword rules with `must` / `mustAll` / `exclude` semantics). `master-route.ps1` now reads this file; hardcoded routing tables removed from scripts. Routing knowledge lives in one place.
 - **Routing regression benchmark** — `skills/tests/routing-benchmark.json` (163 bilingual cases, 40 quick) + `skills/scripts/test-routing.ps1` runner. Any routing change must keep the benchmark green.
-- **Routing keyword coverage expansion** (benchmark-driven): burp suite family, pcap/wireshark, root-detection/certificate-pinning, buffer overflow, `.so`/native/JNI, go binaries (中文), js-encrypt, webshell, privilege escalation, S3/object storage, memory dump, incident response, Bluetooth/BLE, USB, Unity/game reverse, security assessment, and more.
+- **Routing keyword coverage expansion** (benchmark-driven): burp suite family, pcap/wireshark, root-detection/certificate-pinning, buffer overflow, `.so`/native/JNI, Go binaries (Chinese), js-encrypt, webshell, privilege escalation, S3/object storage, memory dump, incident response, Bluetooth/BLE, USB, Unity/game reverse, security assessment, and more.
 - **Supply-chain pin gate** — `verify-routing-coherence.ps1` now fails on any auto-install capability lacking `pinnedVersion` / `pinnedCommit` / `pinPolicy` / asset hash. Pinned: frida-tools 14.10.4, pwntools 4.15.0, agent-browser 0.31.1, ida-pro-mcp @commit, SecLists/ProxyCat @commit, nuclei v3.9.0; winget sources annotated with `winget-latest` policy.
 - **Client-neutral integration contract** — routing, tests, manifests, and case workflows remain independent of Claude Code, Codex, Cursor, OpenCode, or any other client; client adapters are optional and must not define repository identity.
 - **Skill navigation index** — `skills/INDEX.md` auto-generated from SKILL.md frontmatter by `extract-summaries.ps1` (`-Check` mode for CI drift detection).
@@ -48,7 +48,7 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - **Upstream mixed-EOL files** — 3 markdown files committed with CRLF while `.gitattributes` declares `*.md eol=lf`; normalized to LF so `git status` stays clean on fresh clones.
-- Routing: sigma vs malware, LLM 越狱 vs iOS 越狱, 完整渗透/打到域控 vs AD 域控, forensics vs OT ics; master-route.ps1 rewritten UTF-8 BOM for PS 5.1 CJK
+- Routing: Sigma vs malware, LLM jailbreak vs iOS jailbreak, full-scope penetration / domain-controller compromise vs AD domain controller, forensics vs OT ICS; `master-route.ps1` was rewritten with a UTF-8 BOM for PowerShell 5.1 CJK support
 - Linux/macOS bootstrap: register PentestSwarm MCP with a verified executable path after Go install or when already installed
 
 ### Security

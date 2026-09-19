@@ -1,88 +1,88 @@
-# 系统架构图
+# System Architecture
 
-## 完整行为链流程图
+## Complete Behavior Chain Flowchart
 
 ```mermaid
 flowchart TD
-    Start([用户提出安全/逆向任务]) --> Detect{触发关键词匹配?}
-    Detect -->|是| ReadRouting[读取 SKILL.md + routing.md]
-    Detect -->|否| Normal([正常对话])
+    Start([User submits a security or reverse-engineering task]) --> Detect{Trigger keyword matches?}
+    Detect -->|yes| ReadRouting[Read SKILL.md + routing.md]
+    Detect -->|no| Normal([Normal conversation])
     
-    ReadRouting --> RouteMatch{路由矩阵匹配?}
-    RouteMatch -->|未命中| ProposeNew[提议新增 skill<br/>按 CONTRIBUTING.md]
-    RouteMatch -->|命中| CheckJournal[检查 field-journal<br/>是否有同类经验]
+    ReadRouting --> RouteMatch{Does the routing matrix match?}
+    RouteMatch -->|no match| ProposeNew[Propose a new skill<br/>Follow CONTRIBUTING.md]
+    RouteMatch -->|match| CheckJournal[Check field-journal<br/>for similar experience]
     
-    CheckJournal --> CheckTools[读取 tool-index.md<br/>确认工具状态]
-    CheckTools --> ToolOK{工具可用?}
+    CheckJournal --> CheckTools[Read tool-index.md<br/>confirm tool status]
+    CheckTools --> ToolOK{Are the tools available?}
     
-    ToolOK -->|缺失| Bootstrap[调用 bootstrap-reverse.ps1<br/>自动安装]
-    ToolOK -->|可用| Execute[进入 skill 工作流]
+    ToolOK -->|missing| Bootstrap[Run bootstrap-reverse.ps1<br/>install automatically]
+    ToolOK -->|available| Execute[Enter the skill workflow]
     
-    Bootstrap --> BootOK{安装成功?}
-    BootOK -->|成功| Execute
-    BootOK -->|失败| Guide[输出结构化引导<br/>等用户手动处理]
-    Guide --> UserConfirm([用户确认已安装])
+    Bootstrap --> BootOK{Did installation succeed?}
+    BootOK -->|yes| Execute
+    BootOK -->|no| Guide[Provide structured guidance<br/>wait for manual action]
+    Guide --> UserConfirm([User confirms installation])
     UserConfirm --> Execute
     
-    Execute --> TaskDone{任务完成?}
-    TaskDone -->|否| Execute
-    TaskDone -->|是| ReviewCase[调用 case-review<br/>校验证据图]
-    ReviewCase --> GenReport[调用 docs-generator<br/>生成报告 + 图表]
+    Execute --> TaskDone{Is the task complete?}
+    TaskDone -->|no| Execute
+    TaskDone -->|yes| ReviewCase[Run case-review<br/>validate the evidence graph]
+    ReviewCase --> GenReport[Run docs-generator<br/>generate the report and diagrams]
     
-    GenReport --> WriteJournal[回写 field-journal<br/>经验沉淀]
-    WriteJournal --> UpdateIndex[更新索引/路由/manifest]
-    UpdateIndex --> Output([输出最终结果])
+    GenReport --> WriteJournal[Write to field-journal<br/>retain the experience]
+    WriteJournal --> UpdateIndex[Update the index, routing, and manifest]
+    UpdateIndex --> Output([Output the final result])
 ```
 
-## Skills 模块关系图
+## Skills Module Relationship Diagram
 
 ```mermaid
 flowchart LR
-    subgraph 路由层
-        SKILL[SKILL.md<br/>总控入口]
-        Routing[routing.md<br/>路由矩阵]
+    subgraph RoutingLayer[Routing layer]
+        SKILL[SKILL.md<br/>control entry]
+        Routing[routing.md<br/>routing matrix]
     end
 
-    subgraph 逆向分析
-        APK[apk-reverse<br/>APK 逆向]
+    subgraph ReverseAnalysis[Reverse engineering]
+        APK[apk-reverse<br/>APK reverse engineering]
         IDA[ida-reverse<br/>IDA Pro]
-        R2[radare2<br/>CLI 分析]
-        RE[reverse-engineering<br/>通用方法论]
-        BinDiff[binary-diff<br/>符号迁移]
-        PatchDiff[patch-diff-exploit<br/>N-day 武器化]
+        R2[radare2<br/>CLI analysis]
+        RE[reverse-engineering<br/>general methods]
+        BinDiff[binary-diff<br/>symbol migration]
+        PatchDiff[patch-diff-exploit<br/>N-day weaponization]
     end
 
-    subgraph 漏洞利用
-        Pwn[pwn-chain<br/>RE→exploit]
-        Firmware[firmware-pentest<br/>固件全链路]
+    subgraph Exploitation[Exploitation]
+        Pwn[pwn-chain<br/>reverse engineering to exploitation]
+        Firmware[firmware-pentest<br/>full firmware workflow]
     end
 
-    subgraph 渗透测试
-        Pentest[pentest-tools<br/>工具链+循环框架]
-        SrcHunter[src-hunter<br/>19 playbook]
-        EDR[edr-bypass-re<br/>EDR 绕过]
+    subgraph PenetrationTesting[Penetration testing]
+        Pentest[pentest-tools<br/>toolchain and workflow]
+        SrcHunter[src-hunter<br/>19 playbooks]
+        EDR[edr-bypass-re<br/>EDR evasion]
     end
 
-    subgraph Web/浏览器
-        JS[js-reverse<br/>JS 签名逆向]
-        Browser[browser-automation<br/>Playwright+OpenReverse]
+    subgraph WebBrowser[Web and browser]
+        JS[js-reverse<br/>JavaScript signature reverse engineering]
+        Browser[browser-automation<br/>Playwright and OpenReverse]
     end
 
-    subgraph 基础设施
-        Bootstrap[bootstrap-reverse.ps1<br/>按需自举]
-        Discovery[ToolDiscovery.ps1<br/>工具发现]
-        ToolIndex[tool-index<br/>状态索引]
+    subgraph Infrastructure[Infrastructure]
+        Bootstrap[bootstrap-reverse.ps1<br/>on-demand bootstrap]
+        Discovery[ToolDiscovery.ps1<br/>tool discovery]
+        ToolIndex[tool-index<br/>status index]
     end
 
-    subgraph 输出层
-        Docs[docs-generator<br/>报告生成]
-        Diagram[diagram-generator<br/>图表生成]
-        Review[case-review<br/>Evidence graph audit]
-        Journal[field-journal<br/>自动进化]
+    subgraph OutputLayer[Output layer]
+        Docs[docs-generator<br/>report generation]
+        Diagram[diagram-generator<br/>diagram generation]
+        Review[case-review<br/>evidence graph audit]
+        Journal[field-journal<br/>experience retention]
     end
 
-    subgraph 外部
-        CTF[CTF-Sandbox-Orchestrator<br/>40+ 子技能]
+    subgraph External[External]
+        CTF[CTF-Sandbox-Orchestrator<br/>40+ subskills]
     end
 
     SKILL --> Routing
@@ -91,106 +91,106 @@ flowchart LR
     Routing --> CTF
 
     Pentest --> SrcHunter
-    APK -->|.so 分流| IDA
-    APK -->|.so 分流| R2
-    PatchDiff -->|写出 PoC| Pwn
-    Firmware -->|找到 crash| Pwn
-    Pwn -->|整合| Pentest
-    EDR -->|投递阶段| Pentest
-    JS -->|浏览器操作| Browser
+    APK -->|.so routing| IDA
+    APK -->|.so routing| R2
+    PatchDiff -->|write PoC| Pwn
+    Firmware -->|find crash| Pwn
+    Pwn -->|combine| Pentest
+    EDR -->|delivery stage| Pentest
+    JS -->|browser operations| Browser
     
     Bootstrap --> Discovery --> ToolIndex
     
-    APK & IDA & R2 & Pentest & JS -->|任务完成| Review
+    APK & IDA & R2 & Pentest & JS -->|task complete| Review
     Review --> Docs
     Docs --> Diagram
     Docs --> Journal
 ```
 
-## Bootstrap 自举流程
+## Bootstrap Process
 
 ```mermaid
 flowchart TD
-    Need[检测到缺少工具] --> ReadManifest[读取 bootstrap-manifest.json]
-    ReadManifest --> Kind{安装类型?}
+    Need[Missing tool detected] --> ReadManifest[Read bootstrap-manifest.json]
+    ReadManifest --> Kind{What is the installation type?}
     
-    Kind -->|github-release-zip| GH[从 GitHub Release<br/>下载 ZIP 解压]
+    Kind -->|github-release-zip| GH[Download and extract ZIP<br/>from a GitHub release]
     Kind -->|pip-package| Pip[pip install]
-    Kind -->|npm-mcp| NPM[npx 启动 + 注册 MCP]
-    Kind -->|npm-global| Global[npm install -g<br/>+ postInstall]
+    Kind -->|npm-mcp| NPM[Start with npx<br/>and register MCP]
+    Kind -->|npm-global| Global[npm install -g<br/>and run postInstall]
     Kind -->|winget-package| Winget[winget install]
-    Kind -->|local-http-mcp| HTTP[注册 URL + 启动服务]
+    Kind -->|local-http-mcp| HTTP[Register the URL<br/>and start the service]
     
-    GH & Pip & NPM & Global & Winget & HTTP --> Verify{验证可用?}
-    Verify -->|成功| AddPath[加入 PATH<br/>刷新 tool-index]
-    Verify -->|失败| Manual[输出手动安装引导]
+    GH & Pip & NPM & Global & Winget & HTTP --> Verify{Is the tool available?}
+    Verify -->|yes| AddPath[Add to PATH<br/>refresh tool-index]
+    Verify -->|no| Manual[Provide manual installation guidance]
     
-    AddPath --> Continue([继续执行任务])
-    Manual --> Wait([等待用户确认])
+    AddPath --> Continue([Continue the task])
+    Manual --> Wait([Wait for user confirmation])
 ```
 
-## 渗透测试循环
+## Penetration Testing Loop
 
 ```mermaid
 flowchart TD
-    Init[初始化：确定目标/范围/工具] --> Loop
+    Init[Initialize: define target, scope, and tools] --> Loop
 
-    subgraph Loop[核心循环]
-        Align[1. 重新对齐目标] --> Review[2. 审查已知发现]
-        Review --> Decide[3. 决定下一步操作]
-        Decide --> Risk{4. 风险门控}
-        Risk -->|低/中/高| Exec[5. 执行操作]
-        Risk -->|严重| Ask[请求用户批准]
-        Ask -->|批准| Exec
-        Exec --> Record[6. 记录结果]
-        Record --> Check{7. 自我检查}
-        Check -->|继续| Align
-        Check -->|完成| Done
+    subgraph Loop[Core loop]
+        Align[1. Re-align with the target] --> Review[2. Review known findings]
+        Review --> Decide[3. Decide the next operation]
+        Decide --> Risk{4. Apply risk control}
+        Risk -->|low, medium, or high| Exec[5. Execute the operation]
+        Risk -->|critical| Ask[Request user approval]
+        Ask -->|approved| Exec
+        Exec --> Record[6. Record the result]
+        Record --> Check{7. Perform a self-check}
+        Check -->|continue| Align
+        Check -->|complete| Done
     end
 
-    Done[8. 完成检查] --> Report([生成最终报告])
+    Done[8. Complete the checks] --> Report([Generate the final report])
 ```
 
-## 自动进化机制
+## Automatic Evolution Mechanism
 
 ```mermaid
 flowchart LR
-    Task([完成任务]) --> WriteLog[写入 field-journal<br/>踩坑+解决方案+代码]
-    WriteLog --> UpdateIdx[更新 _index.md<br/>按场景分类]
-    UpdateIdx --> CheckUpdate{需要更新系统?}
+    Task([Complete the task]) --> WriteLog[Write to field-journal<br/>record pitfalls, solutions, and code]
+    WriteLog --> UpdateIdx[Update _index.md<br/>classify by scenario]
+    UpdateIdx --> CheckUpdate{Does the system need an update?}
     
-    CheckUpdate -->|路由缺失| FixRoute[更新 routing.md]
-    CheckUpdate -->|工具变化| FixTool[刷新 tool-index]
-    CheckUpdate -->|新工具| FixManifest[更新 bootstrap-manifest]
-    CheckUpdate -->|无需更新| Done([完成])
+    CheckUpdate -->|route missing| FixRoute[Update routing.md]
+    CheckUpdate -->|tool changed| FixTool[Refresh tool-index]
+    CheckUpdate -->|new tool| FixManifest[Update bootstrap-manifest]
+    CheckUpdate -->|no update needed| Done([Complete])
     
     FixRoute & FixTool & FixManifest --> Done
 
-    NewTask([下次同类任务]) --> ReadIdx[读取 _index.md]
-    ReadIdx --> Reuse[复用已有经验<br/>避免重复踩坑]
+    NewTask([Next similar task]) --> ReadIdx[Read _index.md]
+    ReadIdx --> Reuse[Reuse existing experience<br/>avoid repeated pitfalls]
 ```
 
-## 多平台支持架构
+## Multi-Platform Support Architecture
 
 ```mermaid
 flowchart TD
-    subgraph 共享层["共享层（平台无关）"]
+    subgraph Shared["Shared layer (platform neutral)"]
         Skills[skills/<br/>SKILL.md + routing.md + references]
-        CTF[CTF-Sandbox-Orchestrator/<br/>40+ 子技能]
-        Journal[field-journal/<br/>经验沉淀]
+        CTF[CTF-Sandbox-Orchestrator/<br/>40+ subskills]
+        Journal[field-journal/<br/>experience retention]
         Docs[docs-generator + diagram-generator]
     end
 
-    subgraph Windows["Windows 平台层"]
-        WinScripts[skills/scripts/*.ps1<br/>PowerShell 脚本]
+    subgraph Windows["Windows platform layer"]
+        WinScripts[skills/scripts/*.ps1<br/>PowerShell scripts]
         WinManifest[bootstrap-manifest.json<br/>winget + GitHub ZIP]
-        WinRules[RULES.md<br/>Windows 版规则]
+        WinRules[RULES.md<br/>Windows rules]
     end
 
-    subgraph Kali["Kali Linux 平台层"]
-        KaliScripts[kali/scripts/*.sh<br/>Bash 脚本]
+    subgraph Kali["Kali Linux platform layer"]
+        KaliScripts[kali/scripts/*.sh<br/>Bash scripts]
         KaliManifest[kali/scripts/bootstrap-manifest.json<br/>apt + pip + GitHub tar]
-        KaliRules[kali/RULES-kali.md<br/>Kali 版规则]
+        KaliRules[kali/RULES-kali.md<br/>Kali rules]
     end
 
     Skills --> WinScripts & KaliScripts
@@ -204,48 +204,48 @@ flowchart TD
     KaliRules --> Skills
 ```
 
-### 平台选择逻辑
+### Platform Selection Logic
 
-| 环境 | 使用的规则文件 | 使用的脚本 | 包管理 |
+| Environment | Rules file | Scripts | Package management |
 |------|--------------|-----------|--------|
-| Windows | `RULES.md` | `skills/scripts/*.ps1` | winget / GitHub Release ZIP |
+| Windows | `RULES.md` | `skills/scripts/*.ps1` | winget / GitHub release ZIP |
 | Kali Linux | `kali/RULES-kali.md` | `kali/scripts/*.sh` | apt / pip / npm / GitHub tar.gz |
 
-### Kali 版特点
+### Kali Edition Features
 
-- **大量工具预装**：nmap、sqlmap、hashcat、hydra、metasploit、radare2、binwalk、burpsuite 等无需 bootstrap
-- **apt 统一管理**：不需要 winget、不需要手动解压 ZIP
-- **bash 原生**：脚本更简洁，无 PowerShell 依赖
-- **路径规范**：`/usr/bin/`、`/opt/`、`~/tools/`，无盘符和空格问题
+- **Many tools are preinstalled**: nmap, sqlmap, hashcat, hydra, metasploit, radare2, binwalk, and burpsuite need no bootstrap.
+- **Unified apt management**: No winget or manual ZIP extraction is required.
+- **Native Bash**: The scripts have no PowerShell dependency.
+- **Standard paths**: `/usr/bin/`, `/opt/`, and `~/tools/` avoid drive-letter and space issues.
 
-## 文件读取时序图
+## File Reading Sequence Diagram
 
 ```mermaid
 sequenceDiagram
-    participant U as 用户
-    participant AI as AI客户端
+    participant U as User
+    participant AI as AI client
     participant R as RULES.md / RULES-kali.md
     participant SK as SKILL.md
     participant RT as routing.md
     participant TI as tool-index.md
     participant FJ as field-journal
-    participant SUB as 子skill
-    participant BS as bootstrap
+    participant SUB as Subskill
+    participant BS as Bootstrap
     participant DOC as docs-generator
 
-    U->>AI: 提出安全任务
-    AI->>R: 读取路由规则
-    AI->>SK: 读取总控入口
-    AI->>RT: 路由匹配
-    AI->>FJ: 查同类经验
-    AI->>TI: 确认工具状态
-    alt 工具缺失
-        AI->>BS: 自动安装（.ps1 或 .sh）
-        BS-->>AI: 结果
+    U->>AI: Submit a security task
+    AI->>R: Read routing rules
+    AI->>SK: Read the control entry
+    AI->>RT: Match the route
+    AI->>FJ: Find similar experience
+    AI->>TI: Confirm tool status
+    alt Tool missing
+        AI->>BS: Install automatically (.ps1 or .sh)
+        BS-->>AI: Return the result
     end
-    AI->>SUB: 进入工作流
-    AI-->>U: 任务结果
-    AI->>DOC: 生成报告
-    AI->>FJ: 回写经验
-    AI-->>U: 完成
+    AI->>SUB: Enter the workflow
+    AI-->>U: Return the task result
+    AI->>DOC: Generate the report
+    AI->>FJ: Write back the experience
+    AI-->>U: Complete
 ```
