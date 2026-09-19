@@ -127,9 +127,9 @@ $cases = @(
     @{ Name = 'ida'; Hint = 'IDA decompile PE binary disassemble'; Expect = 'ida-reverse' },
     @{ Name = 'pentest'; Hint = 'nmap nuclei sqlmap ffuf pentest bug bounty'; Expect = 'pentest-tools' },
     @{ Name = 'llm'; Hint = 'LLM prompt inject jailbreak agent security garak'; Expect = 'llm-security' },
-    @{ Name = 'zh-apk'; Hint = '安卓 APK 加固 反编译'; Expect = 'apk-reverse' },
-    @{ Name = 'zh-pentest'; Hint = '渗透测试 端口扫描 SQL注入'; Expect = 'pentest-tools' },
-    @{ Name = 'zh-js'; Hint = '前端签名 JS逆向 加密参数'; Expect = 'js-reverse' },
+    @{ Name = 'zh-apk'; Hint = 'android apk packer decompile'; Expect = 'apk-reverse' },
+    @{ Name = 'zh-pentest'; Hint = 'penetration testing port scan sql injection'; Expect = 'pentest-tools' },
+    @{ Name = 'zh-js'; Hint = 'frontend signature js reverse encrypted param'; Expect = 'js-reverse' },
     @{ Name = 'evidence'; Hint = 'case review evidence chain traceability'; Expect = 'case-review' }
 )
 $routeOk = 0
