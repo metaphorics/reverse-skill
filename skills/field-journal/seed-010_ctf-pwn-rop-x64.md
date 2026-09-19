@@ -127,7 +127,7 @@ Stage 2: pop rdi; "/bin/sh"; ret; system
 ```
 
 ## Evolution actions
-- [ ] Add a pwn quick-reference page to the CTF orchestrator
+- [ ] Add a pwn quick-reference page to CTF-Sandbox-Orchestrator
 - [ ] Add pwntools / pwndbg / one_gadget to the bootstrap manifest
 - [ ] Reference this case from reverse-engineering/tools-dynamic.md
 

@@ -138,7 +138,7 @@ Common checks:
 
 Bypass: Set breakpoint at check, modify register to bypass conditional. pwntools patch: `elf.asm(elf.symbols.ptrace, 'ret')` to replace function with immediate return. See [patterns.md](patterns.md#pwntools-binary-patching-crypto-cat).
 
-For comprehensive anti-analysis techniques and bypasses (30+ methods with code), see [anti-analysis.md](anti-analysis.md).
+For anti-analysis techniques and bypasses (30+ methods with code), see [anti-analysis.md](anti-analysis.md).
 
 ## Specialized Patterns
 

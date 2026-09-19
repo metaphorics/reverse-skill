@@ -21,7 +21,7 @@ Hot path (same as `RULES.md`): `skills/scripts/master-route.sh` → `case-init.s
 - Penetration testing, red team, security assessment, blue team, incident response
 - Write reports, write documentation, produce reports, writeup, technical documentation, penetration testing reports, reverse-engineering reports
 - Browser automation, open webpages, fill forms, crawling, screenshots, automated login, Playwright, agent-browser, headless
-- Symbol migration, bindiff, cross-version work, missing PDB, function-offset migration, symbol migration, version comparison, old-version symbols
+- Symbol migration, bindiff, cross-version work, missing PDB, function-offset migration, version comparison, old-version symbols
 - N-day, Nday, patch diff, Patch Tuesday, 1day, CVE reproduction, vulnerability reconstruction, ghidriff, Diaphora, DeepDiff, patch analysis
 - pwn, stack overflow, heap overflow, ROP, ret2libc, ret2csu, one_gadget, libc-database, tcache, fastbin, kernel pwn, SMEP, SMAP, KASLR, modprobe_path, commit_creds, pwntools, GEF, pwndbg
 - Firmware, IoT, binwalk, unblob, squashfs, UBI, JFFS2, Firmadyne, FAT, full-system QEMU emulation, EMBA, firmware penetration testing, router firmware, embedded exploitation, AFL++, boofuzz, UART, JTAG
@@ -32,7 +32,7 @@ Hot path (same as `RULES.md`): `skills/scripts/master-route.sh` → `case-init.s
 - Agent does not work, AI is lazy, skipped steps, prompt engineering, Agent obedience
 - EDR bypass, AV bypass, AV/EDR evasion, unhook, direct syscall, indirect syscall, Hell's Gate, SysWhispers, ETW patch, AMSI patch, call stack spoofing, MITRE T1562, CrowdStrike bypass, Defender bypass, SentinelOne bypass, pe-sieve
 - Port scanning, Nmap, vulnerability scanning, Nuclei, SQL injection, SQLMap, directory brute force, FFUF, password cracking, Hashcat, Hydra, Metasploit, Impacket, pentestMCP
-- SRC, Bug Bounty, crowdsourced testing, bug bounty, HackerOne, WAF bypass, bypass WAF, IDOR, broken access control, arbitrary accounts
+- SRC, Bug Bounty, crowdsourced testing, vulnerability bounty, HackerOne, WAF bypass, bypass WAF, IDOR, broken access control, arbitrary accounts
 - Drawing, flowcharts, architecture diagrams, attack-path diagrams, sequence diagrams, state diagrams, data-flow diagrams, Mermaid, Graphviz, PlantUML, diagram
 - Malware analysis, virus analysis, sample analysis, sandbox, YARA, IOC
 - Kernel drivers, Rootkit, LKM, IOCTL, DeviceIoControl

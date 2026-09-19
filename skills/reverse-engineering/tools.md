@@ -364,7 +364,7 @@ Notes:
 
 ### Two-Stage XOR + AES-CBC Decode Pattern (Codegate 2013)
 
-**Pattern:** .NET binary stores an encrypted byte array that undergoes XOR decoding followed by AES-256-CBC decryption. The same key value serves as both the AES key and IV.
+**Pattern:** .NET binary stores an encrypted byte array that undergoes XOR decoding followed by AES-256-CBC decryption. The same key value is both the AES key and IV.
 
 **Steps:**
 1. Extract hardcoded byte array and key string from binary (dnSpy/ILSpy)
@@ -390,7 +390,7 @@ cipher = AES.new(key, AES.MODE_CBC, iv=key)
 plaintext = cipher.decrypt(ct)
 ```
 
-**Key insight:** When `RijndaelManaged` appears in .NET decompilation, check if Key and IV are set to the same value — this is a common CTF pattern. The XOR stage often serves as a simple obfuscation layer before the real crypto.
+**Key insight:** When `RijndaelManaged` appears in .NET decompilation, check if Key and IV are set to the same value — this is a common CTF pattern. The XOR stage is often a simple obfuscation layer before the real crypto.
 
 ---
 

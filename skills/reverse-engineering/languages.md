@@ -381,7 +381,7 @@ for pos in range(len(ciphertext)):
     # Combined with known plaintext prefix, this uniquely determines key
 ```
 
-**Key insight:** Code coverage is a powerful oracle — it tells you which conditional paths were taken. Any encryption with data-dependent branching leaks information through coverage.
+**Key insight:** Code coverage is an oracle — it tells you which conditional paths were taken. Any encryption with data-dependent branching leaks information through coverage.
 
 **Mitigation detection:** Look for branchless/constant-time crypto implementations that defeat this attack.
 

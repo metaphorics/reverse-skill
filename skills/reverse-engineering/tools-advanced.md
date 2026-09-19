@@ -247,7 +247,7 @@ Usage: Code Browser → Analysis → GOOMBA
 
 ### Miasm
 
-Powerful reverse engineering framework with symbolic execution and IR lifting.
+Reverse engineering framework with symbolic execution and IR lifting.
 
 ```python
 from miasm.analysis.binary import Container

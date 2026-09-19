@@ -1,12 +1,12 @@
 # Cybersecurity Skills Router Overview
 
-> A workflow router and tool orchestration system for code Agents: classify the task, choose the right Skill, then call real tools to execute.
+> A workflow router and tool coordination system for code Agents: classify the task, choose the right Skill, then call real tools to execute.
 
 If this is your first time seeing this repository, start here. `README_AI.md` contains the AI Agent bootstrap entry with execution instructions.
 
 ## What is this?
 
-Cybersecurity Skills Router is a **Skill Router + Tool Orchestration** system for code Agents such as Claude Code, Codex CLI, Cursor, Cline, Windsurf, and Kiro.
+Cybersecurity Skills Router is a **Skill Router + Tool Coordination** system for code Agents such as Claude Code, Codex CLI, Cursor, Cline, Windsurf, and Kiro.
 
 It helps an Agent handle APKs, binaries, frontend JavaScript, HTTP traffic, CTF challenges, firmware, and security-testing tasks through a repeatable workflow:
 
@@ -51,7 +51,7 @@ Report + field journal
 | Capability | Description |
 |---|---|
 | Skill Router | Routes tasks by target type, user intent, and toolchain requirements. |
-| Tool Orchestration | Connects jadx, apktool, Frida, radare2, IDA, BurpSuite, browsers, and scripts. |
+| Tool Coordination | Connects jadx, apktool, Frida, radare2, IDA, BurpSuite, browsers, and scripts. |
 | MCP Integration | Exposes BurpSuite, IDA, browser analysis, and other execution surfaces to Agents. |
 | Bootstrap Scripts | Detects local tool status and guides automatic or manual setup. |
 | Field Journal | Stores reusable lessons, commands, pitfalls, and patterns after tasks. |

@@ -1,6 +1,6 @@
 # CTF Reverse - Anti-Analysis Techniques & Bypasses
 
-Comprehensive reference for anti-debugging, anti-VM, anti-DBI, and integrity-check techniques encountered in CTF challenges, with practical bypasses.
+Full reference for anti-debugging, anti-VM, anti-DBI, and integrity-check techniques encountered in CTF challenges, with practical bypasses.
 
 ## Table of Contents
 - [Linux Anti-Debug (Advanced)](#linux-anti-debug-advanced)
@@ -39,7 +39,7 @@ Comprehensive reference for anti-debugging, anti-VM, anti-DBI, and integrity-che
 - [SIGFPE Signal Handler Side-Channel via strace Counting (PlaidCTF 2017)](#sigfpe-signal-handler-side-channel-via-strace-counting-plaidctf-2017)
 - [Instruction Trace Inversion with Keystone and Unicorn (MeePwn CTF 2017)](#instruction-trace-inversion-with-keystone-and-unicorn-meepwn-ctf-2017)
 - [Call-less Function Chaining via Stack Frame Manipulation (THC CTF 2018)](#call-less-function-chaining-via-stack-frame-manipulation-thc-ctf-2018)
-- [Comprehensive Bypass Strategies](#comprehensive-bypass-strategies)
+- [Full Bypass Strategies](#full-bypass-strategies)
   - [Universal Bypass Checklist](#universal-bypass-checklist)
   - [Layered Anti-Debug (Real-World Pattern)](#layered-anti-debug-real-world-pattern)
   - [Quick Reference: Check to Bypass](#quick-reference-check-to-bypass)
@@ -733,7 +733,7 @@ def reverse_processing(byte):
 
 ---
 
-## Comprehensive Bypass Strategies
+## Full Bypass Strategies
 
 ### Universal Bypass Checklist
 
