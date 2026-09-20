@@ -60,6 +60,11 @@ $scriptRefs = @{
     'bkcrack' = @('reverse-engineering/crypto-decode-tools.md', '../CTF-Sandbox-Orchestrator/competition-zip-archive/SKILL.md')
     'redress' = @('go-rust-reverse/scripts/go-triage.ps1')
     'goresym' = @('go-rust-reverse/scripts/go-triage.ps1')
+    'capa' = @('malware-analysis/SKILL.md')
+    'yara-x' = @('malware-analysis/SKILL.md')
+    'unblob' = @('firmware-pentest/SKILL.md')
+    'wabt' = @('reverse-engineering/SKILL.md')
+    'objection' = @('mobile-reverse/SKILL.md')
 }
 
 $skillsRoot = Split-Path -Parent $PSScriptRoot
@@ -103,7 +108,7 @@ $markdownContent = ($markdownLines -join [Environment]::NewLine) + [Environment]
 $markdownContent | Set-Content -LiteralPath $OutputMarkdown -Encoding utf8
 
 # --- Capability status view ---
-$capabilityNames = @('jadx', 'apktool', 'jeb-pro', 'frida', 'frida-ps', 'idalib-mcp', 'jshookmcp', 'reqable-mcp', 'xquik-mcp', 'anything-analyzer', 'idapro', 'r2', 'rabin2', 'adb', 'agent-browser', 'ghidra-mcp', 'seclists', 'proxycat', 'burpsuite-mcp', 'pentestswarm', 'nmap', 'binwalk', 'yara', 'pwntools', 'bkcrack')
+$capabilityNames = @('jadx', 'apktool', 'jeb-pro', 'frida', 'frida-ps', 'idalib-mcp', 'jshookmcp', 'reqable-mcp', 'xquik-mcp', 'anything-analyzer', 'idapro', 'r2', 'rabin2', 'adb', 'agent-browser', 'ghidra-mcp', 'seclists', 'proxycat', 'burpsuite-mcp', 'pentestswarm', 'nmap', 'binwalk', 'yara', 'pwntools', 'bkcrack', 'redress', 'goresym', 'capa', 'yara-x', 'unblob', 'wabt', 'objection')
 $capabilityRows = @()
 foreach ($capName in $capabilityNames) {
     $state = Get-ReverseCapabilityState -Name $capName

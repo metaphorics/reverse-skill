@@ -348,8 +348,9 @@ verify_sha256() {
   elif command -v shasum >/dev/null 2>&1; then
     actual=$(shasum -a 256 "$file" | awk '{print tolower($1)}')
   else
-    log_warn "sha256 tool missing; skip integrity for $file"
-    return 0
+    rm -f "$file"
+    log_err "sha256 tool missing; refusing to install unverified asset $file (file deleted)"
+    return 1
   fi
   local exp="$expected"
   if [[ -z "$exp" && -n "$api_digest" ]]; then
@@ -365,7 +366,9 @@ verify_sha256() {
     fi
     log_ok "SHA256 OK: $actual"
   else
-    log_warn "No pinned digest for $(basename "$file"); recorded sha256=$actual"
+    rm -f "$file"
+    log_err "No pinned digest for $(basename "$file"); refusing to install unverified asset (file deleted)"
+    return 1
   fi
 }
 
@@ -647,6 +650,8 @@ manual_required() {
   local name="$1"
   local hint="$2"
   log_warn "MANUAL_INSTALL_REQUIRED: $name — $hint"
+  LAST_CAPABILITY_MANUAL=true
+  MANUAL_REQUIRED=true
 }
 
 is_ready_cmd() {
@@ -660,8 +665,6 @@ ensure_jeb_pro() {
     return 0
   fi
   manual_required jeb-pro "JEB Pro is commercial. Install it with a valid PNF Software license, then refresh the tool index."
-  LAST_CAPABILITY_MANUAL=true
-  MANUAL_REQUIRED=true
   return 0
 }
 
@@ -888,8 +891,6 @@ ensure_proxycat() {
   commit=$(manifest_field proxycat pinnedCommit) || return 1
   pipx install "git+${repo}@${commit}" || {
     manual_required proxycat "Clone/install ProxyCat manually; verify command 'proxycat'."
-    LAST_CAPABILITY_MANUAL=true
-    MANUAL_REQUIRED=true
     return 0
   }
 }

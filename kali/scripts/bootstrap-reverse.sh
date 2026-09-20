@@ -406,12 +406,16 @@ install_manifest_release() {
 ensure_capability() {
     local name="$1"
 
-    # 检查是否已可用（verifyCommand 感知：yara-x 探测 yr、wabt 探测 wasm-objdump、goresym 探测 GoReSym）
-    local verify_cmd
-    verify_cmd=$(manifest_field "$name" verifyCommand 2>/dev/null) || verify_cmd="$name"
-    if command -v "$verify_cmd" &>/dev/null; then
-        log_ok "$name 已可用: $(command -v "$verify_cmd")"
-        return 0
+    # MCP 能力的 verifyCommand 可能只是 npx/node；注册必须走下方 case。
+    local bootstrap_kind
+    bootstrap_kind=$(manifest_field "$name" bootstrapKind 2>/dev/null) || bootstrap_kind=""
+    if [[ "$bootstrap_kind" != *mcp* ]]; then
+        local verify_cmd
+        verify_cmd=$(manifest_field "$name" verifyCommand 2>/dev/null) || verify_cmd="$name"
+        if command -v "$verify_cmd" &>/dev/null; then
+            log_ok "$name 已可用: $(command -v "$verify_cmd")"
+            return 0
+        fi
     fi
 
     log_info "开始安装: $name"
@@ -545,7 +549,12 @@ ensure_capability() {
             install_pip_package "frida-tools==14.10.4"
             ;;
         idalib-mcp)
-            install_pip_package "ida-pro-mcp" "git+https://github.com/mrexodia/ida-pro-mcp.git@f82e6e2517a161b77e738951c3071cd446480ba0"
+            local idalib_source
+            idalib_source=$(manifest_field idalib-mcp pipSource) || {
+                log_err "manifest 中缺少 idalib-mcp.pipSource"
+                return 1
+            }
+            install_pip_package "ida-pro-mcp" "$idalib_source"
             log_info "运行 ida-pro-mcp --install 完成 IDA 插件安装"
             ;;
         proxycat)

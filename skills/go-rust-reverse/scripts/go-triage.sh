@@ -49,6 +49,26 @@ ensure_tool() {
     elif [[ -x "$LINUX_BOOTSTRAP" ]]; then
         bash "$LINUX_BOOTSTRAP" "$name" 2>/dev/null || true
     fi
+    # Bootstrap runs in a child shell, so its PATH changes are lost here.
+    # Re-adopt the tool from the known install locations before the recheck.
+    local tools_root="${REVERSE_SKILL_TOOLS_DIR:-$HOME/tools}"
+    local dir pkgdir
+    for dir in "$tools_root" "$tools_root/bin"; do
+        pkgdir="$dir/$name"
+        if [[ -d "$pkgdir" ]]; then
+            case ":$PATH:" in
+                *":$pkgdir:"*) ;;
+                *) PATH="$pkgdir:$PATH" ;;
+            esac
+        fi
+        if [[ -d "$pkgdir/bin" ]]; then
+            case ":$PATH:" in
+                *":$pkgdir/bin:"*) ;;
+                *) PATH="$pkgdir/bin:$PATH" ;;
+            esac
+        fi
+    done
+    export PATH
     if ! command -v "$exe" &>/dev/null; then
         printf 'ERR: %s installation failed. Install it manually.\n' "$exe" >&2
         return 1
@@ -63,11 +83,14 @@ else
     printf 'file: not installed, skipping magic identification\n'
 fi
 
+# awk consumes the full stream; an early-output filter could SIGPIPE
+# the producer under pipefail.
 printf '=== runtime markers ===\n'
+markers=""
 if command -v strings &>/dev/null; then
-    markers=$(strings "$BIN" | grep -E 'go\.buildid|runtime\.main|rust_begin_unwind' | sed -n '1,5p' || true)
+    markers=$(strings "$BIN" | grep -E 'go\.buildid|runtime\.main|rust_begin_unwind' || true)
     if [[ -n "$markers" ]]; then
-        printf '%s\n' "$markers"
+        printf '%s\n' "$markers" | awk 'NR<=5'
     else
         printf 'no go.buildid / runtime.main / rust_begin_unwind markers\n'
     fi
@@ -75,13 +98,32 @@ else
     printf 'strings: not installed, skipping marker scan\n'
 fi
 
-ensure_tool "redress" "redress"
-printf '=== redress info ===\n'
-redress info "$BIN"
+# Classify the runtime from the markers collected above before touching the
+# Go-only tools. redress and GoReSym parse Go build metadata and misreport
+# Rust binaries, so run them only for non-Rust inputs; a stripped binary with
+# no markers falls through to the Go tools. Go markers win over the
+# rust_begin_unwind string when both are present.
+is_rust=0
+if [[ "$markers" == *rust_begin_unwind* ]]; then
+    is_rust=1
+fi
+if [[ "$markers" == *go.buildid* || "$markers" == *runtime.main* ]]; then
+    is_rust=0
+fi
 
-printf '=== redress packages ===\n'
-redress packages "$BIN"
+if [[ "$is_rust" -eq 0 ]]; then
+    ensure_tool "redress" "redress"
+    printf '=== redress info ===\n'
+    redress info "$BIN"
 
-ensure_tool "goresym" "GoReSym"
-printf '=== GoReSym (first 60 lines) ===\n'
-GoReSym "$BIN" | sed -n '1,60p'
+    printf '=== redress packages ===\n'
+    redress packages --std --vendor "$BIN"
+
+    ensure_tool "goresym" "GoReSym"
+    # awk consumes the full stream; an early-output filter could SIGPIPE
+    # under pipefail once GoReSym emits more than 60 lines.
+    printf '=== GoReSym (first 60 lines) ===\n'
+    GoReSym "$BIN" | awk 'NR<=60'
+else
+    printf 'INFO: skipping redress/GoReSym: Rust runtime detected, Go-only tools not applicable\n' >&2
+fi

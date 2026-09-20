@@ -310,4 +310,22 @@ if (( BASH_VERSINFO[0] >= 4 )); then
   expect_line 'pnpm|install|--frozen-lockfile'
 fi
 
+# A preferApiDigest capability with no API digest must fail closed.
+[[ "$(json_value redress preferApiDigest)" == "True" ]]
+VERIFY_SNIPPET="$SCRATCH/verify-sha256.sh"
+VERIFY_FILE="$SCRATCH/unverified-asset"
+awk '/^verify_sha256\(\) \{/,/^}/' "$BOOTSTRAP" > "$VERIFY_SNIPPET"
+printf 'asset\n' > "$VERIFY_FILE"
+set +e
+bash -c '
+  log_ok() { :; }
+  log_warn() { :; }
+  log_err() { :; }
+  source "$1"
+  verify_sha256 "$2" "" ""
+' bash "$VERIFY_SNIPPET" "$VERIFY_FILE" >/dev/null 2>&1
+verify_rc=$?
+set -e
+[[ $verify_rc -ne 0 ]]
+
 echo 'bootstrap manifest source regression passed'

@@ -139,6 +139,13 @@ TOOLS=(
   "burp-mcp-full|burp-mcp|Local Burp MCP extension and stdio bridge|none|none|$REPO_ROOT/burp-mcp-full/mcp-bridge.js"
   "yara|malware-analysis|Malware rule matching engine|yara|yara --version|"
   "pwntools|reverse-engineering|CTF pwn exploit development framework|pwn|pwn --version|"
+  "redress|go-rust-reverse|Go binary package, type, and source recovery|redress|redress version|$HOME/tools/redress/redress;$HOME/tools/redress/bin/redress"
+  "goresym|go-rust-reverse|Go symbol recovery for IDA/Ghidra import|GoReSym|GoReSym -h|$HOME/tools/goresym/GoReSym;$HOME/tools/goresym/bin/GoReSym"
+  "capa|malware-analysis|Executable capability detection|capa|capa -h|$HOME/tools/capa/capa;$HOME/tools/capa/bin/capa"
+  "yara-x|malware-analysis|YARA-X rule engine for new rules|yr|yr --help|$HOME/tools/yara-x/yr;$HOME/tools/yara-x/bin/yr"
+  "unblob|firmware-pentest|Firmware extraction pipeline|unblob|unblob --help|$HOME/.local/bin/unblob"
+  "wabt|reverse-engineering|WebAssembly binary toolkit|wasm-objdump|wasm-objdump --help|$HOME/tools/wabt/bin/wasm-objdump;$HOME/tools/wabt/wasm-objdump"
+  "objection|mobile-reverse|Mobile runtime exploration toolkit|objection|objection --help|$HOME/.local/bin/objection"
 )
 
 records_tmp="$(mktemp)"

@@ -413,6 +413,17 @@ function Get-ReverseToolCatalog {
             )
         }
         [pscustomobject]@{
+            Name = 'ghidra-mcp'
+            Skill = 'reverse-engineering'
+            Purpose = 'Ghidra 无头分析（ghidra-mcp 能力别名）'
+            VersionArgs = @()
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'analyzeHeadless' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\ghidra\support\analyzeHeadless.bat') },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\ghidra\ghidra_11.3_PUBLIC\support\analyzeHeadless.bat') }
+            )
+        }
+        [pscustomobject]@{
             Name = 'jeb-pro'
             Skill = 'apk-reverse'
             Purpose = 'JEB Pro 商业 Android / ARM 反编译器（需用户自备有效许可证）'

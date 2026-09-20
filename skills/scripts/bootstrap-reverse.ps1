@@ -369,48 +369,6 @@ function Get-GitHubLatestReleaseAsset {
     return $asset
 }
 
-function Get-FileSha256Hex {
-    param([Parameter(Mandatory = $true)][string]$Path)
-    return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash.ToLowerInvariant()
-}
-
-function Assert-DownloadedFileIntegrity {
-    param(
-        [Parameter(Mandatory = $true)][string]$Path,
-        $Definition = $null,
-        $Asset = $null
-    )
-
-    if (-not (Test-Path -LiteralPath $Path)) {
-        throw "Integrity check failed: file missing $Path"
-    }
-
-    $actual = Get-FileSha256Hex -Path $Path
-    $expected = $null
-    $source = $null
-
-    if ($null -ne $Definition -and $Definition.PSObject.Properties['assetSha256'] -and -not [string]::IsNullOrWhiteSpace([string]$Definition.assetSha256)) {
-        $expected = ([string]$Definition.assetSha256 -replace '^(?i)sha256:', '').Trim().ToLowerInvariant()
-        $source = 'manifest.assetSha256'
-    }
-    elseif ($null -ne $Asset -and $Asset.PSObject.Properties['digest'] -and -not [string]::IsNullOrWhiteSpace([string]$Asset.digest)) {
-        $expected = ([string]$Asset.digest -replace '^(?i)sha256:', '').Trim().ToLowerInvariant()
-        $source = 'github.api.digest'
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($expected)) {
-        if ($actual -ne $expected) {
-            Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
-            throw "SHA256 mismatch for $(Split-Path -Leaf $Path) (via $source): expected $expected got $actual — file deleted"
-        }
-        Write-Host ("[integrity] SHA256 OK ({0}): {1}" -f $source, $actual) -ForegroundColor Green
-        return $actual
-    }
-
-    Write-Warning ("[integrity] No pinned digest for {0}; recorded sha256={1} (supply-chain residual — prefer assetSha256 in manifest)" -f (Split-Path -Leaf $Path), $actual)
-    return $actual
-}
-
 function Expand-ArchiveIntoDirectory {
     param(
         [Parameter(Mandatory = $true)][string]$ZipPath,
@@ -448,33 +406,36 @@ function Expand-TarIntoDirectory {
 
     $tempExtract = Join-Path $tmpBase ("reverse-bootstrap-" + [System.Guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $tempExtract -Force | Out-Null
-    $tarExe = Get-FirstCommandPath -Names @('tar.exe', 'tar') -PreferApplication
-    if ([string]::IsNullOrWhiteSpace($tarExe)) {
-        throw "github-release-tar requires tar.exe on PATH (ships with Windows 10 1803+)."
-    }
-    & $tarExe -xzf $TarPath -C $tempExtract
-    if ($LASTEXITCODE -ne 0) {
-        throw "tar extraction failed for $TarPath"
-    }
+    try {
+        $tarExe = Get-FirstCommandPath -Names @('tar.exe', 'tar') -PreferApplication
+        if ([string]::IsNullOrWhiteSpace($tarExe)) {
+            throw "github-release-tar requires tar.exe on PATH (ships with Windows 10 1803+)."
+        }
+        & $tarExe -xzf $TarPath -C $tempExtract
+        if ($LASTEXITCODE -ne 0) {
+            throw "tar extraction failed for $TarPath"
+        }
 
-    if (Test-Path -LiteralPath $Destination) {
-        Remove-Item -LiteralPath $Destination -Recurse -Force
-    }
-    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+        if (Test-Path -LiteralPath $Destination) {
+            Remove-Item -LiteralPath $Destination -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $Destination -Force | Out-Null
 
-    $children = Get-ChildItem -LiteralPath $tempExtract
-    if ($children.Count -eq 1 -and $children[0].PSIsContainer) {
-        $sourceDir = $children[0].FullName
-    }
-    else {
-        $sourceDir = $tempExtract
-    }
+        $children = Get-ChildItem -LiteralPath $tempExtract
+        if ($children.Count -eq 1 -and $children[0].PSIsContainer) {
+            $sourceDir = $children[0].FullName
+        }
+        else {
+            $sourceDir = $tempExtract
+        }
 
-    Get-ChildItem -LiteralPath $sourceDir -Force | ForEach-Object {
-        Move-Item -LiteralPath $_.FullName -Destination $Destination -Force
+        Get-ChildItem -LiteralPath $sourceDir -Force | ForEach-Object {
+            Move-Item -LiteralPath $_.FullName -Destination $Destination -Force
+        }
     }
-
-    Remove-Item -LiteralPath $tempExtract -Recurse -Force
+    finally {
+        Remove-Item -LiteralPath $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
 
 function Ensure-GitHubTarInstall {

@@ -151,7 +151,18 @@ printf "pnpm|%s\n" "$*" >> "$BOOTSTRAP_PS_LOG"
         }
     }
 
-    . (Join-Path $PSScriptRoot 'bootstrap-reverse.ps1') -Capability '__test_missing__' -SkipRefresh | Out-Null
+    # Assert-DownloadedFileIntegrity comes from lib/BootstrapSupplyChain.ps1 (dotted at the top of this file).
+    $missingDigestPath = Join-Path $scratch 'missing-api-digest.zip'
+    Set-Content -LiteralPath $missingDigestPath -Value 'fixture'
+    $missingDigestRejected = $false
+    try {
+        Assert-DownloadedFileIntegrity -Path $missingDigestPath -Definition ([pscustomobject]@{ preferApiDigest = $true }) -Asset ([pscustomobject]@{ name = 'missing-api-digest.zip' }) | Out-Null
+    }
+    catch {
+        $missingDigestRejected = $_.Exception.Message -match 'No pinned digest'
+    }
+    Assert-True $missingDigestRejected 'missing API digest was accepted'
+    Assert-True (-not (Test-Path -LiteralPath $missingDigestPath)) 'missing API digest rejection left the unverified download'
     $script:gitCloneDefinition = [pscustomobject]@{
         name = 'test-git-clone'
         bootstrapKind = 'git-clone'
