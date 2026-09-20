@@ -15,7 +15,7 @@ description: Use for authorized digital forensics including memory dumps, disk t
 
 ## Use cases
 
-- Memory dump analysis (Volatility 2/3)
+- Memory dump analysis (Volatility 3 v2.28.2)
 - Disk / E01 / dropped-file timelines
 - PCAP attribution and protocol reconstruction (pair with `protocol-reverse/`)
 - Host artifacts: Prefetch, Shimcache, Event Log, browser history
@@ -59,7 +59,7 @@ vol -f mem.dmp windows.cmdline
 
 | Tool | Use |
 |------|------|
-| Volatility 3 | Memory |
+| Volatility 3 v2.28.2 | Memory |
 | Timeline Explorer / Plaso | Super timeline |
 | tshark | PCAP |
 | Eric Zimmerman toolset | Windows artifacts |

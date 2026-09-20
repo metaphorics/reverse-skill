@@ -5,6 +5,13 @@ description: Use for authorized binary analysis in Binary Ninja, including HLIL/
 
 # Binary Ninja reverse engineering
 
+## ACTION REQUIRED (Execute immediately after reading)
+
+1. `NOW`: Read `../field-journal/precedent-reverse.md`
+2. `NOW`: Confirm that Binary Ninja is required (user selected it, ILs materially help, or cross-check duty)
+3. `NEXT`: Check `skills/tool-index.md` for `binaryninja` (commercial; manual Vector 35 license install)
+4. `ACT`: Enumerate views → capture status/entry/imports/exports → follow xrefs → report with addresses
+
 Use Binary Ninja when the user explicitly selects it, when its ILs materially help data-flow analysis, or when IDA/Ghidra/radare2 results need an independent cross-check.
 
 ## Start safely
@@ -45,3 +52,9 @@ Useful MCP capability families include binary/view selection, `list_imports`, `l
 ## Output
 
 Report concrete addresses, function names, IL level, supporting strings/imports, confidence, and reproduction steps. Keep the Evidence → Finding → Path chain used by the rest of the repository.
+
+## Task Completion Check
+
+- [ ] Confirm that the binary view, IL level, and addresses back every finding.
+- [ ] Confirm that imports/exports, entry points, and file hash are recorded.
+- [ ] Confirm that byte patches and saved-file writes were requested and preserve the original artifact.

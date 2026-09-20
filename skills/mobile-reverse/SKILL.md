@@ -174,8 +174,8 @@ Interceptor.attach(Module.findExportByName("libcommonCrypto.dylib", "CCCrypt"), 
 | apktool | A | APK unpacking/rebuilding |
 | Ghidra | A+I | Multi-architecture decompilation |
 | Hopper | I | iOS-specific disassembly |
-| Frida | A+I | Dynamic instrumentation |
-| Objection | A+I | Frida REPL extension |
+| Frida (frida-tools 14.10.4) | A+I | Dynamic instrumentation |
+| Objection 1.12.5 | A+I | Frida REPL extension |
 | MobSF | A+I | Automatic SAST+DAST |
 | class-dump | I | ObjC class export |
 | frida-ios-dump | I | IPA decryption |

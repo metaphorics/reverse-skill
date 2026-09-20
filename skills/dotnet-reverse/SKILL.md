@@ -44,7 +44,7 @@ If the target is a pure native binary (compiled from C/C++/Go/Rust, with no CLR)
 | Capability | First Choice | Notes |
 |------|------|------|
 | Decompilation + debugging + patching | **dnSpyEx** | Primary choice, the only GUI with an IL editor; old dnSpy is no longer maintained, use the Ex branch |
-| Lightweight CLI / headless decompilation | **ILSpy** (`ilspycmd`) | Suitable for batch work and scripting on Linux/macOS |
+| Lightweight CLI / headless decompilation | **ILSpy v11.0** (`ilspycmd`, manual `dotnet tool install -g ilspycmd`) | Suitable for batch work and scripting on Linux/macOS |
 | Deobfuscation | **de4dot** | Default choice for common packers such as the ConfuserEx family and SmartAssembly |
 | Obfuscator identification | **Detect It Easy (DIE)** / **file** | Identify the packer type first, then select the de4dot parameters |
 | Programmatic IL operations | **dnlib** | Write C# scripts to batch-edit metadata / string decryptors |

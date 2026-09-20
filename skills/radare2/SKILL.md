@@ -399,8 +399,10 @@ The radare2-skills project (radareorg/radare2-skills) provides a more complete e
   - `curl.exe -sS --data-binary 'aaa' http://127.0.0.1:9393/cmd`
   - `radius2 -p <binary> ...`
   - `r2pm -ci <plugin>`
+  - `r2pm -ci r2frida` (dynamic instrumentation bridge, 6.2.2, tracks radare2 6.2.2)
 
 This skill keeps the original hard gates and evidence chain integrity. Do not skip any authorization or Evidence step.
+rizin is a radare2 fork and stays out of bootstrap; use r2pm plugins on radare2 6.2.2.
 
 ---
 

@@ -29,9 +29,9 @@ Use this skill first when the task includes any of these scenarios:
 
 ## CLI Tools Verified on This Machine
 
-- `jadx` `1.5.5`
-- `apktool` `3.0.2`
-- `frida-ps` `17.9.6`
+- `jadx` `1.5.6`
+- `apktool` `3.0.3`
+- `frida-tools` `14.10.4` (`frida` core `17.18.0`)
 - `adb`
 - `java`
 
@@ -167,7 +167,7 @@ Use it for:
 - Viewing and modifying smali
 - Rebuilding APKs
 
-Common commands:
+Common commands (Apktool 3 is AAPT2-only and 64-bit only; the legacy `-api` flag is gone):
 
 ```bash
 apktool d app.apk -o apktool_out
