@@ -30,7 +30,7 @@ for arg in "$@"; do
         --start-services) START_SERVICES=true ;;
         --skip-refresh) SKIP_REFRESH=true ;;
         --list|-l)
-            echo "jadx apktool jeb-pro frida frida-ps idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer idapro r2 rabin2 adb agent-browser ghidra-mcp seclists proxycat burpsuite-mcp nmap pentestswarm bkcrack"
+            printf '%s\n' "jadx apktool jeb-pro frida frida-ps idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer idapro r2 rabin2 adb agent-browser ghidra-mcp seclists proxycat burpsuite-mcp nmap pentestswarm bkcrack redress goresym capa yara-x unblob wabt objection"
             echo "mcp-kali-server metasploitmcp hexstrike-ai adaptixc2 atomic-operator sstimap xsstrike wpprobe fluxion gef coercer evil-winrm-py netexec responder bloodhound certipy"
             exit 0
             ;;
@@ -46,6 +46,7 @@ if [[ ${#CAPABILITIES[@]} -eq 0 ]]; then
     echo ""
     echo "  [Reverse engineering]"
     echo "    jadx apktool jeb-pro frida frida-ps idalib-mcp r2 rabin2 adb gef"
+    printf '%s\n' "    redress goresym capa yara-x unblob wabt objection"
     echo ""
     echo "  [Penetration testing - classic tools]"
     echo "    nmap sqlmap hashcat hydra gobuster ffuf msfconsole nuclei"
@@ -76,8 +77,11 @@ fi
 # ─── Helper functions ──────────────────────────────────────────────────────────────
 
 log_info() { echo -e "\033[36m[INFO]\033[0m $*"; }
+
 log_ok() { echo -e "\033[32m[OK]\033[0m $*"; }
+
 log_warn() { echo -e "\033[33m[WARN]\033[0m $*"; }
+
 log_err() { echo -e "\033[31m[ERR]\033[0m $*"; }
 
 # Check sudo access
@@ -188,6 +192,27 @@ install_git_commit() {
     fi
 }
 
+# Copy an extracted tree into place, stripping one level only when the
+# archive holds exactly one top-level directory (mirrors the Windows
+# Expand-TarIntoDirectory layout rule). Flat and multi-root archives copy
+# as-is, so root-level payloads are never discarded and empty finds never
+# collapse to "/.".
+flatten_single_top_dir() {
+    local src="$1"
+    local dest="$2"
+    local entries
+    entries=$(find "$src" -maxdepth 1 -mindepth 1 | wc -l)
+    if [[ "$entries" -eq 1 ]]; then
+        local single
+        single=$(find "$src" -maxdepth 1 -mindepth 1)
+        if [[ -d "$single" ]]; then
+            cp -a "$single"/. "$dest"/
+            return 0
+        fi
+    fi
+    cp -a "$src"/. "$dest"/
+}
+
 # Download and extract GitHub Release.
 # Args: repo asset_regex install_dir [release_tag] [expected_sha256]
 install_github_release() {
@@ -267,20 +292,22 @@ install_github_release() {
     # Extract according to file type
     case "$filename" in
         *.tar.gz|*.tgz)
-            tar -xzf "$tmp_file" -C "$install_dir" --strip-components=1 2>/dev/null \
-                || tar -xzf "$tmp_file" -C "$install_dir"
+            tmp_extract=$(mktemp -d /tmp/reverse-bootstrap-extract.XXXXXX)
+            if ! tar -xzf "$tmp_file" -C "$tmp_extract"; then
+                log_err "Extraction failed: $filename"
+                cleanup_github_release
+                return 1
+            fi
+            flatten_single_top_dir "$tmp_extract" "$install_dir"
             ;;
         *.zip)
             tmp_extract=$(mktemp -d /tmp/reverse-bootstrap-extract.XXXXXX)
-            unzip -qo "$tmp_file" -d "$tmp_extract"
-            # If there is one top-level directory, strip it
-            local top_dirs
-            top_dirs=$(find "$tmp_extract" -maxdepth 1 -mindepth 1 -type d)
-            if [[ $(printf '%s\n' "$top_dirs" | wc -l) -eq 1 ]]; then
-                cp -a "$top_dirs"/. "$install_dir/"
-            else
-                cp -a "$tmp_extract"/. "$install_dir/"
+            if ! unzip -qo "$tmp_file" -d "$tmp_extract"; then
+                log_err "Extraction failed: $filename"
+                cleanup_github_release
+                return 1
             fi
+            flatten_single_top_dir "$tmp_extract" "$install_dir"
             ;;
         *.deb)
             if [[ $EUID -eq 0 ]]; then
@@ -387,8 +414,12 @@ install_manifest_release() {
         return 1
     }
     asset_sha256=$(manifest_field "$capability" assetSha256) || {
-        log_err "manifest is missing $capability.assetSha256. Refusing to download an asset without a pinned checksum"
-        return 1
+        if [[ "$(manifest_field "$capability" preferApiDigest)" == "true" ]]; then
+            asset_sha256=""
+        else
+            log_err "manifest is missing $capability.assetSha256. Refusing to download an asset without a pinned checksum"
+            return 1
+        fi
     }
 
     install_dir="${install_dir/\$HOME/$HOME}"
@@ -398,10 +429,16 @@ install_manifest_release() {
 ensure_capability() {
     local name="$1"
 
-    # Check whether it is already available
-    if command -v "$name" &>/dev/null; then
-        log_ok "$name is available: $(command -v "$name")"
-        return 0
+    # An MCP capability may expose only npx/node as verifyCommand; registration belongs in the case below.
+    local bootstrap_kind
+    bootstrap_kind=$(manifest_field "$name" bootstrapKind 2>/dev/null) || bootstrap_kind=""
+    if [[ "$bootstrap_kind" != *mcp* ]]; then
+        local verify_cmd
+        verify_cmd=$(manifest_field "$name" verifyCommand 2>/dev/null) || verify_cmd="$name"
+        if command -v "$verify_cmd" &>/dev/null; then
+            log_ok "$name is available: $(command -v "$verify_cmd")"
+            return 0
+        fi
     fi
 
     log_info "Starting installation: $name"
@@ -535,7 +572,12 @@ ensure_capability() {
             install_pip_package "frida-tools==14.10.4"
             ;;
         idalib-mcp)
-            install_pip_package "ida-pro-mcp" "git+https://github.com/mrexodia/ida-pro-mcp.git@f82e6e2517a161b77e738951c3071cd446480ba0"
+            local idalib_source
+            idalib_source=$(manifest_field idalib-mcp pipSource) || {
+                log_err "manifest is missing idalib-mcp.pipSource"
+                return 1
+            }
+            install_pip_package "ida-pro-mcp" "$idalib_source"
             log_info "Run ida-pro-mcp --install to finish IDA plugin installation"
             ;;
         proxycat)
@@ -562,6 +604,27 @@ EOF
         pwntools)
             install_pip_package "pwntools==4.15.0"
             ;;
+        redress)
+            install_manifest_release "redress"
+            ;;
+        goresym)
+            install_manifest_release "goresym"
+            ;;
+        capa)
+            install_manifest_release "capa"
+            ;;
+        yara-x)
+            install_manifest_release "yara-x"
+            ;;
+        unblob)
+            install_pip_package "unblob==26.6.4"
+            ;;
+        wabt)
+            install_apt_package "wabt"
+            ;;
+        objection)
+            install_pip_package "objection==1.12.5"
+            ;;
 
         # ─── GitHub Release ───
         jadx)
@@ -575,7 +638,7 @@ EOF
                 install_apt_package "ghidra" 2>/dev/null \
                     || install_github_release "NationalSecurityAgency/ghidra" "^ghidra_.*_PUBLIC_.*\\.zip$" "$HOME/tools/ghidra"
             fi
-            log_warn "GhidraMCP plugin requires manual installation: https://github.com/LaurieWired/GhidraMCP/releases"
+            log_warn "This branch installs Ghidra only. Community MCP bridges require skill-supply-chain review first; use tool-index for the port."
             ;;
         nuclei)
             if command -v go &>/dev/null; then
@@ -603,7 +666,7 @@ EOF
             fi
             register_mcp_server "reqable-mcp" '{
                 "command": "npx",
-                "args": ["-y", "reqable-mcp-server@1.0.1", "--scope", "minimal"]
+                "args": ["-y", "reqable-mcp-server@1.0.2", "--scope", "minimal"]
             }'
             log_warn "Reqable MCP requires a separate Reqable desktop client with its local API enabled."
             ;;
@@ -616,7 +679,7 @@ EOF
             fi
             register_mcp_server "jshook" '{
                 "command": "npx",
-                "args": ["-y", "@jshookmcp/jshook@0.3.4"],
+                "args": ["-y", "@jshookmcp/jshook@0.3.5"],
                 "env": {"JSHOOK_BASE_PROFILE": "search"}
             }'
             ;;
@@ -630,7 +693,7 @@ EOF
             if ! command -v node &>/dev/null; then
                 install_apt_package "nodejs"
             fi
-            install_npm_global "agent-browser@0.31.1"
+            install_npm_global "agent-browser@0.38.1"
             npx playwright install chromium 2>/dev/null || true
             ;;
 

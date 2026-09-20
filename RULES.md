@@ -73,7 +73,8 @@ Core scripts MUST NOT write client-global configuration. Optional adapters belon
 - LLM security, AI security testing, Prompt injection, jailbreak, Agent security, agent skills security, Agentic Skills Top 10, skill supply chain, MCP supply chain
 - OWASP LLM Top 10, ASI Top 10, Agentic AI, tool abuse, memory poisoning, garak, PyRIT, promptfoo
 - API security, GraphQL, JWT attack, supply chain security
-- iOS reverse, Objection, YARA, malware analysis, AI decompilation
+- iOS reverse, Objection, YARA, yara-x, capa, malware analysis, AI decompilation
+- Go/Rust reverse, redress, goretk, GoReSym, pclntab, Ghidra, PyGhidra, WASM, wabt, wasm-decompile
 - internal network, lateral movement, domain penetration, AD attack, BloodHound
 - privilege escalation, credential extraction, Mimikatz, Kerberoasting, DCSync
 - C2, persistence, Cobalt Strike, Sliver, Havoc
@@ -227,8 +228,8 @@ After task completion (vulnerability verified / reverse complete / flag captured
 |---------|------|---------|---------|
 | idapro | 13337-13350 | IDA Pro 72 reverse tools | Auto-start (IDA plugin), port increments per instance |
 | anything-analyzer | 23816 | Browser automation + HTTP capture | `pnpm dev` (project dir) |
-| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.4` (stdio) |
-| ghidra | 8765 | Ghidra free decompiler | Ghidra GUI auto-listens after launch |
+| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.5` (stdio) |
+| ghidra | tool-index | Ghidra free decompiler | Install Ghidra via bootstrap; community bridges need supply-chain review; confirm the port from tool-index |
 | burpsuite | 9876 | BurpSuite 78-tool full control (Proxy/Intruder/Repeater/Scanner/Collaborator) | Burp extension auto-loads |
 
 ---
@@ -399,7 +400,7 @@ Windows (PowerShell):
 powershell -NoProfile -ExecutionPolicy Bypass -File "<SKILL_ROOT>/skills/scripts/bootstrap-reverse.ps1" -Capability @('tool_name') -StartServices
 
 Supported capability names (must match `skills/scripts/bootstrap-manifest.json`):  
-jadx, apktool, jeb-pro, binaryninja, frida, frida-ps, idalib-mcp, reqable-mcp, jshookmcp, xquik-mcp, anything-analyzer, idapro, r2, rabin2, adb, agent-browser, ghidra-mcp, seclists, proxycat, burpsuite-mcp, nmap, pentestswarm, binwalk, yara, pwntools, bkcrack
+jadx, apktool, jeb-pro, binaryninja, frida, frida-ps, idalib-mcp, reqable-mcp, jshookmcp, xquik-mcp, anything-analyzer, idapro, r2, rabin2, adb, agent-browser, ghidra-mcp, seclists, proxycat, burpsuite-mcp, nmap, pentestswarm, binwalk, yara, pwntools, bkcrack, redress, goresym, capa, yara-x, unblob, wabt, objection
 
 Do NOT invent capabilities. Tools not listed require manual install steps in the skill docs.
 ```

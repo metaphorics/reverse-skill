@@ -1,12 +1,12 @@
 {
   "bootstrapDependencies": {
     "pipx": {
-      "package": "pipx==1.16.5",
-      "version": "1.16.5"
+      "package": "pipx==1.17.4",
+      "version": "1.17.4"
     },
     "pnpm": {
-      "package": "pnpm@10.24.0",
-      "version": "10.24.0"
+      "package": "pnpm@12.5.1",
+      "version": "12.5.1"
     }
   },
   "capabilities": [
@@ -26,14 +26,14 @@
       "name": "apktool",
       "bootstrapKind": "github-release-jar-wrapper",
       "repo": "iBotPeaches/Apktool",
-      "assetRegex": "^apktool_3\\.0\\.2\\.jar$",
+      "assetRegex": "^apktool_3\\.0\\.3\\.jar$",
       "installDir": "%USERPROFILE%\\Tools\\apktool",
       "wrapperName": "apktool.bat",
       "docsUrl": "https://apktool.org/",
       "canAutoInstall": true,
       "verifyCommand": "apktool",
-      "releaseTag": "v3.0.2",
-      "assetSha256": "eee4669a704a14e0623407e6701b0b91887e61e1e4049cb7a82833e14ae8b5fd"
+      "releaseTag": "v3.0.3",
+      "assetSha256": "dbf930b076c6b9be08d57c449cacefc3bdd6b71ebd59b3066fc0e1f5b14f9423"
     },
     {
       "name": "jeb-pro",
@@ -65,8 +65,8 @@
       "name": "idalib-mcp",
       "bootstrapKind": "pip-package",
       "pipPackage": "ida-pro-mcp",
-      "pipSource": "git+https://github.com/mrexodia/ida-pro-mcp.git@f82e6e2517a161b77e738951c3071cd446480ba0",
-      "pinnedCommit": "f82e6e2517a161b77e738951c3071cd446480ba0",
+      "pipSource": "git+https://github.com/mrexodia/ida-pro-mcp.git@00e4aa7543625fdfb71b7fcba54cb2fc6866aae9",
+      "pinnedCommit": "00e4aa7543625fdfb71b7fcba54cb2fc6866aae9",
       "docsUrl": "https://github.com/mrexodia/ida-pro-mcp",
       "canAutoInstall": true,
       "verifyCommand": "ida-pro-mcp",
@@ -87,14 +87,14 @@
     {
       "name": "reqable-mcp",
       "bootstrapKind": "npm-mcp",
-      "npmPackage": "reqable-mcp-server@1.0.1",
+      "npmPackage": "reqable-mcp-server@1.0.2",
       "mcpNames": [
         "reqable-mcp"
       ],
       "mcpCommand": "npx",
       "mcpArgs": [
         "-y",
-        "reqable-mcp-server@1.0.1",
+        "reqable-mcp-server@1.0.2",
         "--scope",
         "minimal"
       ],
@@ -102,20 +102,20 @@
       "docsUrl": "https://github.com/reqable/reqable-mcp-server",
       "canAutoInstall": true,
       "verifyCommand": "npx",
-      "pinnedVersion": "1.0.1",
+      "pinnedVersion": "1.0.2",
       "note": "Requires the separately installed Reqable desktop application. The MCP server uses Reqable's local API; scope and authorization rules still apply to captured or replayed traffic."
     },
     {
       "name": "jshookmcp",
       "bootstrapKind": "npm-mcp",
-      "npmPackage": "@jshookmcp/jshook@0.3.4",
+      "npmPackage": "@jshookmcp/jshook@0.3.5",
       "mcpNames": [
         "jshook"
       ],
       "mcpCommand": "npx",
       "mcpArgs": [
         "-y",
-        "@jshookmcp/jshook@0.3.4"
+        "@jshookmcp/jshook@0.3.5"
       ],
       "mcpEnv": {
         "JSHOOK_BASE_PROFILE": "search"
@@ -123,7 +123,7 @@
       "docsUrl": "https://github.com/vmoranv/jshookmcp",
       "canAutoInstall": true,
       "verifyCommand": "npx",
-      "pinnedVersion": "0.3.4"
+      "pinnedVersion": "0.3.5"
     },
     {
       "name": "xquik-mcp",
@@ -219,8 +219,8 @@
     {
       "name": "agent-browser",
       "bootstrapKind": "npm-global",
-      "npmPackage": "agent-browser@0.31.1",
-      "pinnedVersion": "0.31.1",
+      "npmPackage": "agent-browser@0.38.1",
+      "pinnedVersion": "0.38.1",
       "postInstall": "npx playwright install chromium",
       "installDir": "%LOCALAPPDATA%\\ms-playwright",
       "docsUrl": "https://github.com/nicepkg/agent-browser",
@@ -238,16 +238,9 @@
       "canAutoInstall": true,
       "verifyCommand": "analyzeHeadless",
       "postInstallSteps": [
-        "Download the GhidraMCP plugin: https://github.com/LaurieWired/GhidraMCP/releases",
-        "Install the plugin zip into Ghidra: File → Install Extensions → select the downloaded zip",
-        "After a Ghidra project opens, the MCP server listens on localhost:8765 automatically"
+        "Install community MCP bridges only after the skill-supply-chain review",
+        "Confirm the MCP port from tool-index; do not assume a default"
       ],
-      "mcpNames": [
-        "ghidra"
-      ],
-      "mcpUrl": "http://localhost:8765/mcp",
-      "servicePort": 8765,
-      "verificationMode": "service-or-registration",
       "preferApiDigest": true,
       "note": "Ghidra releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity."
     },
@@ -355,6 +348,95 @@
       "verifyCommand": "bkcrack",
       "releaseTag": "v1.8.1",
       "preferApiDigest": true
+    },
+    {
+      "name": "redress",
+      "bootstrapKind": "github-release-zip",
+      "repo": "goretk/redress",
+      "assetRegex": "^redress-v1\\.2\\.85-windows\\.zip$",
+      "linuxAssetRegex": "^redress-v1\\.2\\.85-linux-amd64\\.tar\\.gz$",
+      "installDir": "%USERPROFILE%\\Tools\\redress",
+      "docsUrl": "https://github.com/goretk/redress",
+      "canAutoInstall": true,
+      "verifyCommand": "redress",
+      "releaseTag": "v1.2.85",
+      "pinnedVersion": "v1.2.85",
+      "preferApiDigest": true
+    },
+    {
+      "name": "goresym",
+      "bootstrapKind": "github-release-zip",
+      "repo": "mandiant/GoReSym",
+      "assetRegex": "^GoReSym-windows\\.zip$",
+      "linuxAssetRegex": "^GoReSym-linux\\.zip$",
+      "installDir": "%USERPROFILE%\\Tools\\goresym",
+      "docsUrl": "https://github.com/mandiant/GoReSym",
+      "canAutoInstall": true,
+      "verifyCommand": "GoReSym",
+      "releaseTag": "v3.4.1",
+      "pinnedVersion": "v3.4.1",
+      "preferApiDigest": true
+    },
+    {
+      "name": "capa",
+      "bootstrapKind": "github-release-zip",
+      "repo": "mandiant/capa",
+      "assetRegex": "^capa-v9\\.4\\.0-windows\\.zip$",
+      "linuxAssetRegex": "^capa-v9\\.4\\.0-linux\\.zip$",
+      "installDir": "%USERPROFILE%\\Tools\\capa",
+      "docsUrl": "https://github.com/mandiant/capa",
+      "canAutoInstall": true,
+      "verifyCommand": "capa",
+      "releaseTag": "v9.4.0",
+      "pinnedVersion": "v9.4.0",
+      "preferApiDigest": true
+    },
+    {
+      "name": "yara-x",
+      "bootstrapKind": "github-release-zip",
+      "repo": "VirusTotal/yara-x",
+      "assetRegex": "^yara-x-v1\\.20\\.0-x86_64-pc-windows-msvc\\.zip$",
+      "linuxAssetRegex": "^yara-x-v1\\.20\\.0-x86_64-unknown-linux-gnu\\.tar\\.gz$",
+      "installDir": "%USERPROFILE%\\Tools\\yara-x",
+      "docsUrl": "https://github.com/VirusTotal/yara-x",
+      "canAutoInstall": true,
+      "verifyCommand": "yr",
+      "releaseTag": "v1.20.0",
+      "pinnedVersion": "v1.20.0",
+      "preferApiDigest": true
+    },
+    {
+      "name": "unblob",
+      "bootstrapKind": "pip-package",
+      "pipPackage": "unblob==26.6.4",
+      "pinnedVersion": "26.6.4",
+      "docsUrl": "https://github.com/onekey-sec/unblob",
+      "canAutoInstall": true,
+      "verifyCommand": "unblob"
+    },
+    {
+      "name": "wabt",
+      "bootstrapKind": "github-release-tar",
+      "repo": "WebAssembly/wabt",
+      "assetRegex": "^wabt-1\\.0\\.42-windows-x64\\.tar\\.gz$",
+      "linuxAssetRegex": "^wabt-1\\.0\\.42-linux-x64\\.tar\\.gz$",
+      "installDir": "%USERPROFILE%\\Tools\\wabt",
+      "docsUrl": "https://github.com/WebAssembly/wabt",
+      "canAutoInstall": true,
+      "verifyCommand": "wasm-objdump",
+      "releaseTag": "1.0.42",
+      "pinnedVersion": "1.0.42",
+      "preferApiDigest": true,
+      "note": "wabt 1.0.42 removed wasm-decompile (PR #2769); verify via wasm-objdump. The legacy decompile workflow needs 1.0.41."
+    },
+    {
+      "name": "objection",
+      "bootstrapKind": "pip-package",
+      "pipPackage": "objection==1.12.5",
+      "pinnedVersion": "1.12.5",
+      "docsUrl": "https://github.com/sensepost/objection",
+      "canAutoInstall": true,
+      "verifyCommand": "objection"
     }
   ]
 }

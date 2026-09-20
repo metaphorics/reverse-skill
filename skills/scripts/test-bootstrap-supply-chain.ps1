@@ -151,7 +151,31 @@ printf "pnpm|%s\n" "$*" >> "$BOOTSTRAP_PS_LOG"
         }
     }
 
-    . (Join-Path $PSScriptRoot 'bootstrap-reverse.ps1') -Capability '__test_missing__' -SkipRefresh | Out-Null
+    # Import installer-only functions by AST extent. Dot-sourcing
+    # bootstrap-reverse.ps1 would execute its main flow (and exit the test),
+    # so define just the two functions this file exercises. Their runtime
+    # dependencies resolve to the stubs above and lib/BootstrapSupplyChain.ps1.
+    $installerSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'bootstrap-reverse.ps1') -Raw
+    $parseTokens = $null
+    $parseErrors = $null
+    $installerAst = [System.Management.Automation.Language.Parser]::ParseInput($installerSource, [ref]$parseTokens, [ref]$parseErrors)
+    if ($parseErrors.Count -gt 0) { throw "bootstrap-reverse.ps1 has syntax errors: $($parseErrors[0].Message)" }
+    foreach ($wantedFunction in @('Ensure-Capability', 'Start-AnythingAnalyzerService')) {
+        $found = @($installerAst.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $wantedFunction }, $true))[0]
+        if ($null -eq $found) { throw "installer function missing: $wantedFunction" }
+        . ([scriptblock]::Create($found.Extent.Text))
+    }
+    $missingDigestPath = Join-Path $scratch 'missing-api-digest.zip'
+    Set-Content -LiteralPath $missingDigestPath -Value 'fixture'
+    $missingDigestRejected = $false
+    try {
+        Assert-DownloadedFileIntegrity -Path $missingDigestPath -Definition ([pscustomobject]@{ preferApiDigest = $true }) -Asset ([pscustomobject]@{ name = 'missing-api-digest.zip' }) | Out-Null
+    }
+    catch {
+        $missingDigestRejected = $_.Exception.Message -match 'No pinned digest'
+    }
+    Assert-True $missingDigestRejected 'missing API digest was accepted'
+    Assert-True (-not (Test-Path -LiteralPath $missingDigestPath)) 'missing API digest rejection left the unverified download'
     $script:gitCloneDefinition = [pscustomobject]@{
         name = 'test-git-clone'
         bootstrapKind = 'git-clone'

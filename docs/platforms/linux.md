@@ -67,13 +67,14 @@ python3 -m pipx ensurepath
 
 ```bash
 mkdir -p ~/tools/jadx
-curl -L https://github.com/skylot/jadx/releases/latest/download/jadx-1.5.5.zip -o /tmp/jadx.zip
-unzip -q /tmp/jadx.zip -d ~/tools/jadx
+curl -fL https://github.com/skylot/jadx/releases/download/v1.5.6/jadx-1.5.6.zip -o /tmp/jadx-1.5.6.zip
+printf '%s  %s\n' '545ea2be9c242511bc145755cf4bda2485ade42966e096f8b4d3da2a230e8974' /tmp/jadx-1.5.6.zip | sha256sum -c - || exit 1
+unzip -q /tmp/jadx-1.5.6.zip -d ~/tools/jadx
 export PATH="$HOME/tools/jadx/bin:$PATH"
 jadx --version
 ```
 
-If the release filename changes, download the latest Linux/ZIP asset from <https://github.com/skylot/jadx/releases>.
+Keep the asset name and SHA256 in sync with `skills/scripts/bootstrap-manifest.json` when intentionally bumping the pin.
 
 ### Frida via pipx
 

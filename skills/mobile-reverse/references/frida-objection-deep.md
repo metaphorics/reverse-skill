@@ -1,4 +1,5 @@
 # Frida + Objection Advanced Use
+# Pinned versions: frida-tools 14.10.4 (Frida core 17.18.0), objection 1.12.5
 
 ## Frida Core API
 
@@ -149,8 +150,11 @@ ios plist cat Info.plist          # Read a plist
 # 1. APK unpacking
 apktool d app.apk -o app_unpacked
 
-# 2. Download frida-gadget. Put it in the lib directory.
-cp frida-gadget-17.x.x-android-arm64.so \
+# 2. Download the pinned Frida Gadget and put it in the lib directory.
+curl -fL -o frida-gadget-17.18.0-android-arm64.so.xz \
+  https://github.com/frida/frida/releases/download/17.18.0/frida-gadget-17.18.0-android-arm64.so.xz
+xz -d -f frida-gadget-17.18.0-android-arm64.so.xz
+cp frida-gadget-17.18.0-android-arm64.so \
    app_unpacked/lib/arm64-v8a/libfrida-gadget.so
 
 # 3. Inject System.loadLibrary("frida-gadget") into smali

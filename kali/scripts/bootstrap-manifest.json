@@ -25,12 +25,12 @@
   ],
   "bootstrapDependencies": {
     "pipx": {
-      "package": "pipx==1.16.5",
-      "version": "1.16.5"
+      "package": "pipx==1.17.4",
+      "version": "1.17.4"
     },
     "pnpm": {
-      "package": "pnpm@10.24.0",
-      "version": "10.24.0"
+      "package": "pnpm@12.5.1",
+      "version": "12.5.1"
     }
   },
   "capabilities": [
@@ -53,14 +53,14 @@
       "aptPackage": "apktool",
       "fallbackKind": "github-release-jar",
       "repo": "iBotPeaches/Apktool",
-      "assetRegex": "^apktool_3\\.0\\.2\\.jar$",
+      "assetRegex": "^apktool_3\\.0\\.3\\.jar$",
       "installDir": "$HOME/tools/apktool",
       "docsUrl": "https://apktool.org/",
       "canAutoInstall": true,
       "verifyCommand": "apktool",
       "kaliNote": "apt install apktool is enough. If the version is old, download the latest from GitHub",
-      "releaseTag": "v3.0.2",
-      "assetSha256": "eee4669a704a14e0623407e6701b0b91887e61e1e4049cb7a82833e14ae8b5fd"
+      "releaseTag": "v3.0.3",
+      "assetSha256": "dbf930b076c6b9be08d57c449cacefc3bdd6b71ebd59b3066fc0e1f5b14f9423"
     },
     {
       "name": "frida",
@@ -85,8 +85,8 @@
       "name": "idalib-mcp",
       "bootstrapKind": "pip-package",
       "pipPackage": "ida-pro-mcp",
-      "pipSource": "git+https://github.com/mrexodia/ida-pro-mcp.git@f82e6e2517a161b77e738951c3071cd446480ba0",
-      "pinnedCommit": "f82e6e2517a161b77e738951c3071cd446480ba0",
+      "pipSource": "git+https://github.com/mrexodia/ida-pro-mcp.git@00e4aa7543625fdfb71b7fcba54cb2fc6866aae9",
+      "pinnedCommit": "00e4aa7543625fdfb71b7fcba54cb2fc6866aae9",
       "docsUrl": "https://github.com/mrexodia/ida-pro-mcp",
       "canAutoInstall": true,
       "verifyCommand": "ida-pro-mcp",
@@ -118,34 +118,34 @@
     {
       "name": "reqable-mcp",
       "bootstrapKind": "npm-mcp",
-      "npmPackage": "reqable-mcp-server@1.0.1",
+      "npmPackage": "reqable-mcp-server@1.0.2",
       "mcpNames": [
         "reqable-mcp"
       ],
       "mcpCommand": "npx",
       "mcpArgs": [
         "-y",
-        "reqable-mcp-server@1.0.1",
+        "reqable-mcp-server@1.0.2",
         "--scope",
         "minimal"
       ],
       "docsUrl": "https://github.com/reqable/reqable-mcp-server",
       "canAutoInstall": true,
       "verifyCommand": "npx",
-      "pinnedVersion": "1.0.1",
+      "pinnedVersion": "1.0.2",
       "kaliNote": "Requires the separately installed Reqable desktop application and its local API."
     },
     {
       "name": "jshookmcp",
       "bootstrapKind": "npm-mcp",
-      "npmPackage": "@jshookmcp/jshook@0.3.4",
+      "npmPackage": "@jshookmcp/jshook@0.3.5",
       "mcpNames": [
         "jshook"
       ],
       "mcpCommand": "npx",
       "mcpArgs": [
         "-y",
-        "@jshookmcp/jshook@0.3.4"
+        "@jshookmcp/jshook@0.3.5"
       ],
       "mcpEnv": {
         "JSHOOK_BASE_PROFILE": "search"
@@ -153,7 +153,7 @@
       "docsUrl": "https://github.com/vmoranv/jshookmcp",
       "canAutoInstall": true,
       "verifyCommand": "npx",
-      "pinnedVersion": "0.3.4"
+      "pinnedVersion": "0.3.5"
     },
     {
       "name": "xquik-mcp",
@@ -249,8 +249,8 @@
     {
       "name": "agent-browser",
       "bootstrapKind": "npm-global",
-      "npmPackage": "agent-browser@0.31.1",
-      "pinnedVersion": "0.31.1",
+      "npmPackage": "agent-browser@0.38.1",
+      "pinnedVersion": "0.38.1",
       "postInstall": "npx playwright install chromium",
       "docsUrl": "https://github.com/nicepkg/agent-browser",
       "canAutoInstall": true,
@@ -268,18 +268,12 @@
       "canAutoInstall": true,
       "verifyCommand": "ghidra",
       "postInstallSteps": [
-        "Download the GhidraMCP plugin: https://github.com/LaurieWired/GhidraMCP/releases",
-        "Install the plugin zip into Ghidra: File → Install Extensions → select the downloaded zip",
-        "After a Ghidra project opens, the MCP server listens on localhost:8765 automatically"
+        "Install community MCP bridges only after the skill-supply-chain review",
+        "Confirm the MCP port from tool-index; do not assume a default"
       ],
-      "mcpNames": [
-        "ghidra"
-      ],
-      "mcpUrl": "http://localhost:8765/mcp",
-      "servicePort": 8765,
-      "verificationMode": "service-or-registration",
       "kaliNote": "apt install ghidra or download from GitHub",
-      "preferApiDigest": true
+      "preferApiDigest": true,
+      "note": "Ghidra releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity."
     },
     {
       "name": "seclists",
@@ -582,6 +576,91 @@
       "canAutoInstall": true,
       "verifyCommand": "bkcrack",
       "kaliNote": "Classic ZipCrypto known-plaintext attack tool. Kali/Debian can install it through apt."
+    },
+    {
+      "name": "redress",
+      "bootstrapKind": "github-release-tar",
+      "repo": "goretk/redress",
+      "assetRegex": "^redress-v1\\.2\\.85-linux-amd64\\.tar\\.gz$",
+      "installDir": "$HOME/tools/redress",
+      "docsUrl": "https://github.com/goretk/redress",
+      "canAutoInstall": true,
+      "verifyCommand": "redress",
+      "releaseTag": "v1.2.85",
+      "pinnedVersion": "v1.2.85",
+      "preferApiDigest": true,
+      "kaliNote": "Go stripped-binary toolkit (AGPL-3.0). Download the official release tarball; do not vendor sources."
+    },
+    {
+      "name": "goresym",
+      "bootstrapKind": "github-release-zip",
+      "repo": "mandiant/GoReSym",
+      "assetRegex": "^GoReSym-linux\\.zip$",
+      "installDir": "$HOME/tools/goresym",
+      "docsUrl": "https://github.com/mandiant/GoReSym",
+      "canAutoInstall": true,
+      "verifyCommand": "GoReSym",
+      "releaseTag": "v3.4.1",
+      "pinnedVersion": "v3.4.1",
+      "preferApiDigest": true,
+      "kaliNote": "Go symbol recovery for IDA/Ghidra import. Unzip GoReSym-linux.zip into $HOME/tools/goresym."
+    },
+    {
+      "name": "capa",
+      "bootstrapKind": "github-release-zip",
+      "repo": "mandiant/capa",
+      "assetRegex": "^capa-v9\\.4\\.0-linux\\.zip$",
+      "installDir": "$HOME/tools/capa",
+      "docsUrl": "https://github.com/mandiant/capa",
+      "canAutoInstall": true,
+      "verifyCommand": "capa",
+      "releaseTag": "v9.4.0",
+      "pinnedVersion": "v9.4.0",
+      "preferApiDigest": true,
+      "kaliNote": "Malware capability detection. Unzip the capa Linux build into $HOME/tools/capa."
+    },
+    {
+      "name": "yara-x",
+      "bootstrapKind": "github-release-tar",
+      "repo": "VirusTotal/yara-x",
+      "assetRegex": "^yara-x-v1\\.20\\.0-x86_64-unknown-linux-gnu\\.tar\\.gz$",
+      "installDir": "$HOME/tools/yara-x",
+      "docsUrl": "https://github.com/VirusTotal/yara-x",
+      "canAutoInstall": true,
+      "verifyCommand": "yr",
+      "releaseTag": "v1.20.0",
+      "pinnedVersion": "v1.20.0",
+      "preferApiDigest": true,
+      "kaliNote": "Current YARA engine (yr CLI). New rules use yr; existing .yar still run on classic yara."
+    },
+    {
+      "name": "unblob",
+      "bootstrapKind": "pip-package",
+      "pipPackage": "unblob==26.6.4",
+      "pinnedVersion": "26.6.4",
+      "docsUrl": "https://github.com/onekey-sec/unblob",
+      "canAutoInstall": true,
+      "verifyCommand": "unblob",
+      "kaliNote": "Firmware extraction fallback (pip). Pair with binwalk."
+    },
+    {
+      "name": "wabt",
+      "bootstrapKind": "apt-package",
+      "aptPackage": "wabt",
+      "docsUrl": "https://github.com/WebAssembly/wabt",
+      "canAutoInstall": true,
+      "verifyCommand": "wasm-objdump",
+      "kaliNote": "Kali installs wabt through apt (distro build; apt reported 1.0.36+dfsg+~cs1.0.36-2ubuntu1 on the surveyed host). Upstream is 1.0.42 with wasm-objdump/wasm2wat/wasm2c; wasm-decompile was removed upstream in 1.0.42, so its presence follows the distro build."
+    },
+    {
+      "name": "objection",
+      "bootstrapKind": "pip-package",
+      "pipPackage": "objection==1.12.5",
+      "pinnedVersion": "1.12.5",
+      "docsUrl": "https://github.com/sensepost/objection",
+      "canAutoInstall": true,
+      "verifyCommand": "objection",
+      "kaliNote": "Mobile runtime exploration (pip). Pair with frida-tools 14.10.4."
     }
   ]
 }

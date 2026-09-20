@@ -382,6 +382,7 @@ Method:
 - Standard reconnaissance script: `scripts/recon.ps1`
 
 ## radare2-skills Ecosystem
+This workflow targets radare2 6.2.2. Rizin is a fork of radare2 and remains outside bootstrap.
 
 The radare2-skills project (radareorg/radare2-skills) provides a more complete ecosystem of tools and workflows:
 
@@ -399,6 +400,7 @@ The radare2-skills project (radareorg/radare2-skills) provides a more complete e
   - `curl.exe -sS --data-binary 'aaa' http://127.0.0.1:9393/cmd`
   - `radius2 -p <binary> ...`
   - `r2pm -ci <plugin>`
+  - `r2pm -ci r2frida` for dynamic instrumentation with radare2 6.2.2
 
 This skill keeps the original hard gates and evidence chain integrity. Do not skip any authorization or Evidence step.
 
@@ -449,3 +451,4 @@ This skill keeps the original hard gates and evidence chain integrity. Do not sk
 - [ ] Did I use a real tool path based on `tool-index`?
 - [ ] Did I produce reproducible evidence (commands/scripts/screenshots/reports)?
 - [ ] Did I complete and write back the Checklist items required by RULES?
+

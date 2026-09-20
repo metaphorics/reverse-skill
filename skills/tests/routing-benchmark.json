@@ -880,6 +880,61 @@
       "hint": "Twitter marketing sentiment for our product",
       "expect": "R0",
       "quick": false
+    },
+    {
+      "hint": "extract this router firmware with unblob",
+      "expect": "R8",
+      "quick": true
+    },
+    {
+      "hint": "run capa on this malware pe",
+      "expect": "R9",
+      "quick": true
+    },
+    {
+      "hint": "compile a yara-x rule for this sample",
+      "expect": "R9",
+      "quick": false
+    },
+    {
+      "hint": "redress info on this stripped go binary",
+      "expect": "R33",
+      "quick": true
+    },
+    {
+      "hint": "use goretk redress to recover pclntab types",
+      "expect": "R33",
+      "quick": false
+    },
+    {
+      "hint": "wasm-decompile this module with wabt",
+      "expect": "R0",
+      "quick": true
+    },
+    {
+      "hint": "pyghidra headless decompile",
+      "expect": "R22",
+      "quick": false
+    },
+    {
+      "hint": "r2frida attach to process",
+      "expect": "R7",
+      "quick": false
+    },
+    {
+      "hint": "go reverse engineering on this stripped binary",
+      "expect": "R33",
+      "quick": true
+    },
+    {
+      "hint": "rust reverse engineering of this crate",
+      "expect": "R33",
+      "quick": true
+    },
+    {
+      "hint": "go/rust reverse triage for this sample",
+      "expect": "R33",
+      "quick": false
     }
   ]
 }

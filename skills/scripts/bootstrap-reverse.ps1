@@ -369,48 +369,6 @@ function Get-GitHubLatestReleaseAsset {
     return $asset
 }
 
-function Get-FileSha256Hex {
-    param([Parameter(Mandatory = $true)][string]$Path)
-    return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash.ToLowerInvariant()
-}
-
-function Assert-DownloadedFileIntegrity {
-    param(
-        [Parameter(Mandatory = $true)][string]$Path,
-        $Definition = $null,
-        $Asset = $null
-    )
-
-    if (-not (Test-Path -LiteralPath $Path)) {
-        throw "Integrity check failed: file missing $Path"
-    }
-
-    $actual = Get-FileSha256Hex -Path $Path
-    $expected = $null
-    $source = $null
-
-    if ($null -ne $Definition -and $Definition.PSObject.Properties['assetSha256'] -and -not [string]::IsNullOrWhiteSpace([string]$Definition.assetSha256)) {
-        $expected = ([string]$Definition.assetSha256 -replace '^(?i)sha256:', '').Trim().ToLowerInvariant()
-        $source = 'manifest.assetSha256'
-    }
-    elseif ($null -ne $Asset -and $Asset.PSObject.Properties['digest'] -and -not [string]::IsNullOrWhiteSpace([string]$Asset.digest)) {
-        $expected = ([string]$Asset.digest -replace '^(?i)sha256:', '').Trim().ToLowerInvariant()
-        $source = 'github.api.digest'
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($expected)) {
-        if ($actual -ne $expected) {
-            Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
-            throw "SHA256 mismatch for $(Split-Path -Leaf $Path) (via $source): expected $expected got $actual — file deleted"
-        }
-        Write-Host ("[integrity] SHA256 OK ({0}): {1}" -f $source, $actual) -ForegroundColor Green
-        return $actual
-    }
-
-    Write-Warning ("[integrity] No pinned digest for {0}; recorded sha256={1} (supply-chain residual — prefer assetSha256 in manifest)" -f (Split-Path -Leaf $Path), $actual)
-    return $actual
-}
-
 function Expand-ArchiveIntoDirectory {
     param(
         [Parameter(Mandatory = $true)][string]$ZipPath,
@@ -440,6 +398,84 @@ function Expand-ArchiveIntoDirectory {
 
     Remove-Item -LiteralPath $tempExtract -Recurse -Force
 }
+function Expand-TarIntoDirectory {
+    param(
+        [Parameter(Mandatory = $true)][string]$TarPath,
+        [Parameter(Mandatory = $true)][string]$Destination
+    )
+
+    $tempExtract = Join-Path $tmpBase ("reverse-bootstrap-" + [System.Guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $tempExtract -Force | Out-Null
+    try {
+        $tarExe = Get-FirstCommandPath -Names @('tar.exe', 'tar') -PreferApplication
+        if ([string]::IsNullOrWhiteSpace($tarExe)) {
+            throw "github-release-tar requires tar.exe on PATH (ships with Windows 10 1803+)."
+        }
+        & $tarExe -xzf $TarPath -C $tempExtract
+        if ($LASTEXITCODE -ne 0) {
+            throw "tar extraction failed for $TarPath"
+        }
+
+        if (Test-Path -LiteralPath $Destination) {
+            Remove-Item -LiteralPath $Destination -Recurse -Force
+        }
+        New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+
+        $children = Get-ChildItem -LiteralPath $tempExtract
+        if ($children.Count -eq 1 -and $children[0].PSIsContainer) {
+            $sourceDir = $children[0].FullName
+        }
+        else {
+            $sourceDir = $tempExtract
+        }
+
+        Get-ChildItem -LiteralPath $sourceDir -Force | ForEach-Object {
+            Move-Item -LiteralPath $_.FullName -Destination $Destination -Force
+        }
+    }
+    finally {
+        Remove-Item -LiteralPath $tempExtract -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
+function Ensure-GitHubTarInstall {
+    param(
+        [Parameter(Mandatory = $true)]$Definition,
+        [Parameter(Mandatory = $true)][string]$TargetPath
+    )
+
+    $capabilityName = [string]$Definition.name
+    if ([string]::IsNullOrWhiteSpace($capabilityName)) { throw "GitHub install needs a capability name." }
+
+    # Same fail-fast contract as Ensure-GitHubZipInstall.
+    $existing = Resolve-ReverseToolSpec -Name $capabilityName
+    if ($existing.Available) {
+        return $existing
+    }
+
+    $releaseTag = if ($Definition.PSObject.Properties['releaseTag']) { [string]$Definition.releaseTag } else { '' }
+    $asset = Get-GitHubLatestReleaseAsset -Repo $Definition.repo -AssetRegex $Definition.assetRegex -ReleaseTag $releaseTag
+    $downloadUrl = if ($asset.PSObject.Properties['browser_download_url']) { $asset.browser_download_url } else { $asset.url }
+    $downloadPath = Join-Path $tmpBase $asset.name
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $downloadPath -Headers @{ 'Accept' = 'application/octet-stream' }
+    Assert-DownloadedFileIntegrity -Path $downloadPath -Definition $Definition -Asset $asset | Out-Null
+    Ensure-DownloadDirectory -Path (Split-Path -Path $TargetPath -Parent)
+    Expand-TarIntoDirectory -TarPath $downloadPath -Destination $TargetPath
+    Remove-Item -LiteralPath $downloadPath -Force
+
+    # Refresh PATH so newly installed tools are discoverable
+    $binCandidates = @(
+        (Join-Path $TargetPath 'bin'),
+        $TargetPath
+    )
+    foreach ($binDir in $binCandidates) {
+        if ((Test-Path -LiteralPath $binDir) -and ($env:PATH -notlike "*$binDir*")) {
+            $env:PATH = "$binDir;$env:PATH"
+        }
+    }
+
+    return (Resolve-ReverseToolSpec -Name $capabilityName)
+}
 
 function Ensure-DownloadDirectory {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -452,11 +488,15 @@ function Ensure-DownloadDirectory {
 function Ensure-GitHubZipInstall {
     param(
         [Parameter(Mandatory = $true)]$Definition,
-        [Parameter(Mandatory = $true)][string]$TargetPath,
-        [Parameter(Mandatory = $true)][string]$VerifyName
+        [Parameter(Mandatory = $true)][string]$TargetPath
     )
 
-    $existing = Resolve-ReverseToolSpec -Name $VerifyName
+    $capabilityName = [string]$Definition.name
+    if ([string]::IsNullOrWhiteSpace($capabilityName)) { throw "GitHub install needs a capability name." }
+
+    # Fail fast on a missing catalog row: Step 3 requires the row, so its
+    # absence is an invariant failure, not a download-and-discover case.
+    $existing = Resolve-ReverseToolSpec -Name $capabilityName
     if ($existing.Available) {
         return $existing
     }
@@ -482,7 +522,7 @@ function Ensure-GitHubZipInstall {
         }
     }
 
-    return (Resolve-ReverseToolSpec -Name $VerifyName)
+    return (Resolve-ReverseToolSpec -Name $capabilityName)
 }
 
 function Ensure-ApktoolInstall {
@@ -888,10 +928,11 @@ function Ensure-Capability {
     switch ($definition.bootstrapKind) {
         'github-release-zip' {
             # Generic handler for all github-release-zip capabilities
-            $verifyName = if ($definition.PSObject.Properties['verifyCommand'] -and -not [string]::IsNullOrWhiteSpace($definition.verifyCommand)) {
-                $definition.verifyCommand
-            } else { $Name }
-            return Ensure-GitHubZipInstall -Definition $definition -TargetPath $definition.installDir -VerifyName $verifyName
+            return Ensure-GitHubZipInstall -Definition $definition -TargetPath $definition.installDir
+        }
+        'github-release-tar' {
+            # Generic handler for all github-release-tar capabilities (same contract as zip)
+            return Ensure-GitHubTarInstall -Definition $definition -TargetPath $definition.installDir
         }
         'git-clone' {
             return Ensure-GitCloneInstall -Definition $definition -TargetPath $definition.installDir

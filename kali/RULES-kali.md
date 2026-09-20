@@ -28,20 +28,20 @@ Hot path (same as `RULES.md`): `skills/scripts/master-route.sh` → `case-init.s
 - BurpSuite, Burp MCP, Intruder, Repeater, Collaborator, proxy-history analysis
 - LLM security, AI security testing, prompt injection, jailbreak, Agent security, garak, PyRIT
 - API security testing, GraphQL security, JWT attacks, supply-chain security, SBOM, Trivy
-- iOS reverse engineering, Objection, YARA, malware analysis, AI decompilation, LLM4Decompile
+- iOS reverse engineering, Objection, YARA, yara-x, capa, malware analysis, AI decompilation, LLM4Decompile
 - Agent does not work, AI is lazy, skipped steps, prompt engineering, Agent obedience
 - EDR bypass, AV bypass, AV/EDR evasion, unhook, direct syscall, indirect syscall, Hell's Gate, SysWhispers, ETW patch, AMSI patch, call stack spoofing, MITRE T1562, CrowdStrike bypass, Defender bypass, SentinelOne bypass, pe-sieve
 - Port scanning, Nmap, vulnerability scanning, Nuclei, SQL injection, SQLMap, directory brute force, FFUF, password cracking, Hashcat, Hydra, Metasploit, Impacket, pentestMCP
 - SRC, Bug Bounty, crowdsourced testing, vulnerability bounty, HackerOne, WAF bypass, bypass WAF, IDOR, broken access control, arbitrary accounts
 - Drawing, flowcharts, architecture diagrams, attack-path diagrams, sequence diagrams, state diagrams, data-flow diagrams, Mermaid, Graphviz, PlantUML, diagram
-- Malware analysis, virus analysis, sample analysis, sandbox, YARA, IOC
+- Malware analysis, virus analysis, sample analysis, sandbox, YARA, yara-x, capa, IOC
 - Kernel drivers, Rootkit, LKM, IOCTL, DeviceIoControl
 - Cryptography, encryption and decryption, AES, RSA, hash collisions, signature verification
 - Protocol reverse engineering, custom protocols, Protobuf, serialization
 - Firmware reverse engineering, IoT, binwalk, ARM, MIPS, embedded systems
-- WASM, WebAssembly, Python bytecode, pyc, .NET, dnSpy, IL
+- WASM, WebAssembly, wabt, wasm-decompile, Python bytecode, pyc, .NET, dnSpy, IL
 - macOS, iOS, Mach-O, ObjC, Swift, Frida iOS
-- Go reverse engineering, Rust reverse engineering, stripped binary, GoReSym
+- Go reverse engineering, Rust reverse engineering, stripped binary, GoReSym, redress, goretk, pclntab, Ghidra, PyGhidra
 - Memory dump, forensics, forensic, steganography
 - Cloud security, container escape, K8s, Docker, AWS, Azure
 - Prompt injection, AI security, Agent security, LLM attacks
@@ -169,7 +169,8 @@ bash kali/scripts/bootstrap-reverse.sh jadx frida gef ghidra-mcp
 bash kali/scripts/bootstrap-reverse.sh sstimap xsstrike wpprobe nuclei
 ```
 
-Supported capability names: jadx, apktool, frida, idalib-mcp, jshookmcp, xquik-mcp, anything-analyzer, idapro, r2, rabin2, adb, agent-browser, ghidra-mcp, nmap, sqlmap, hashcat, hydra, gobuster, ffuf, msfconsole, nuclei, seclists, proxycat, mcp-kali-server, metasploitmcp, hexstrike-ai, pentestswarm, adaptixc2, atomic-operator, sstimap, xsstrike, wpprobe, fluxion, gef, evil-winrm-py, coercer, netexec, responder, crackmapexec, bloodhound, certipy, wfuzz, aircrack-ng
+Supported capability names: jadx, apktool, frida, idalib-mcp, jshookmcp, xquik-mcp, anything-analyzer, idapro, r2, rabin2, adb, agent-browser, ghidra-mcp, nmap, sqlmap, hashcat, hydra, gobuster, ffuf, msfconsole, nuclei, seclists, proxycat, mcp-kali-server, metasploitmcp, hexstrike-ai, pentestswarm, adaptixc2, atomic-operator, sstimap, xsstrike, wpprobe, fluxion, gef, evil-winrm-py, coercer, netexec, responder, crackmapexec, bloodhound, certipy, wfuzz, aircrack-ng, redress, goresym, capa, yara-x, unblob, wabt, objection
+Unblob is registered and auto-installable. EMBA and other capabilities absent from the manifest MUST use manual installation steps. Do not pretend bootstrap supports them.
 
 ## Refresh the tool index
 
@@ -196,8 +197,8 @@ bash "<package root>/kali/scripts/refresh-tool-index.sh"
 | Pentest Swarm AI | stdio | Autonomous swarm penetration testing (recon→classify→exploit→report) | `pentestswarm mcp serve` |
 | idapro | 13337-13350 | IDA Pro reverse-engineering tools | `bash kali/scripts/ida-start.sh` |
 | anything-analyzer | 23816 | Browser automation and HTTP capture | `cd ~/tools/anything-analyzer && pnpm dev` |
-| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.4` (stdio) |
-| ghidra | 8765 | Ghidra decompilation | Ghidra GUI starts listening automatically |
+| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.5` (stdio) |
+| ghidra | tool-index | Ghidra decompilation | Install Ghidra via bootstrap; community bridges need supply-chain review; confirm the port from tool-index |
 | burpsuite | 9876 | BurpSuite Web proxy | Start the BurpSuite extension |
 
 ### Recommended MCP priority (Kali 2026.1)

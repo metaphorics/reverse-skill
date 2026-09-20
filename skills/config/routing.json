@@ -50,7 +50,7 @@
       "label": "IDA reverse",
       "skill": "ida-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\bida\\b|decompile|disassembl|\\.so\\b|\\.elf\\b|jni", "note": ".so, .elf, native, and JNI analysis route to binary static analysis (IDA and disassembly path)" }
+        { "must": "\\bida\\b|decompile|disassembl|\\.so\\b|\\.elf\\b|jni", "exclude": "wasm|wabt", "note": ".so, .elf, native, and JNI analysis route to binary static analysis (IDA and disassembly path)" }
       ]
     },
     "R7": {
@@ -58,21 +58,21 @@
       "skill": "radare2/SKILL.md",
       "keywords": [
         { "must": "radare|\\br2\\b" },
-        { "must": "r2xsql|r2mcp|r2http|radius2|r2pm|rabin2|rasm2|radiff2|rahash2|rax2" }
+        { "must": "r2xsql|r2mcp|r2http|radius2|r2pm|rabin2|rasm2|radiff2|rahash2|rax2|r2frida" }
       ]
     },
     "R8": {
       "label": "Firmware pentest",
       "skill": "firmware-pentest/SKILL.md",
       "keywords": [
-        { "must": "firmware|binwalk|iot|emba|firmadyne" }
+        { "must": "firmware|binwalk|iot|emba|firmadyne|unblob" }
       ]
     },
     "R9": {
       "label": "Malware analysis",
       "skill": "malware-analysis/SKILL.md",
       "keywords": [
-        { "must": "malware|yara|virus.?sample|pe-?sieve|cape.?sandbox|ransomware|webshell|backdoor" },
+        { "must": "malware|yara|virus.?sample|pe-?sieve|cape.?sandbox|ransomware|webshell|backdoor|yara-?x|\\bcapa\\b" },
         { "must": "sandbox", "mustAll": ["malware|virus|cape|any\\.run|triage"], "note": "Bare sandbox routes to R9 only with malware context (avoids catching cloud sandboxes and dev contexts)" }
       ]
     },
@@ -172,7 +172,7 @@
       "label": "Ghidra reverse",
       "skill": "ghidra-reverse/SKILL.md",
       "keywords": [
-        { "must": "ghidra|ghidra.?mcp|analyzeheadless" }
+        { "must": "ghidra|ghidra.?mcp|analyzeheadless|pyghidra" }
       ]
     },
     "R23": {
@@ -257,7 +257,7 @@
       "label": "Go / Rust reverse",
       "skill": "go-rust-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\bgolang\\b|\\brustc\\b|go.?binary|stripped.?go|gore.?sym|go.?malware|rust.?binary" }
+        { "must": "\\bgolang\\b|\\brustc\\b|go.?binary|stripped.?go|gore.?sym|go.?malware|rust.?binary|redress|goretk|pclntab|go.?reverse.?engineering|rust.?reverse.?engineering|go.?rust.?reverse" }
       ]
     },
     "R34": {
@@ -320,7 +320,7 @@
       "label": "General reverse-engineering",
       "skill": "reverse-engineering/SKILL.md",
       "keywords": [
-        { "must": "ollvm|anti-?debug|unicorn|angr|gdb|deobfuscat|unity|il2cpp|game.?reverse|anti-?cheat", "note": "Unity and game reverse engineering route to general RE (seed-014)" },
+        { "must": "ollvm|anti-?debug|unicorn|angr|gdb|deobfuscat|unity|il2cpp|game.?reverse|anti-?cheat|\\bwasm\\b|wabt|wasm-decompile|wasm2c|wasm-objdump", "note": "Unity and game reverse engineering route to general RE (seed-014)" },
         { "must": "frida", "exclude": "\\bapk\\b|smali|jadx|android", "note": "With APK context, frida routes to R1" },
         { "must": "reverse", "exclude": "apk|js.?reverse|ios|mobile|\\.net|firmware|malware|protocol|ghidra|extension|macos|mach|golang|rust", "note": "Generic reverse fallback (a more specific domain wins)" }
       ]

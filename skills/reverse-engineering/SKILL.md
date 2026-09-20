@@ -43,26 +43,31 @@ Quick reference for RE challenges. For detailed techniques, see supporting files
 
 ## Prerequisites
 
-**Python packages (all platforms):**
+When a tool is missing, the platform bootstrap is the only action. Never
+guess paths or install tools by hand:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File skills/scripts/bootstrap-reverse.ps1 -Capability @('frida')
+```
+
 ```bash
-pip install frida-tools angr qiling uncompyle6 capstone lief z3-solver
-# For Python 3.9+ bytecode: build pycdc from source
+bash skills/scripts/bootstrap-reverse.sh frida r2
+bash kali/scripts/bootstrap-reverse.sh frida r2
+```
+
+Packages outside bootstrap stay explicit manual installs:
+
+```bash
+pip install angr qiling capstone lief z3-solver   # heavy aides, manual by design
+apt install gdb binutils upx                      # Linux system packages
+brew install gdb binutils upx                     # macOS system packages
+# Python 3.9+ bytecode: build pycdc from source
 git clone https://github.com/zrax/pycdc && cd pycdc && cmake . && make
-```
-
-**Linux (apt):**
-```bash
-apt install gdb radare2 binutils strace ltrace apktool upx
-```
-
-**macOS (Homebrew):**
-```bash
-brew install gdb radare2 binutils apktool upx ghidra
 ```
 
 **radare2 plugins:**
 ```bash
-r2pm -ci r2ghidra   # Native Ghidra decompiler for radare2
+r2pm -ci r2ghidra   # Native Ghidra decompiler for radare2 (r2pm ships with r2)
 ```
 
 **Manual install:**
@@ -175,6 +180,7 @@ pdf @ main         # Disassemble main
 
 # Ghidra (headless)
 analyzeHeadless project/ tmp -import binary -postScript script.py
+# Scripting: see ghidra-reverse (PyGhidra via support/pyghidraRun; Jython is legacy)
 
 # IDA
 ida64 binary       # Open in IDA64

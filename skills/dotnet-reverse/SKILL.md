@@ -44,13 +44,13 @@ If the target is a pure native binary (compiled from C/C++/Go/Rust, with no CLR)
 | Capability | First Choice | Notes |
 |------|------|------|
 | Decompilation + debugging + patching | **dnSpyEx** | Primary choice, the only GUI with an IL editor; old dnSpy is no longer maintained, use the Ex branch |
-| Lightweight CLI / headless decompilation | **ILSpy** (`ilspycmd`) | Suitable for batch work and scripting on Linux/macOS |
+| Lightweight CLI / headless decompilation | **ILSpy v11.0** (`ilspycmd`) | Suitable for batch work and scripting on Linux/macOS |
 | Deobfuscation | **de4dot** | Default choice for common packers such as the ConfuserEx family and SmartAssembly |
 | Obfuscator identification | **Detect It Easy (DIE)** / **file** | Identify the packer type first, then select the de4dot parameters |
 | Programmatic IL operations | **dnlib** | Write C# scripts to batch-edit metadata / string decryptors |
 | Direct AI operations | **dnSpy MCP** | Includes tools such as `dnspy_decompile` / `dnspy_inspect_il` |
 
-> Prerequisite: Install dnSpyEx + de4dot on a Windows host with choco or from a release; use `ilspycmd` + `dotnet runtime` on Linux/macOS. See the installation matrix in `references/sharp-tools.md`.
+> Prerequisite: Install dnSpyEx + de4dot on a Windows host with choco or from a release; on Linux/macOS, install ILSpy v11.0 with `dotnet tool install -g ilspycmd --version 11.0.0.9375` and use the `dotnet` runtime. See the installation matrix in `references/sharp-tools.md`.
 
 ## Six-Stage Workflow
 

@@ -1,4 +1,4 @@
-﻿Set-StrictMode -Version Latest
+Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 function Get-ReverseUserProfilePath {
@@ -47,7 +47,6 @@ function Get-ReverseToolCatalog {
             Name = 'jadx'
             Skill = 'apk-reverse'
             Purpose = 'Java decompiler'
-            FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'jadx' },
@@ -58,7 +57,6 @@ function Get-ReverseToolCatalog {
             Name = 'apktool'
             Skill = 'apk-reverse'
             Purpose = 'APK unpack and rebuild'
-            FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'apktool' },
@@ -172,7 +170,6 @@ function Get-ReverseToolCatalog {
             Name = 'frida'
             Skill = 'apk-reverse'
             Purpose = 'Frida dynamic instrumentation'
-            FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'frida' },
@@ -416,6 +413,17 @@ function Get-ReverseToolCatalog {
             )
         }
         [pscustomobject]@{
+            Name = 'ghidra-mcp'
+            Skill = 'reverse-engineering'
+            Purpose = 'Ghidra headless analysis (ghidra-mcp capability alias)'
+            VersionArgs = @()
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'analyzeHeadless' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\ghidra\support\analyzeHeadless.bat') },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\ghidra\ghidra_11.3_PUBLIC\support\analyzeHeadless.bat') }
+            )
+        }
+        [pscustomobject]@{
             Name = 'jeb-pro'
             Skill = 'apk-reverse'
             Purpose = 'commercial Android/ARM decompiler (manual license install)'
@@ -520,6 +528,80 @@ function Get-ReverseToolCatalog {
                 [pscustomobject]@{ Type = 'command'; Value = 'bkcrack' },
                 [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\bkcrack\bkcrack.exe') },
                 [pscustomobject]@{ Type = 'path'; Value = 'C:\Tools\bkcrack\bkcrack.exe' }
+            )
+        }
+        [pscustomobject]@{
+            Name = 'redress'
+            Skill = 'go-rust-reverse'
+            Purpose = 'Go stripped-binary toolkit (redress CLI)'
+            VersionArgs = @('version')
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'redress' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\redress\redress.exe') }
+            )
+        }
+        [pscustomobject]@{
+            Name = 'goresym'
+            Skill = 'go-rust-reverse'
+            Purpose = 'Go symbol recovery (GoReSym)'
+            VersionArgs = @('--help')
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'GoReSym' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\goresym\GoReSym.exe') }
+            )
+        }
+        [pscustomobject]@{
+            Name = 'capa'
+            Skill = 'malware-analysis'
+            Purpose = 'malware capability detection'
+            VersionArgs = @('--version')
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'capa' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\capa\capa.exe') }
+            )
+        }
+        [pscustomobject]@{
+            Name = 'yara-x'
+            Skill = 'malware-analysis'
+            Purpose = 'YARA-X rule engine (yr CLI)'
+            VersionArgs = @('--version')
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'yr' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\yara-x\yr.exe') }
+            )
+        }
+        [pscustomobject]@{
+            Name = 'unblob'
+            Skill = 'firmware-pentest'
+            Purpose = 'firmware extraction fallback'
+            VersionArgs = @('--help')
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'unblob' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python312\Scripts\unblob.exe') },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python313\Scripts\unblob.exe') }
+            )
+        }
+        [pscustomobject]@{
+            Name = 'wabt'
+            Skill = 'reverse-engineering'
+            Purpose = 'WebAssembly toolkit (wasm-objdump/wasm2wat/wasm2c)'
+            VersionArgs = @('--version')
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'wasm-objdump' },
+                [pscustomobject]@{ Type = 'command'; Value = 'wasm2wat' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\wabt\wasm-objdump.exe') },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\wabt\bin\wasm-objdump.exe') }
+            )
+        }
+        [pscustomobject]@{
+            Name = 'objection'
+            Skill = 'mobile-reverse'
+            Purpose = 'mobile runtime exploration'
+            VersionArgs = @('--help')
+            Fallbacks = @(
+                [pscustomobject]@{ Type = 'command'; Value = 'objection' },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python312\Scripts\objection.exe') },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python313\Scripts\objection.exe') }
             )
         }
     )

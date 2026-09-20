@@ -53,7 +53,7 @@ GENERATED_AT=$(date '+%Y-%m-%d %H:%M:%S %z')
     echo "| Capability | Tool available | MCP registered | Service online | Auto-installable | Installation method |"
     echo "|------|---------|-----------|---------|-----------|---------|"
 
-    CAPABILITY_NAMES=("jadx" "apktool" "jeb-pro" "binaryninja" "frida" "idalib-mcp" "jshookmcp" "reqable-mcp" "xquik-mcp" "anything-analyzer" "idapro" "r2" "adb" "agent-browser" "ghidra-mcp" "seclists" "proxycat" "burpsuite-mcp" "nmap" "sqlmap" "hashcat" "hydra" "gobuster" "ffuf" "msfconsole" "nuclei" "bkcrack")
+    CAPABILITY_NAMES=("jadx" "apktool" "jeb-pro" "binaryninja" "frida" "idalib-mcp" "jshookmcp" "reqable-mcp" "xquik-mcp" "anything-analyzer" "idapro" "r2" "adb" "agent-browser" "ghidra-mcp" "seclists" "proxycat" "burpsuite-mcp" "nmap" "sqlmap" "hashcat" "hydra" "gobuster" "ffuf" "msfconsole" "nuclei" "bkcrack" "redress" "goresym" "capa" "yara-x" "unblob" "wabt" "objection")
 
     for cap_name in "${CAPABILITY_NAMES[@]}"; do
         # Check whether the tool is available
@@ -71,6 +71,15 @@ GENERATED_AT=$(date '+%Y-%m-%d %H:%M:%S %z')
                 ;;
             reqable-mcp|jshookmcp)
                 if command -v npx &>/dev/null; then tool_available="✓"; fi
+                ;;
+            yara-x)
+                if command -v yr &>/dev/null; then tool_available="✓"; fi
+                ;;
+            wabt)
+                if command -v wasm-objdump &>/dev/null; then tool_available="✓"; fi
+                ;;
+            goresym)
+                if command -v GoReSym &>/dev/null; then tool_available="✓"; fi
                 ;;
             *)
                 if command -v "$cap_name" &>/dev/null; then tool_available="✓"; fi
@@ -98,9 +107,6 @@ GENERATED_AT=$(date '+%Y-%m-%d %H:%M:%S %z')
             anything-analyzer)
                 if test_tcp_port 23816 2>/dev/null; then service_online="✓"; fi
                 ;;
-            ghidra-mcp)
-                if test_tcp_port 8765 2>/dev/null; then service_online="✓"; fi
-                ;;
             burpsuite-mcp)
                 if test_tcp_port 9876 2>/dev/null; then service_online="✓"; fi
                 ;;
@@ -118,6 +124,12 @@ GENERATED_AT=$(date '+%Y-%m-%d %H:%M:%S %z')
                 ;;
             jshookmcp|reqable-mcp|agent-browser)
                 bootstrap_kind="npm-mcp"
+                ;;
+            redress|goresym|capa|yara-x)
+                bootstrap_kind="github-release"
+                ;;
+            unblob|objection)
+                bootstrap_kind="pip-package"
                 ;;
             xquik-mcp)
                 bootstrap_kind="remote-http-mcp"

@@ -17,7 +17,7 @@ description: Use for free/open reverse engineering with Ghidra (headless or GUI)
 
 - Main reverse engineering entry point when no IDA license is available
 - Batch headless analysis / decompilation in CI
-- Automation with Ghidra scripts (Java/Python Jython/PyGhidra)
+- Automation with Ghidra scripts through PyGhidra (Python 3; Jython is legacy)
 - Integration with ghidriff from `binary-diff` / `patch-diff-exploit`
 
 ## Division of Work with IDA
@@ -27,6 +27,7 @@ description: Use for free/open reverse engineering with Ghidra (headless or GUI)
 | Existing IDA MCP deep analysis | `ida-reverse/` |
 | Open source / batch / training | **this skill** |
 | CLI-only quick reconnaissance | `radare2/` |
+
 
 ## Workflow
 
@@ -57,7 +58,7 @@ analyzeHeadless /path/to/project Proj -import sample.bin -postScript ExportDecom
 ### 4. MCP (If Configured)
 
 ```text
-□ Confirm the ghidra MCP port (commonly 8765; use tool-index as the authority)
+□ Use tool-index to obtain the ghidra MCP port; it is authoritative.
 □ Use MCP tools to retrieve decompilation / xrefs; do not guess the port
 ```
 
@@ -65,9 +66,11 @@ analyzeHeadless /path/to/project Proj -import sample.bin -postScript ExportDecom
 
 | Tool | Purpose | Bootstrap |
 |------|------|------|
-| Ghidra | Main decompilation tool | Manual release / package manager |
+| Ghidra 12.1.3 | Main decompilation tool; requires a 64-bit JDK 21 | Manual release / package manager |
+| PyGhidra | Python 3 automation via `support/pyghidraRun`; install the wheel bundled at `Ghidra/Features/PyGhidra/pypkg/dist`, never PyPI | Bundled with Ghidra |
 | ghidra-mcp | AI bridge | bootstrap capability name `ghidra-mcp` |
 | ghidriff | patch diff | See `patch-diff-exploit` |
+
 
 ## References
 

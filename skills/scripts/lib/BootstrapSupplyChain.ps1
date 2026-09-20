@@ -174,3 +174,45 @@ function Invoke-AnythingAnalyzerPinnedInstall {
 
     Assert-GitCheckoutState -GitPath $GitPath -CheckoutPath $RepoDir -PinnedCommit $PinnedCommit
 }
+
+function Get-FileSha256Hex {
+    param([Parameter(Mandatory = $true)][string]$Path)
+    return (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash.ToLowerInvariant()
+}
+
+function Assert-DownloadedFileIntegrity {
+    param(
+        [Parameter(Mandatory = $true)][string]$Path,
+        $Definition = $null,
+        $Asset = $null
+    )
+
+    if (-not (Test-Path -LiteralPath $Path)) {
+        throw "Integrity check failed: file missing $Path"
+    }
+
+    $actual = Get-FileSha256Hex -Path $Path
+    $expected = $null
+    $source = $null
+
+    if ($null -ne $Definition -and $Definition.PSObject.Properties['assetSha256'] -and -not [string]::IsNullOrWhiteSpace([string]$Definition.assetSha256)) {
+        $expected = ([string]$Definition.assetSha256 -replace '^(?i)sha256:', '').Trim().ToLowerInvariant()
+        $source = 'manifest.assetSha256'
+    }
+    elseif ($null -ne $Asset -and $Asset.PSObject.Properties['digest'] -and -not [string]::IsNullOrWhiteSpace([string]$Asset.digest)) {
+        $expected = ([string]$Asset.digest -replace '^(?i)sha256:', '').Trim().ToLowerInvariant()
+        $source = 'github.api.digest'
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($expected)) {
+        if ($actual -ne $expected) {
+            Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+            throw "SHA256 mismatch for $(Split-Path -Leaf $Path) (via $source): expected $expected got $actual — file deleted"
+        }
+        Write-Host ("[integrity] SHA256 OK ({0}): {1}" -f $source, $actual) -ForegroundColor Green
+        return $actual
+    }
+
+    Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+    throw ("[integrity] No pinned digest for {0}; refusing to install unpinned asset (manifest assetSha256 and GitHub API digest both absent; file deleted)" -f (Split-Path -Leaf $Path))
+}
