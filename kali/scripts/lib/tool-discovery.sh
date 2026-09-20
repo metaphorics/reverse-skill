@@ -84,6 +84,13 @@ declare -a TOOL_CATALOG=(
     "aircrack-ng|pentest-tools|WiFi 破解套件|--help|aircrack-ng"
     "wireshark|pentest-tools|网络协议分析|--version|wireshark,tshark"
     "burpsuite|pentest-tools|Web 代理与漏洞扫描||burpsuite"
+    "redress|go-rust-reverse|Go stripped-binary toolkit (redress CLI)|version|redress,${HOME}/tools/redress/redress"
+    "goresym|go-rust-reverse|Go symbol recovery (GoReSym)|--help|GoReSym,${HOME}/tools/goresym/GoReSym"
+    "capa|malware-analysis|malware capability detection|--version|capa,${HOME}/tools/capa/capa"
+    "yara-x|malware-analysis|YARA-X rule engine (yr CLI)|--version|yr,${HOME}/tools/yara-x/yr"
+    "unblob|firmware-pentest|firmware extraction fallback|--help|unblob"
+    "wabt|reverse-engineering|WebAssembly toolkit (wasm-objdump/wasm2wat/wasm2c)|--version|wasm-objdump,wasm2wat,${HOME}/tools/wabt/wasm-objdump"
+    "objection|mobile-reverse|mobile runtime exploration|--help|objection"
 )
 
 # 脚本引用映射
@@ -128,6 +135,13 @@ declare -A SCRIPT_REFS=(
     ["bkcrack"]="reverse-engineering/crypto-decode-tools.md,../CTF-Sandbox-Orchestrator/competition-zip-archive/SKILL.md"
     ["netexec"]="pentest-tools/SKILL.md"
     ["responder"]="pentest-tools/SKILL.md"
+    ["redress"]="go-rust-reverse/SKILL.md"
+    ["goresym"]="go-rust-reverse/SKILL.md"
+    ["capa"]="malware-analysis/SKILL.md"
+    ["yara-x"]="malware-analysis/SKILL.md"
+    ["unblob"]="firmware-pentest/SKILL.md"
+    ["wabt"]="reverse-engineering/SKILL.md"
+    ["objection"]="mobile-reverse/SKILL.md"
 )
 
 # ─── 工具发现函数 ─────────────────────────────────────────────────────────────────
@@ -254,3 +268,4 @@ get_capability_definition() {
         echo ""
     fi
 }
+# weave: run 'weave explain kali/scripts/lib/tool-discovery.sh' for per-hunk detail, 'weave check' to verify your resolution

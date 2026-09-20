@@ -440,6 +440,96 @@ function Expand-ArchiveIntoDirectory {
 
     Remove-Item -LiteralPath $tempExtract -Recurse -Force
 }
+function Expand-TarIntoDirectory {
+    param(
+        [Parameter(Mandatory = $true)][string]$TarPath,
+        [Parameter(Mandatory = $true)][string]$Destination
+    )
+
+    $tempExtract = Join-Path $tmpBase ("reverse-bootstrap-" + [System.Guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $tempExtract -Force | Out-Null
+    $tarExe = Get-FirstCommandPath -Names @('tar.exe', 'tar') -PreferApplication
+    if ([string]::IsNullOrWhiteSpace($tarExe)) {
+        throw "github-release-tar requires tar.exe on PATH (ships with Windows 10 1803+)."
+    }
+    & $tarExe -xzf $TarPath -C $tempExtract
+    if ($LASTEXITCODE -ne 0) {
+        throw "tar extraction failed for $TarPath"
+    }
+
+    if (Test-Path -LiteralPath $Destination) {
+        Remove-Item -LiteralPath $Destination -Recurse -Force
+    }
+    New-Item -ItemType Directory -Path $Destination -Force | Out-Null
+
+    $children = Get-ChildItem -LiteralPath $tempExtract
+    if ($children.Count -eq 1 -and $children[0].PSIsContainer) {
+        $sourceDir = $children[0].FullName
+    }
+    else {
+        $sourceDir = $tempExtract
+    }
+
+    Get-ChildItem -LiteralPath $sourceDir -Force | ForEach-Object {
+        Move-Item -LiteralPath $_.FullName -Destination $Destination -Force
+    }
+
+    Remove-Item -LiteralPath $tempExtract -Recurse -Force
+}
+
+function Ensure-GitHubTarInstall {
+    param(
+        [Parameter(Mandatory = $true)]$Definition,
+        [Parameter(Mandatory = $true)][string]$TargetPath,
+        [Parameter(Mandatory = $true)][string]$VerifyName
+    )
+
+    $capabilityName = [string]$Definition.name
+    if ([string]::IsNullOrWhiteSpace($capabilityName)) { $capabilityName = $VerifyName }
+    $exeName = if ([string]::IsNullOrWhiteSpace($VerifyName)) { $capabilityName } else { $VerifyName }
+
+    # Same capability-scoped contract as Ensure-GitHubZipInstall: catalog row wins,
+    # $exeName is an executable probe only, never a catalog key.
+    try {
+        $existing = Resolve-ReverseToolSpec -Name $capabilityName
+        if ($existing.Available) {
+            return $existing
+        }
+    } catch { }
+
+    $probePath = Get-FirstCommandPath -Names @($exeName)
+    if (-not [string]::IsNullOrWhiteSpace($probePath)) {
+        try {
+            $existing = Resolve-ReverseToolSpec -Name $capabilityName
+            if ($existing.Available) {
+                return $existing
+            }
+        } catch { }
+    }
+
+    $releaseTag = if ($Definition.PSObject.Properties['releaseTag']) { [string]$Definition.releaseTag } else { '' }
+    $asset = Get-GitHubLatestReleaseAsset -Repo $Definition.repo -AssetRegex $Definition.assetRegex -ReleaseTag $releaseTag
+    $downloadUrl = if ($asset.PSObject.Properties['browser_download_url']) { $asset.browser_download_url } else { $asset.url }
+    $downloadPath = Join-Path $tmpBase $asset.name
+    Invoke-WebRequest -Uri $downloadUrl -OutFile $downloadPath -Headers @{ 'Accept' = 'application/octet-stream' }
+    Assert-DownloadedFileIntegrity -Path $downloadPath -Definition $Definition -Asset $asset | Out-Null
+    Ensure-DownloadDirectory -Path (Split-Path -Path $TargetPath -Parent)
+    Expand-TarIntoDirectory -TarPath $downloadPath -Destination $TargetPath
+    Remove-Item -LiteralPath $downloadPath -Force
+
+    # Refresh PATH so newly installed tools are discoverable
+    $binCandidates = @(
+        (Join-Path $TargetPath 'bin'),
+        $TargetPath
+    )
+    foreach ($binDir in $binCandidates) {
+        if ((Test-Path -LiteralPath $binDir) -and ($env:PATH -notlike "*$binDir*")) {
+            $env:PATH = "$binDir;$env:PATH"
+        }
+    }
+
+    return (Resolve-ReverseToolSpec -Name $capabilityName)
+}
 
 function Ensure-DownloadDirectory {
     param([Parameter(Mandatory = $true)][string]$Path)
@@ -456,9 +546,28 @@ function Ensure-GitHubZipInstall {
         [Parameter(Mandatory = $true)][string]$VerifyName
     )
 
-    $existing = Resolve-ReverseToolSpec -Name $VerifyName
-    if ($existing.Available) {
-        return $existing
+    $capabilityName = [string]$Definition.name
+    if ([string]::IsNullOrWhiteSpace($capabilityName)) { $capabilityName = $VerifyName }
+    $exeName = if ([string]::IsNullOrWhiteSpace($VerifyName)) { $capabilityName } else { $VerifyName }
+
+    # Availability is capability-scoped: the catalog row for $capabilityName lists
+    # the real executable (alias exes such as yr or wasm-objdump) in its Fallbacks.
+    # $exeName is an executable probe only, never a catalog key.
+    try {
+        $existing = Resolve-ReverseToolSpec -Name $capabilityName
+        if ($existing.Available) {
+            return $existing
+        }
+    } catch { }
+
+    $probePath = Get-FirstCommandPath -Names @($exeName)
+    if (-not [string]::IsNullOrWhiteSpace($probePath)) {
+        try {
+            $existing = Resolve-ReverseToolSpec -Name $capabilityName
+            if ($existing.Available) {
+                return $existing
+            }
+        } catch { }
     }
 
     $releaseTag = if ($Definition.PSObject.Properties['releaseTag']) { [string]$Definition.releaseTag } else { '' }
@@ -482,7 +591,7 @@ function Ensure-GitHubZipInstall {
         }
     }
 
-    return (Resolve-ReverseToolSpec -Name $VerifyName)
+    return (Resolve-ReverseToolSpec -Name $capabilityName)
 }
 
 function Ensure-ApktoolInstall {
@@ -892,6 +1001,13 @@ function Ensure-Capability {
                 $definition.verifyCommand
             } else { $Name }
             return Ensure-GitHubZipInstall -Definition $definition -TargetPath $definition.installDir -VerifyName $verifyName
+        }
+        'github-release-tar' {
+            # Generic handler for all github-release-tar capabilities (same contract as zip)
+            $verifyName = if ($definition.PSObject.Properties['verifyCommand'] -and -not [string]::IsNullOrWhiteSpace($definition.verifyCommand)) {
+                $definition.verifyCommand
+            } else { $Name }
+            return Ensure-GitHubTarInstall -Definition $definition -TargetPath $definition.installDir -VerifyName $verifyName
         }
         'git-clone' {
             return Ensure-GitCloneInstall -Definition $definition -TargetPath $definition.installDir

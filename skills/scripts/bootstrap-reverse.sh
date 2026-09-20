@@ -184,7 +184,7 @@ Capabilities (parity with bootstrap-reverse.ps1):
   jadx apktool frida frida-ps idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer idapro
   r2 rabin2 adb agent-browser ghidra-mcp seclists proxycat burpsuite-mcp
   nmap pentestswarm binwalk yara pwntools
-
+  redress goresym capa yara-x unblob wabt objection
 Examples:
   bash skills/scripts/bootstrap-reverse.sh jadx apktool frida
   bash skills/scripts/bootstrap-reverse.sh jshookmcp --mcp-host=codex
@@ -205,6 +205,7 @@ ALL_CAPABILITIES=(
   jadx apktool jeb-pro frida frida-ps idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer idapro
   r2 rabin2 adb agent-browser ghidra-mcp seclists proxycat burpsuite-mcp
   nmap pentestswarm binwalk yara pwntools
+  redress goresym capa yara-x unblob wabt objection
 )
 
 if $LIST_ONLY; then
@@ -983,6 +984,87 @@ ensure_pwntools() {
   pipx install "$package" || python3 -m pip install --user "$package" || return 1
 }
 
+ensure_redress() {
+  if has_cmd redress; then log_ok "redress ready: $(cmd_path redress)"; return 0; fi
+  local repo re tag sha
+  repo=$(manifest_field redress repo) || return 1
+  re=$(manifest_field redress linuxAssetRegex) || re=$(manifest_field redress assetRegex) || return 1
+  tag=$(manifest_field redress releaseTag) || return 1
+  sha=$(manifest_field redress assetSha256) || sha=""
+  case "$PLATFORM" in
+    macos) manual_required redress "Download redress for macOS from https://github.com/goretk/redress/releases (pinned v1.2.85)" ;;
+    linux) install_github_release "$repo" "$re" "$TOOLS_ROOT/redress" "$tag" "$sha" ;;
+  esac
+}
+
+ensure_goresym() {
+  if has_cmd GoReSym; then log_ok "goresym ready: $(cmd_path GoReSym)"; return 0; fi
+  local repo re tag sha
+  repo=$(manifest_field goresym repo) || return 1
+  re=$(manifest_field goresym linuxAssetRegex) || re=$(manifest_field goresym assetRegex) || return 1
+  tag=$(manifest_field goresym releaseTag) || return 1
+  sha=$(manifest_field goresym assetSha256) || sha=""
+  case "$PLATFORM" in
+    macos) manual_required goresym "Download GoReSym for macOS from https://github.com/mandiant/GoReSym/releases (pinned v3.4.1)" ;;
+    linux) install_github_release "$repo" "$re" "$TOOLS_ROOT/goresym" "$tag" "$sha" ;;
+  esac
+}
+
+ensure_capa() {
+  if has_cmd capa; then log_ok "capa ready: $(cmd_path capa)"; return 0; fi
+  local repo re tag sha
+  repo=$(manifest_field capa repo) || return 1
+  re=$(manifest_field capa linuxAssetRegex) || re=$(manifest_field capa assetRegex) || return 1
+  tag=$(manifest_field capa releaseTag) || return 1
+  sha=$(manifest_field capa assetSha256) || sha=""
+  case "$PLATFORM" in
+    macos) manual_required capa "Download capa for macOS from https://github.com/mandiant/capa/releases (pinned v9.4.0)" ;;
+    linux) install_github_release "$repo" "$re" "$TOOLS_ROOT/capa" "$tag" "$sha" ;;
+  esac
+}
+
+ensure_yara_x() {
+  if has_cmd yr; then log_ok "yara-x ready: $(cmd_path yr)"; return 0; fi
+  local repo re tag sha
+  repo=$(manifest_field yara-x repo) || return 1
+  re=$(manifest_field yara-x linuxAssetRegex) || re=$(manifest_field yara-x assetRegex) || return 1
+  tag=$(manifest_field yara-x releaseTag) || return 1
+  sha=$(manifest_field yara-x assetSha256) || sha=""
+  case "$PLATFORM" in
+    macos) manual_required yara-x "Download yara-x for macOS from https://github.com/VirusTotal/yara-x/releases (pinned v1.20.0)" ;;
+    linux) install_github_release "$repo" "$re" "$TOOLS_ROOT/yara-x" "$tag" "$sha" ;;
+  esac
+}
+
+ensure_unblob() {
+  ensure_python_runtime || return 1
+  if has_cmd unblob; then log_ok "unblob ready: $(cmd_path unblob)"; return 0; fi
+  local package
+  package=$(manifest_field unblob pipPackage) || return 1
+  pipx install "$package" || python3 -m pip install --user "$package" || return 1
+}
+
+ensure_wabt() {
+  if has_cmd wasm-objdump; then log_ok "wabt ready: $(cmd_path wasm-objdump)"; return 0; fi
+  local repo re tag sha
+  repo=$(manifest_field wabt repo) || return 1
+  re=$(manifest_field wabt linuxAssetRegex) || re=$(manifest_field wabt assetRegex) || return 1
+  tag=$(manifest_field wabt releaseTag) || return 1
+  sha=$(manifest_field wabt assetSha256) || sha=""
+  case "$PLATFORM" in
+    macos) manual_required wabt "Download wabt for macOS from https://github.com/WebAssembly/wabt/releases (pinned 1.0.42)" ;;
+    linux) install_github_release "$repo" "$re" "$TOOLS_ROOT/wabt" "$tag" "$sha" ;;
+  esac
+}
+
+ensure_objection() {
+  ensure_python_runtime || return 1
+  if has_cmd objection; then log_ok "objection ready: $(cmd_path objection)"; return 0; fi
+  local package
+  package=$(manifest_field objection pipPackage) || return 1
+  pipx install "$package" || python3 -m pip install --user "$package" || return 1
+}
+
 status_json_line() {
   local name="$1"
   local status="$2"
@@ -1043,6 +1125,13 @@ ensure_capability() {
     binwalk) ensure_binwalk ;;
     yara) ensure_yara ;;
     pwntools) ensure_pwntools ;;
+    redress) ensure_redress ;;
+    goresym) ensure_goresym ;;
+    capa) ensure_capa ;;
+    yara-x) ensure_yara_x ;;
+    unblob) ensure_unblob ;;
+    wabt) ensure_wabt ;;
+    objection) ensure_objection ;;
     *) log_err "No bootstrap definition for capability: $name"; return 1 ;;
   esac
 }

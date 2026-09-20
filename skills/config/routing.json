@@ -51,7 +51,7 @@
       "label": "IDA reverse",
       "skill": "ida-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\bida\\b|decompile|disassembl|\\.so\\b|\\.elf\\b|jni", "exclude": "wasm|wabt", "note": ".so, .elf, native, and JNI analysis route to binary static analysis (IDA and disassembly path)" }
+        { "must": "\\bida\\b|decompile|disassembl|反编译|反汇编|静态.?分析.?二进制|\\.so\\b|\\.elf\\b|so.?文件|native.?分析|jni", "exclude": "wasm|wabt", "note": ".so/.elf/native/JNI 分析归二进制静态分析（IDA/反汇编路线）" }
       ]
     },
     "R7": {
@@ -66,15 +66,15 @@
       "label": "Firmware pentest",
       "skill": "firmware-pentest/SKILL.md",
       "keywords": [
-        { "must": "firmware|binwalk|iot|emba|firmadyne|unblob" }
+        { "must": "firmware|binwalk|iot|emba|firmadyne|固件|路由器.?固件|嵌入式|unblob" }
       ]
     },
     "R9": {
       "label": "Malware analysis",
       "skill": "malware-analysis/SKILL.md",
       "keywords": [
-        { "must": "malware|yara|virus.?sample|pe-?sieve|cape.?sandbox|ransomware|webshell|backdoor|yara-?x|\\bcapa\\b" },
-        { "must": "sandbox", "mustAll": ["malware|virus|cape|any\\.run|triage"], "note": "Bare sandbox routes to R9 only with malware context (avoids catching cloud sandboxes and dev contexts)" }
+        { "must": "malware|yara|virus.?sample|pe-?sieve|cape.?sandbox|恶意.?软件|病毒.?样本|木马.?分析|恶意.?样本|样本.?分析|ransomware|勒索|webshell|后门|backdoor|yara-?x|\\bcapa\\b" },
+        { "must": "sandbox", "mustAll": ["malware|virus|恶意|木马|样本|cape|any\\.run|triage"], "note": "裸 sandbox 归 R9 需恶意语境（防误伤云沙箱/开发语境）" }
       ]
     },
     "R10": {
@@ -173,7 +173,7 @@
       "label": "Ghidra reverse",
       "skill": "ghidra-reverse/SKILL.md",
       "keywords": [
-        { "must": "ghidra|ghidra.?mcp|analyzeheadless|pyghidra" }
+        { "must": "ghidra|ghidra.?mcp|analyzeheadless|无.?ida|开源.?反编译|pyghidra" }
       ]
     },
     "R23": {
@@ -259,7 +259,7 @@
       "label": "Go / Rust reverse",
       "skill": "go-rust-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\bgolang\\b|\\brustc\\b|go.?binary|stripped.?go|gore.?sym|go.?malware|rust.?binary|redress|goretk|pclntab" }
+        { "must": "\\bgolang\\b|\\brustc\\b|go.?binary|go.?二进|go.?语言|go.?程序|stripped.?go|gore.?sym|go.?malware|rust.?binary|go.?逆向|rust.?逆向|redress|goretk|pclntab" }
       ]
     },
     "R34": {
@@ -322,12 +322,12 @@
       "label": "General reverse-engineering",
       "skill": "reverse-engineering/SKILL.md",
       "keywords": [
-        { "must": "ollvm|anti-?debug|unicorn|angr|gdb|deobfuscat|unity|il2cpp|game.?reverse|anti-?cheat|\\bwasm\\b|wabt|wasm-decompile|wasm2c|wasm-objdump", "note": "Unity and game reverse engineering route to general RE (seed-014)" },
-        { "must": "frida", "exclude": "\\bapk\\b|smali|jadx|android", "note": "With APK context, frida routes to R1" },
-        { "must": "reverse", "exclude": "apk|js.?reverse|ios|mobile|\\.net|firmware|malware|protocol|ghidra|extension|macos|mach|golang|rust", "note": "Generic reverse fallback (a more specific domain wins)" }
+        { "must": "ollvm|anti-?debug|unicorn|angr|gdb|deobfuscat|控制流平坦|反调试|unity|il2cpp|游戏.?逆向|game.?reverse|anti-?cheat|反作弊|\\bwasm\\b|wabt|wasm-decompile|wasm2c|wasm-objdump", "note": "Unity/游戏逆向归通用逆向 (seed-014)" },
+        { "must": "frida", "exclude": "\\bapk\\b|smali|jadx|android|安卓", "note": "APK 语境下 frida 归 R1" },
+        { "must": "reverse|逆向", "exclude": "apk|js.?reverse|ios|mobile|\\.net|firmware|malware|安卓|固件|恶意|protocol|ghidra|extension|macos|mach|golang|rust|工控|厚客户端|取证|协议|扩展", "note": "泛逆向兜底；命中更具体域时让位" }
       ]
     }
-  }
+  },
   "priority": [
     "R4", "R1", "R2", "R3", "R30", "R31", "R33", "R5", "R9", "R21",
     "R22", "R45", "R6", "R7", "R8", "R34", "R28", "R17", "R16", "R18", "R24",
@@ -335,4 +335,3 @@
     "R10", "R11", "R12", "R13", "R14", "R15", "R19", "R40", "R20", "R39", "R41", "R0"
   ]
 }
-// weave: run 'weave explain skills/config/routing.json' for per-hunk detail, 'weave check' to verify your resolution

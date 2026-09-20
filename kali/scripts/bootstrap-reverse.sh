@@ -30,7 +30,7 @@ for arg in "$@"; do
         --start-services) START_SERVICES=true ;;
         --skip-refresh) SKIP_REFRESH=true ;;
         --list|-l)
-            echo "jadx apktool jeb-pro frida frida-ps idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer idapro r2 rabin2 adb agent-browser ghidra-mcp seclists proxycat burpsuite-mcp nmap pentestswarm bkcrack"
+            echo "jadx apktool jeb-pro frida frida-ps idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer idapro r2 rabin2 adb agent-browser ghidra-mcp seclists proxycat burpsuite-mcp nmap pentestswarm bkcrack redress goresym capa yara-x unblob wabt objection"
             echo "mcp-kali-server metasploitmcp hexstrike-ai adaptixc2 atomic-operator sstimap xsstrike wpprobe fluxion gef coercer evil-winrm-py netexec responder bloodhound certipy"
             exit 0
             ;;
@@ -46,6 +46,7 @@ if [[ ${#CAPABILITIES[@]} -eq 0 ]]; then
     echo ""
     echo "  [逆向分析]"
     echo "    jadx apktool jeb-pro frida frida-ps idalib-mcp r2 rabin2 adb gef"
+    echo "    redress goresym capa yara-x unblob wabt objection"
     echo ""
     echo "  [渗透测试 - 经典工具]"
     echo "    nmap sqlmap hashcat hydra gobuster ffuf msfconsole nuclei"
@@ -76,8 +77,11 @@ fi
 # ─── 辅助函数 ──────────────────────────────────────────────────────────────────────
 
 log_info() { echo -e "\033[36m[INFO]\033[0m $*"; }
+
 log_ok() { echo -e "\033[32m[OK]\033[0m $*"; }
+
 log_warn() { echo -e "\033[33m[WARN]\033[0m $*"; }
+
 log_err() { echo -e "\033[31m[ERR]\033[0m $*"; }
 
 # 检查是否有 sudo 权限
@@ -387,8 +391,12 @@ install_manifest_release() {
         return 1
     }
     asset_sha256=$(manifest_field "$capability" assetSha256) || {
-        log_err "manifest 中缺少 $capability.assetSha256；拒绝下载未固定资产"
-        return 1
+        if [[ "$(manifest_field "$capability" preferApiDigest)" == "true" ]]; then
+            asset_sha256=""
+        else
+            log_err "manifest 中缺少 $capability.assetSha256；拒绝下载未固定资产"
+            return 1
+        fi
     }
 
     install_dir="${install_dir/\$HOME/$HOME}"
@@ -398,9 +406,15 @@ install_manifest_release() {
 ensure_capability() {
     local name="$1"
 
-    # 先检查是否已可用
-    if command -v "$name" &>/dev/null; then
-        log_ok "$name 已可用: $(command -v "$name")"
+    # Check whether it is already available (verifyCommand-aware: yara-x probes yr,
+    # wabt probes wasm-objdump, goresym probes GoReSym)
+    local verify_cmd
+    verify_cmd=$(manifest_field "$name" verifyCommand 2>/dev/null) || verify_cmd="$name"
+    # 检查是否已可用（verifyCommand 感知：yara-x 探测 yr、wabt 探测 wasm-objdump、goresym 探测 GoReSym）
+    local verify_cmd
+    verify_cmd=$(manifest_field "$name" verifyCommand 2>/dev/null) || verify_cmd="$name"
+    if command -v "$verify_cmd" &>/dev/null; then
+        log_ok "$name 已可用: $(command -v "$verify_cmd")"
         return 0
     fi
 
@@ -562,6 +576,27 @@ EOF
         pwntools)
             install_pip_package "pwntools==4.15.0"
             ;;
+        redress)
+            install_manifest_release "redress"
+            ;;
+        goresym)
+            install_manifest_release "goresym"
+            ;;
+        capa)
+            install_manifest_release "capa"
+            ;;
+        yara-x)
+            install_manifest_release "yara-x"
+            ;;
+        unblob)
+            install_pip_package "unblob==26.6.4"
+            ;;
+        wabt)
+            install_apt_package "wabt"
+            ;;
+        objection)
+            install_pip_package "objection==1.12.5"
+            ;;
 
         # ─── GitHub Release ───
         jadx)
@@ -603,7 +638,7 @@ EOF
             fi
             register_mcp_server "reqable-mcp" '{
                 "command": "npx",
-                "args": ["-y", "reqable-mcp-server@1.0.1", "--scope", "minimal"]
+                "args": ["-y", "reqable-mcp-server@1.0.2", "--scope", "minimal"]
             }'
             log_warn "Reqable MCP 需要单独安装 Reqable 桌面客户端并启用其本地 API。"
             ;;
@@ -616,7 +651,7 @@ EOF
             fi
             register_mcp_server "jshook" '{
                 "command": "npx",
-                "args": ["-y", "@jshookmcp/jshook@0.3.4"],
+                "args": ["-y", "@jshookmcp/jshook@0.3.5"],
                 "env": {"JSHOOK_BASE_PROFILE": "search"}
             }'
             ;;
@@ -630,7 +665,7 @@ EOF
             if ! command -v node &>/dev/null; then
                 install_apt_package "nodejs"
             fi
-            install_npm_global "agent-browser@0.31.1"
+            install_npm_global "agent-browser@0.38.1"
             npx playwright install chromium 2>/dev/null || true
             ;;
 
@@ -766,3 +801,4 @@ for r in "${RESULTS[@]}"; do
 done
 echo ""
 exit "$final_exit_code"
+# weave: run 'weave explain kali/scripts/bootstrap-reverse.sh' for per-hunk detail, 'weave check' to verify your resolution
