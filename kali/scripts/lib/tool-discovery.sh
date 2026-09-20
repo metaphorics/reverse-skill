@@ -268,4 +268,3 @@ get_capability_definition() {
         echo ""
     fi
 }
-# weave: run 'weave explain kali/scripts/lib/tool-discovery.sh' for per-hunk detail, 'weave check' to verify your resolution

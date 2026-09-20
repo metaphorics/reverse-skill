@@ -4,6 +4,16 @@
 > 目的：让 reverse-skill **知道外面有什么**，按需借鉴，**不**把外部巨型库整仓并入本包。  
 > 本包身份：路由 + 工具自举 + 证据/scope 契约 + field-journal（见 `ops/IDENTITY.md`）。
 
+### 1.2 Third search additions (2026-09-20)
+
+| Repository / resource | Positioning | Package use |
+|-------------|------|----------|
+| [goretk/redress](https://github.com/goretk/redress) | Go stripped-binary CLI (info/packages/types/source/r2) | Absorbed into `go-rust-reverse`; bootstrap the release binary, never vendor AGPL sources |
+| [mandiant/capa](https://github.com/mandiant/capa) | Capability detection, static + dynamic | Absorbed into `malware-analysis` Phase 1 triage |
+| [VirusTotal/yara-x](https://github.com/VirusTotal/yara-x) | Current YARA engine (`yr` CLI) | New rules in `malware-analysis` Phase 4; existing `.yar` stays on classic yara |
+| [onekey-sec/unblob](https://github.com/onekey-sec/unblob) | Firmware extraction fallback | Absorbed into `firmware-pentest` Stage 4, ahead of binwalk |
+| [WebAssembly/wabt](https://github.com/WebAssembly/wabt) | wasm-objdump/wasm2wat/wasm2c toolkit | Absorbed into `reverse-engineering` WASM sections; 1.0.42 removed wasm-decompile |
+
 ## 1. 外部高价值仓库（可学习，勿盲装）
 
 | 仓库 | 规模/定位 | 对本包价值 | 风险 |

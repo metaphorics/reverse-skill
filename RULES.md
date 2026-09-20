@@ -73,7 +73,8 @@ Core scripts MUST NOT write client-global configuration. Optional adapters belon
 - LLM security, LLM 安全, AI security testing, Prompt injection, Prompt 注入, jailbreak, 越狱, Agent security, Agent 安全, agent skills security, Agentic Skills Top 10, skill supply chain, 恶意 skill, MCP supply chain
 - OWASP LLM Top 10, ASI Top 10, Agentic AI, tool abuse, memory poisoning, garak, PyRIT, promptfoo
 - API security, API 安全, GraphQL, JWT attack, JWT 攻击, supply chain security, 供应链安全
-- iOS reverse, iOS 逆向, Objection, YARA, malware analysis, 恶意软件分析, AI decompilation, AI 反编译
+- iOS reverse, iOS 逆向, Objection, YARA, yara-x, capa, malware analysis, 恶意软件分析, AI decompilation, AI 反编译
+- Go/Rust reverse, redress, goretk, GoReSym, pclntab, Ghidra, PyGhidra, WASM, wabt, wasm-decompile
 - internal network, 内网渗透, lateral movement, 横向移动, domain penetration, 域渗透, AD attack, BloodHound
 - privilege escalation, 权限提升, credential extraction, 凭证提取, Mimikatz, Kerberoasting, DCSync
 - C2, persistence, 持久化, Cobalt Strike, Sliver, Havoc
@@ -323,7 +324,7 @@ Windows (PowerShell):
 powershell -NoProfile -ExecutionPolicy Bypass -File "<SKILL_ROOT>/skills/scripts/bootstrap-reverse.ps1" -Capability @('tool_name') -StartServices
 
 Supported capability names (must match `skills/scripts/bootstrap-manifest.json`):  
-jadx, apktool, jeb-pro, binaryninja, frida, frida-ps, idalib-mcp, reqable-mcp, jshookmcp, xquik-mcp, anything-analyzer, idapro, r2, rabin2, adb, agent-browser, ghidra-mcp, seclists, proxycat, burpsuite-mcp, nmap, pentestswarm, binwalk, yara, pwntools, bkcrack
+jadx, apktool, jeb-pro, binaryninja, frida, frida-ps, idalib-mcp, reqable-mcp, jshookmcp, xquik-mcp, anything-analyzer, idapro, r2, rabin2, adb, agent-browser, ghidra-mcp, seclists, proxycat, burpsuite-mcp, nmap, pentestswarm, binwalk, yara, pwntools, bkcrack, redress, goresym, capa, yara-x, unblob, wabt, objection
 
 Do NOT invent capabilities. Tools not listed require manual install steps in the skill docs.
 ```

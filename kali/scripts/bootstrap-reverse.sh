@@ -801,4 +801,3 @@ for r in "${RESULTS[@]}"; do
 done
 echo ""
 exit "$final_exit_code"
-# weave: run 'weave explain kali/scripts/bootstrap-reverse.sh' for per-hunk detail, 'weave check' to verify your resolution

@@ -28,20 +28,20 @@
 - BurpSuite、Burp MCP、Intruder、Repeater、Collaborator、代理历史分析
 - LLM 安全、AI 安全测试、Prompt 注入、jailbreak、越狱、Agent 安全、garak、PyRIT
 - API 安全测试、GraphQL 安全、JWT 攻击、供应链安全、SBOM、Trivy
-- iOS 逆向、Objection、YARA、恶意软件分析、AI 反编译、LLM4Decompile
+- iOS 逆向、Objection、YARA、yara-x、capa、恶意软件分析、AI 反编译、LLM4Decompile
 - Agent 不干活、AI 懒、跳过步骤、Prompt 工程、Agent 服从性
 - EDR 绕过、AV bypass、免杀、unhook、direct syscall、indirect syscall、Hell's Gate、SysWhispers、ETW patch、AMSI patch、call stack spoofing、MITRE T1562、CrowdStrike 绕过、Defender 绕过、SentinelOne 绕过、pe-sieve
 - 端口扫描、Nmap、漏洞扫描、Nuclei、SQL 注入、SQLMap、目录爆破、FFUF、密码破解、Hashcat、Hydra、Metasploit、Impacket、pentestMCP
 - SRC、Bug Bounty、众测、漏洞赏金、HackerOne、WAF bypass、绕过 WAF、IDOR、越权、任意账号
 - 画图、流程图、架构图、攻击路径图、时序图、状态图、数据流图、Mermaid、Graphviz、PlantUML、diagram
-- 恶意软件分析、病毒分析、样本分析、沙箱、YARA、IOC
+- 恶意软件分析、病毒分析、样本分析、沙箱、YARA、yara-x、capa、IOC
 - 内核驱动、Rootkit、LKM、IOCTL、DeviceIoControl
 - 密码学、加解密、AES、RSA、哈希碰撞、签名验证
 - 协议逆向、自定义协议、Protobuf、序列化
 - 固件逆向、IoT、binwalk、ARM、MIPS、嵌入式
-- WASM、WebAssembly、Python 字节码、pyc、.NET、dnSpy、IL
+- WASM、WebAssembly、wabt、wasm-decompile、Python 字节码、pyc、.NET、dnSpy、IL
 - macOS、iOS、Mach-O、ObjC、Swift、Frida iOS
-- Go 逆向、Rust 逆向、stripped binary、GoReSym
+- Go 逆向、Rust 逆向、stripped binary、GoReSym、redress、goretk、pclntab、Ghidra、PyGhidra
 - 内存转储、memory dump、取证、forensic、隐写、steganography
 - 云安全、容器逃逸、K8s、Docker、AWS、Azure
 - Prompt 注入、AI 安全、Agent 安全、LLM 攻击
@@ -169,7 +169,7 @@ bash kali/scripts/bootstrap-reverse.sh jadx frida gef ghidra-mcp
 bash kali/scripts/bootstrap-reverse.sh sstimap xsstrike wpprobe nuclei
 ```
 
-支持的全部能力名：jadx、apktool、frida、idalib-mcp、jshookmcp、xquik-mcp、anything-analyzer、idapro、r2、rabin2、adb、agent-browser、ghidra-mcp、nmap、sqlmap、hashcat、hydra、gobuster、ffuf、msfconsole、nuclei、seclists、proxycat、mcp-kali-server、metasploitmcp、hexstrike-ai、pentestswarm、adaptixc2、atomic-operator、sstimap、xsstrike、wpprobe、fluxion、gef、evil-winrm-py、coercer、netexec、responder、crackmapexec、bloodhound、certipy、wfuzz、aircrack-ng
+支持的全部能力名：jadx、apktool、frida、idalib-mcp、jshookmcp、xquik-mcp、anything-analyzer、idapro、r2、rabin2、adb、agent-browser、ghidra-mcp、nmap、sqlmap、hashcat、hydra、gobuster、ffuf、msfconsole、nuclei、seclists、proxycat、mcp-kali-server、metasploitmcp、hexstrike-ai、pentestswarm、adaptixc2、atomic-operator、sstimap、xsstrike、wpprobe、fluxion、gef、evil-winrm-py、coercer、netexec、responder、crackmapexec、bloodhound、certipy、wfuzz、aircrack-ng、redress、goresym、capa、yara-x、unblob、wabt、objection
 
 ## 刷新工具索引
 
