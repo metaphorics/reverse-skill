@@ -36,6 +36,25 @@ if [[ ! -f "$BIN" ]]; then
     exit 1
 fi
 
+# Kali-only bootstrap serves Linux-only release assets; macOS and generic
+# Linux must use the Linux/macOS bootstrap's manual-install path instead.
+# Mirrors is_kali in skills/scripts/bootstrap-reverse.sh.
+is_kali() {
+    [[ -f /etc/os-release ]] || return 1
+    local line
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        case "$line" in
+            ID_LIKE=*|id_like=*) continue ;;
+            ID=*|id=*)
+                case "$line" in
+                    *[Kk][Aa][Ll][Ii]*) return 0 ;;
+                esac
+                ;;
+        esac
+    done < /etc/os-release
+    return 1
+}
+
 # Capability names for bootstrap; the runtime executable may differ (alias exes).
 ensure_tool() {
     local name="$1"
@@ -45,7 +64,7 @@ ensure_tool() {
     fi
     printf 'INFO: Cannot find %s. Trying automatic installation...\n' "$exe" >&2
     # Scripts are invoked via bash, so test readability, not the exec bit (tracked 100644).
-    if [[ -f "$KALI_BOOTSTRAP" ]]; then
+    if [[ -f "$KALI_BOOTSTRAP" ]] && is_kali; then
         bash "$KALI_BOOTSTRAP" "$name" --skip-refresh 2>/dev/null || true
     elif [[ -f "$LINUX_BOOTSTRAP" ]]; then
         bash "$LINUX_BOOTSTRAP" "$name" 2>/dev/null || true

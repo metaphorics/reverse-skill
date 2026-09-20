@@ -327,5 +327,6 @@ bash -c '
 verify_rc=$?
 set -e
 [[ $verify_rc -ne 0 ]]
+[[ ! -e "$VERIFY_FILE" ]]
 
 echo 'bootstrap manifest source regression passed'

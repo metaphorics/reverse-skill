@@ -14,322 +14,495 @@
       "label": "APK reverse",
       "skill": "apk-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\bapk\\b|smali|jadx|apktool|\\bandroid\\b|android.?reverse|root.?detect|certificate.?pinning", "note": "Bare android, root detection, certificate validation, and pinning bypass are common APK analysis intents" }
+        {
+          "must": "\\bapk\\b|smali|jadx|apktool|\\bandroid\\b|android.?reverse|root.?detect|certificate.?pinning",
+          "note": "Bare android, root detection, certificate validation, and pinning bypass are common APK analysis intents"
+        }
       ]
     },
     "R2": {
       "label": "Mobile reverse (Android+iOS)",
       "skill": "mobile-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\bipa\\b|ios.?reverse|objection|mobsf|mobile.?reverse" },
-        { "must": "jailbreak", "mustAll": ["ios|iphone|ipad|mobile|objection|ipa"], "note": "jailbreak routes to mobile only with an iOS context" }
+        {
+          "must": "\\bipa\\b|ios.?reverse|objection|mobsf|mobile.?reverse"
+        },
+        {
+          "must": "jailbreak",
+          "mustAll": [
+            "ios|iphone|ipad|mobile|objection|ipa"
+          ],
+          "note": "jailbreak routes to mobile only with an iOS context"
+        }
       ]
     },
     "R3": {
       "label": "JS / frontend reverse",
       "skill": "js-reverse/SKILL.md",
       "keywords": [
-        { "must": "js.?reverse|webpack|cryptojs|frontend.?sign|jshook|cdp|encrypted.?param|http.?capture|request.?replay", "note": "Packet capture, HTTP capture, and request replay belong to the JS frontend chain (anything-analyzer)" }
+        {
+          "must": "js.?reverse|webpack|cryptojs|frontend.?sign|jshook|cdp|encrypted.?param|http.?capture|request.?replay",
+          "note": "Packet capture, HTTP capture, and request replay belong to the JS frontend chain (anything-analyzer)"
+        }
       ]
     },
     "R4": {
       "label": "DSL VM reverse",
       "skill": "reverse-engineering/dsl-vm-reverse/SKILL.md",
       "keywords": [
-        { "must": "dsl.?vm|fireye|opcode.?vm|custom.?vm" }
+        {
+          "must": "dsl.?vm|fireye|opcode.?vm|custom.?vm"
+        }
       ]
     },
     "R5": {
       "label": ".NET reverse",
       "skill": "dotnet-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\.net|dnspy|de4dot|confuserex|csharp|dotnet|c#" }
+        {
+          "must": "\\.net|dnspy|de4dot|confuserex|csharp|dotnet|c#"
+        }
       ]
     },
     "R6": {
       "label": "IDA reverse",
       "skill": "ida-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\bida\\b|decompile|disassembl|\\.so\\b|\\.elf\\b|jni", "exclude": "wasm|wabt", "note": ".so, .elf, native, and JNI analysis route to binary static analysis (IDA and disassembly path)" }
+        {
+          "must": "\\bida\\b|decompile|disassembl|\\.so\\b|\\.elf\\b|jni",
+          "exclude": "wasm|wabt",
+          "note": ".so, .elf, native, and JNI analysis route to binary static analysis (IDA and disassembly path)"
+        }
       ]
     },
     "R7": {
       "label": "radare2",
       "skill": "radare2/SKILL.md",
       "keywords": [
-        { "must": "radare|\\br2\\b" },
-        { "must": "r2xsql|r2mcp|r2http|radius2|r2pm|rabin2|rasm2|radiff2|rahash2|rax2|r2frida" }
+        {
+          "must": "radare|\\br2\\b"
+        },
+        {
+          "must": "r2xsql|r2mcp|r2http|radius2|r2pm|rabin2|rasm2|radiff2|rahash2|rax2|r2frida"
+        }
       ]
     },
     "R8": {
       "label": "Firmware pentest",
       "skill": "firmware-pentest/SKILL.md",
       "keywords": [
-        { "must": "firmware|binwalk|iot|emba|firmadyne|unblob" }
+        {
+          "must": "firmware|binwalk|iot|emba|firmadyne|unblob"
+        }
       ]
     },
     "R9": {
       "label": "Malware analysis",
       "skill": "malware-analysis/SKILL.md",
       "keywords": [
-        { "must": "malware|yara|virus.?sample|pe-?sieve|cape.?sandbox|ransomware|webshell|backdoor|yara-?x|\\bcapa\\b" },
-        { "must": "sandbox", "mustAll": ["malware|virus|cape|any\\.run|triage"], "note": "Bare sandbox routes to R9 only with malware context (avoids catching cloud sandboxes and dev contexts)" }
+        {
+          "must": "malware|yara|virus.?sample|pe-?sieve|cape.?sandbox|ransomware|webshell|backdoor|yara-?x|\\bcapa\\b"
+        },
+        {
+          "must": "sandbox",
+          "mustAll": [
+            "malware|virus|cape|any\\.run|triage"
+          ],
+          "note": "Bare sandbox routes to R9 only with malware context (avoids catching cloud sandboxes and dev contexts)"
+        }
       ]
     },
     "R10": {
       "label": "Attack chain",
       "skill": "attack-chain/SKILL.md",
       "keywords": [
-        { "must": "attack.?chain|red.?team|lateral|domain.?pentest|internal.?network|full.?pentest" }
+        {
+          "must": "attack.?chain|red.?team|lateral|domain.?pentest|internal.?network|full.?pentest"
+        }
       ]
     },
     "R11": {
       "label": "Pentest tools",
       "skill": "pentest-tools/SKILL.md",
       "keywords": [
-        { "must": "nmap|nuclei|sqlmap|ffuf|pentest|src.?hunt|bug.?bounty|waf.?bypass|burp|burpsuite|intruder|repeater|metasploit|hashcat|hydra|gobuster|dirsearch|privilege.?escalat|security.?assess|risk.?assess", "note": "The burp family, common pentest tools, privilege escalation, and assessments route to R11" }
+        {
+          "must": "nmap|nuclei|sqlmap|ffuf|pentest|src.?hunt|bug.?bounty|waf.?bypass|burp|burpsuite|intruder|repeater|metasploit|hashcat|hydra|gobuster|dirsearch|privilege.?escalat|security.?assess|risk.?assess",
+          "note": "The burp family, common pentest tools, privilege escalation, and assessments route to R11"
+        }
       ]
     },
     "R12": {
       "label": "API security",
       "skill": "api-security/SKILL.md",
       "keywords": [
-        { "must": "graphql|bola|bfla|api.?secur|rest.?api.?secur" },
-        { "must": "\\boauth\\b", "exclude": "oauth2|oidc|saml|sso|openid", "note": "Bare OAuth routes to API security (OIDC/SAML/SSO go to R37)" }
+        {
+          "must": "graphql|bola|bfla|api.?secur|rest.?api.?secur"
+        },
+        {
+          "must": "\\boauth\\b",
+          "exclude": "oauth2|oidc|saml|sso|openid",
+          "note": "Bare OAuth routes to API security (OIDC/SAML/SSO go to R37)"
+        }
       ]
     },
     "R13": {
       "label": "Supply chain",
       "skill": "supply-chain-security/SKILL.md",
       "keywords": [
-        { "must": "sbom|supply.?chain|trivy|gitleaks|syft" }
+        {
+          "must": "sbom|supply.?chain|trivy|gitleaks|syft"
+        }
       ]
     },
     "R14": {
       "label": "LLM / Agent security",
       "skill": "llm-security/SKILL.md",
       "keywords": [
-        { "must": "llm|prompt.?inject|jailbreak|agent.?secur|garak|owasp.?llm" }
+        {
+          "must": "llm|prompt.?inject|jailbreak|agent.?secur|garak|owasp.?llm"
+        }
       ]
     },
     "R15": {
       "label": "Binary diff / symbol migrate",
       "skill": "binary-diff/SKILL.md",
       "keywords": [
-        { "must": "bindiff|symbol.?migrat|pdb" }
+        {
+          "must": "bindiff|symbol.?migrat|pdb"
+        }
       ]
     },
     "R16": {
       "label": "Patch-diff / N-day",
       "skill": "patch-diff-exploit/SKILL.md",
       "keywords": [
-        { "must": "n-?day|patch.?diff|patch.?tuesday" }
+        {
+          "must": "n-?day|patch.?diff|patch.?tuesday"
+        }
       ]
     },
     "R17": {
       "label": "Pwn chain",
       "skill": "pwn-chain/SKILL.md",
       "keywords": [
-        { "must": "\\bpwn\\b|rop|ret2libc|heap.?overflow|stack.?overflow|buffer.?overflow|kernel.?pwn|exploit.?dev|pwntools" }
+        {
+          "must": "\\bpwn\\b|rop|ret2libc|heap.?overflow|stack.?overflow|buffer.?overflow|kernel.?pwn|exploit.?dev|pwntools"
+        }
       ]
     },
     "R18": {
       "label": "EDR bypass RE",
       "skill": "edr-bypass-re/SKILL.md",
       "keywords": [
-        { "must": "edr|av.?bypass|syscall|amsi|etw.?patch|hell.?s.?gate" }
+        {
+          "must": "edr|av.?bypass|syscall|amsi|etw.?patch|hell.?s.?gate"
+        }
       ]
     },
     "R19": {
       "label": "Browser / desktop automation",
       "skill": "browser-automation/SKILL.md",
       "keywords": [
-        { "must": "playwright|browser.?auto|desktop.?auto|openreverse|fill.?form" }
+        {
+          "must": "playwright|browser.?auto|desktop.?auto|openreverse|fill.?form"
+        }
       ]
     },
     "R20": {
       "label": "Docs generator",
       "skill": "docs-generator/SKILL.md",
       "keywords": [
-        { "must": "writeup|write.?report|generate.?report|\\breport\\b" }
+        {
+          "must": "writeup|write.?report|generate.?report|\\breport\\b"
+        }
       ]
     },
     "R39": {
       "label": "Diagram generation",
       "skill": "diagram-generator/SKILL.md",
       "keywords": [
-        { "must": "diagram|mermaid|graphviz|plantuml|flowchart" }
+        {
+          "must": "diagram|mermaid|graphviz|plantuml|flowchart"
+        }
       ]
     },
     "R21": {
       "label": "Protocol reverse",
       "skill": "protocol-reverse/SKILL.md",
       "keywords": [
-        { "must": "protocol.?reverse|custom.?protocol|protobuf|grpc|pcap|wireshark|pcap.?protocol|wireshark.?dissector" }
+        {
+          "must": "protocol.?reverse|custom.?protocol|protobuf|grpc|pcap|wireshark|pcap.?protocol|wireshark.?dissector"
+        }
       ]
     },
     "R22": {
       "label": "Ghidra reverse",
       "skill": "ghidra-reverse/SKILL.md",
       "keywords": [
-        { "must": "ghidra|ghidra.?mcp|analyzeheadless|pyghidra" }
+        {
+          "must": "ghidra|ghidra.?mcp|analyzeheadless|pyghidra"
+        }
       ]
     },
     "R23": {
       "label": "Cloud / K8s",
       "skill": "cloud-k8s/SKILL.md",
       "keywords": [
-        { "must": "kubernetes|\\bk8s\\b|container.?escape|docker.?escape|kube-?bench|cloud.?secur|imds|169\\.254\\.169\\.254|s3", "note": "S3 and object storage route to cloud security" }
+        {
+          "must": "kubernetes|\\bk8s\\b|container.?escape|docker.?escape|kube-?bench|cloud.?secur|imds|169\\.254\\.169\\.254|s3",
+          "note": "S3 and object storage route to cloud security"
+        }
       ]
     },
     "R24": {
       "label": "Windows / AD",
       "skill": "windows-ad/SKILL.md",
       "keywords": [
-        { "must": "active.?directory|\\bad\\b.?cs|bloodhound|kerberoast|as-?rep|certipy|ntlm.?relay|dc.?sync|impacket|mimikatz|secretsdump" }
+        {
+          "must": "active.?directory|\\bad\\b.?cs|bloodhound|kerberoast|as-?rep|certipy|ntlm.?relay|dc.?sync|impacket|mimikatz|secretsdump"
+        }
       ]
     },
     "R25": {
       "label": "Digital forensics",
       "skill": "digital-forensics/SKILL.md",
       "keywords": [
-        { "must": "forensic|volatility|memory.?dump|plaso|timeline.?explorer|autopsy|sleuth|encase|incident.?response", "note": "Incident response and memory dumps route to digital forensics" }
+        {
+          "must": "forensic|volatility|memory.?dump|plaso|timeline.?explorer|autopsy|sleuth|encase|incident.?response",
+          "note": "Incident response and memory dumps route to digital forensics"
+        }
       ]
     },
     "R26": {
       "label": "Code audit / SAST",
       "skill": "code-audit/SKILL.md",
       "keywords": [
-        { "must": "code.?audit|sast|semgrep|codeql|source.?review" }
+        {
+          "must": "code.?audit|sast|semgrep|codeql|source.?review"
+        }
       ]
     },
     "R27": {
       "label": "Threat hunting",
       "skill": "threat-hunting/SKILL.md",
       "keywords": [
-        { "must": "threat.?hunt|detection.?engineer|blue.?team|sigma.?rule|\\bsigma\\b" }
+        {
+          "must": "threat.?hunt|detection.?engineer|blue.?team|sigma.?rule|\\bsigma\\b"
+        }
       ]
     },
     "R44": {
       "label": "Threat intelligence / OSINT",
       "skill": "threat-intelligence/SKILL.md",
       "keywords": [
-        { "must": "\\bosint\\b|open.?source.?intelligence|threat.?intelligence|\\bcti\\b|ioc.?enrichment|indicator.?enrichment" },
-        { "must": "twitter|tweet|x\\.com|x.?post", "mustAll": ["ioc|threat|malware|campaign|actor|phish|scam|impersonat|indicator"], "note": "Requires a security context so generic social-media analysis does not route to threat intelligence" }
+        {
+          "must": "\\bosint\\b|open.?source.?intelligence|threat.?intelligence|\\bcti\\b|ioc.?enrichment|indicator.?enrichment"
+        },
+        {
+          "must": "twitter|tweet|x\\.com|x.?post",
+          "mustAll": [
+            "ioc|threat|malware|campaign|actor|phish|scam|impersonat|indicator"
+          ],
+          "note": "Requires a security context so generic social-media analysis does not route to threat intelligence"
+        }
       ]
     },
     "R28": {
       "label": "OT / ICS",
       "skill": "ot-ics/SKILL.md",
       "keywords": [
-        { "must": "\\bot\\b|\\bics\\b|scada|plc\\b|modbus|dnp3|s7comm|purdue|ot/?ics", "note": "The \\bot\\b word boundary avoids false hits from forensics" }
+        {
+          "must": "\\bot\\b|\\bics\\b|scada|plc\\b|modbus|dnp3|s7comm|purdue|ot/?ics",
+          "note": "The \\bot\\b word boundary avoids false hits from forensics"
+        }
       ]
     },
     "R29": {
       "label": "Wi-Fi / wireless",
       "skill": "wifi-wireless/SKILL.md",
       "keywords": [
-        { "must": "wifi|wi-?fi|aircrack|airmon|wpa.?handshake|wireless.?pentest" }
+        {
+          "must": "wifi|wi-?fi|aircrack|airmon|wpa.?handshake|wireless.?pentest"
+        }
       ]
     },
     "R30": {
       "label": "Browser extension reverse",
       "skill": "browser-extension-reverse/SKILL.md",
       "keywords": [
-        { "must": "browser.?extension|chrome.?extension|\\bcrx\\b|\\bxpi\\b|mv3.?extension" }
+        {
+          "must": "browser.?extension|chrome.?extension|\\bcrx\\b|\\bxpi\\b|mv3.?extension"
+        }
       ]
     },
     "R31": {
       "label": "macOS / Mach-O reverse",
       "skill": "macos-reverse/SKILL.md",
       "keywords": [
-        { "must": "macos|mach-?o|codesign|objective-?c|swift.?reverse|xpc" }
+        {
+          "must": "macos|mach-?o|codesign|objective-?c|swift.?reverse|xpc"
+        }
       ]
     },
     "R32": {
       "label": "Thick client security",
       "skill": "thick-client/SKILL.md",
       "keywords": [
-        { "must": "thick.?client|desktop.?client|electron.?app|winforms|wpf" }
+        {
+          "must": "thick.?client|desktop.?client|electron.?app|winforms|wpf"
+        }
       ]
     },
     "R33": {
       "label": "Go / Rust reverse",
       "skill": "go-rust-reverse/SKILL.md",
       "keywords": [
-        { "must": "\\bgolang\\b|\\brustc\\b|go.?binary|stripped.?go|gore.?sym|go.?malware|rust.?binary|redress|goretk|pclntab" }
+        {
+          "must": "\\bgolang\\b|\\brustc\\b|go.?binary|stripped.?go|gore.?sym|go.?malware|rust.?binary|redress|goretk|pclntab|go.?reverse.?engineering|rust.?reverse.?engineering|go.?rust.?reverse"
+        }
       ]
     },
     "R34": {
       "label": "Hardware / debug interfaces",
       "skill": "hardware-security/SKILL.md",
       "keywords": [
-        { "must": "uart|jtag|swd|debug.?pad|flashrom", "note": "UART, JTAG, SWD, debug pads, and flashrom route to hardware debug interfaces" }
+        {
+          "must": "uart|jtag|swd|debug.?pad|flashrom",
+          "note": "UART, JTAG, SWD, debug pads, and flashrom route to hardware debug interfaces"
+        }
       ]
     },
     "R35": {
       "label": "Database security",
       "skill": "database-security/SKILL.md",
       "keywords": [
-        { "must": "database.?secur|\\bmysql\\b|\\bpostgres|mongodb|redis.?secur|mssql" }
+        {
+          "must": "database.?secur|\\bmysql\\b|\\bpostgres|mongodb|redis.?secur|mssql"
+        }
       ]
     },
     "R36": {
       "label": "Email / phishing analysis",
       "skill": "email-security/SKILL.md",
       "keywords": [
-        { "must": "phish|spf|dkim|dmarc|bec\\b|email.?secur" }
+        {
+          "must": "phish|spf|dkim|dmarc|bec\\b|email.?secur"
+        }
       ]
     },
     "R37": {
       "label": "Identity federation (SAML/OIDC)",
       "skill": "identity-federation/SKILL.md",
       "keywords": [
-        { "must": "saml|oidc|openid.?connect|oauth2|sso\\b" }
+        {
+          "must": "saml|oidc|openid.?connect|oauth2|sso\\b"
+        }
       ]
     },
     "R38": {
       "label": "RF / SDR research",
       "skill": "radio-sdr/SKILL.md",
       "keywords": [
-        { "must": "\\bsdr\\b|hackrf|rtl-?sdr|gnu.?radio|\\burh\\b|bluetooth|\\bble\\b", "note": "Bluetooth and BLE route to RF research" }
+        {
+          "must": "\\bsdr\\b|hackrf|rtl-?sdr|gnu.?radio|\\burh\\b|bluetooth|\\bble\\b",
+          "note": "Bluetooth and BLE route to RF research"
+        }
       ]
     },
     "R40": {
       "label": "Case evidence review",
       "skill": "case-review/SKILL.md",
       "keywords": [
-        { "must": "case.?review|case.?audit|evidence.?chain|evidence.?graph|traceability|fixity.?check" }
+        {
+          "must": "case.?review|case.?audit|evidence.?chain|evidence.?graph|traceability|fixity.?check"
+        }
       ]
     },
     "R41": {
       "label": "CTF sandbox orchestrator",
       "skill": "ctf-sandbox/SKILL.md",
       "keywords": [
-        { "must": "\\bctf\\b|awd", "exclude": "pwn|rop|ret2" }
+        {
+          "must": "\\bctf\\b|awd",
+          "exclude": "pwn|rop|ret2"
+        }
       ]
     },
     "R45": {
       "label": "Binary Ninja reverse",
       "skill": "binary-ninja-reverse/SKILL.md",
       "keywords": [
-        { "must": "binary.?ninja|binaryninja|\\bbinja\\b|binary[_-]ninja[_-]mcp|hlil|mlil", "note": "Binary Ninja GUI, IL, Python API, MCP, or localhost HTTP integration" }
+        {
+          "must": "binary.?ninja|binaryninja|\\bbinja\\b|binary[_-]ninja[_-]mcp|hlil|mlil",
+          "note": "Binary Ninja GUI, IL, Python API, MCP, or localhost HTTP integration"
+        }
       ]
     },
     "R0": {
       "label": "General reverse-engineering",
       "skill": "reverse-engineering/SKILL.md",
       "keywords": [
-        { "must": "ollvm|anti-?debug|unicorn|angr|gdb|deobfuscat|unity|il2cpp|game.?reverse|anti-?cheat|\\bwasm\\b|wabt|wasm-decompile|wasm2c|wasm-objdump", "note": "Unity and game reverse engineering route to general RE (seed-014)" },
-        { "must": "frida", "exclude": "\\bapk\\b|smali|jadx|android", "note": "With APK context, frida routes to R1" },
-        { "must": "reverse", "exclude": "apk|js.?reverse|ios|mobile|\\.net|firmware|malware|protocol|ghidra|extension|macos|mach|golang|rust", "note": "Generic reverse fallback (a more specific domain wins)" }
+        {
+          "must": "ollvm|anti-?debug|unicorn|angr|gdb|deobfuscat|unity|il2cpp|game.?reverse|anti-?cheat|\\bwasm\\b|wabt|wasm-decompile|wasm2c|wasm-objdump",
+          "note": "Unity and game reverse engineering route to general RE (seed-014)"
+        },
+        {
+          "must": "frida",
+          "exclude": "\\bapk\\b|smali|jadx|android",
+          "note": "With APK context, frida routes to R1"
+        },
+        {
+          "must": "reverse",
+          "exclude": "apk|js.?reverse|ios|mobile|\\.net|firmware|malware|protocol|ghidra|extension|macos|mach|golang|rust",
+          "note": "Generic reverse fallback (a more specific domain wins)"
+        }
       ]
     }
   },
   "priority": [
-    "R4", "R1", "R2", "R3", "R30", "R31", "R33", "R5", "R9", "R21",
-    "R22", "R45", "R6", "R7", "R8", "R34", "R28", "R17", "R16", "R18", "R24",
-    "R37", "R23", "R35", "R25", "R44", "R36", "R29", "R38", "R32", "R26", "R27",
-    "R10", "R11", "R12", "R13", "R14", "R15", "R19", "R40", "R20", "R39", "R41", "R0"
+    "R4",
+    "R1",
+    "R2",
+    "R3",
+    "R30",
+    "R31",
+    "R33",
+    "R5",
+    "R9",
+    "R21",
+    "R22",
+    "R45",
+    "R6",
+    "R7",
+    "R8",
+    "R34",
+    "R28",
+    "R17",
+    "R16",
+    "R18",
+    "R24",
+    "R37",
+    "R23",
+    "R35",
+    "R25",
+    "R44",
+    "R36",
+    "R29",
+    "R38",
+    "R32",
+    "R26",
+    "R27",
+    "R10",
+    "R11",
+    "R12",
+    "R13",
+    "R14",
+    "R15",
+    "R19",
+    "R40",
+    "R20",
+    "R39",
+    "R41",
+    "R0"
   ]
 }

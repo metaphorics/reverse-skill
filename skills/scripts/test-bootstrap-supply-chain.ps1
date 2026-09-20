@@ -151,7 +151,20 @@ printf "pnpm|%s\n" "$*" >> "$BOOTSTRAP_PS_LOG"
         }
     }
 
-    # Assert-DownloadedFileIntegrity comes from lib/BootstrapSupplyChain.ps1 (dotted at the top of this file).
+    # Import installer-only functions by AST extent. Dot-sourcing
+    # bootstrap-reverse.ps1 would execute its main flow (and exit the test),
+    # so define just the two functions this file exercises. Their runtime
+    # dependencies resolve to the stubs above and lib/BootstrapSupplyChain.ps1.
+    $installerSource = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'bootstrap-reverse.ps1') -Raw
+    $parseTokens = $null
+    $parseErrors = $null
+    $installerAst = [System.Management.Automation.Language.Parser]::ParseInput($installerSource, [ref]$parseTokens, [ref]$parseErrors)
+    if ($parseErrors.Count -gt 0) { throw "bootstrap-reverse.ps1 has syntax errors: $($parseErrors[0].Message)" }
+    foreach ($wantedFunction in @('Ensure-Capability', 'Start-AnythingAnalyzerService')) {
+        $found = @($installerAst.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $wantedFunction }, $true))[0]
+        if ($null -eq $found) { throw "installer function missing: $wantedFunction" }
+        . ([scriptblock]::Create($found.Extent.Text))
+    }
     $missingDigestPath = Join-Path $scratch 'missing-api-digest.zip'
     Set-Content -LiteralPath $missingDigestPath -Value 'fixture'
     $missingDigestRejected = $false

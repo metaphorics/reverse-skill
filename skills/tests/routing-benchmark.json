@@ -920,6 +920,21 @@
       "hint": "r2frida attach to process",
       "expect": "R7",
       "quick": false
+    },
+    {
+      "hint": "go reverse engineering on this stripped binary",
+      "expect": "R33",
+      "quick": true
+    },
+    {
+      "hint": "rust reverse engineering of this crate",
+      "expect": "R33",
+      "quick": true
+    },
+    {
+      "hint": "go/rust reverse triage for this sample",
+      "expect": "R33",
+      "quick": false
     }
   ]
 }
