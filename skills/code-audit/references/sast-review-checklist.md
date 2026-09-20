@@ -1,10 +1,10 @@
-# 代码审计清单（精简）
+# Source Code Audit Checklist (Condensed)
 
-- [ ] 所有外部输入入口列表
-- [ ] 鉴权/鉴权中间件覆盖
-- [ ] 多租户 ID 是否绑定会话
-- [ ] 反序列化 / pickle / YAML load
-- [ ] SSRF 出网与协议限制
-- [ ] 密钥与 token 存储
-- [ ] 文件上传路径与类型
-- [ ] 危险 exec/system/Runtime
+- [ ] List every external input entry point.
+- [ ] Check authentication and authorization middleware coverage.
+- [ ] Bind every multi-tenant ID to the session.
+- [ ] Check deserialization, pickle, and YAML load.
+- [ ] Check SSRF outbound access and protocol limits.
+- [ ] Check key and token storage.
+- [ ] Check file-upload paths and types.
+- [ ] Check dangerous exec, system, and Runtime calls.

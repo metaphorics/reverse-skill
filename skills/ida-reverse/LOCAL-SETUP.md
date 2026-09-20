@@ -1,48 +1,48 @@
-# IDA ↔ reverse-skill 对接（可移植）
+# IDA ↔ reverse-skill integration (portable)
 
-本页是通用步骤，不含某台机器的绝对路径。本机就绪报告留在仓库根目录的 `LOCAL-READINESS.md`（已 gitignore）。
+This page gives general steps. It does not contain the absolute path of any machine. The local readiness report remains in `LOCAL-READINESS.md` in the repository root (already in gitignore).
 
-## 目标形态
+## Target state
 
-| 项 | 约定 |
+| Item | Convention |
 |----|------|
-| IDA 安装目录 | 环境变量 `IDADIR`（目录内有 `ida.exe` 或 `ida.dll`） |
+| IDA installation directory | Environment variable `IDADIR` (the directory contains `ida.exe` or `ida.dll`) |
 | HTTP MCP | `http://127.0.0.1:13337/mcp` |
-| 客户端服务器名 | 只留 **`idapro`**（不要同时注册 `ida-pro-mcp`） |
-| 启动 | `scripts/start.ps1`（`--unsafe`，无 `?ext=dbg`） |
-| 开库 | 大文件优先 `scripts/open.ps1`，不要经部分客户端直调 `idb_open` |
+| Client server name | Keep only **`idapro`** (do not register `ida-pro-mcp` at the same time) |
+| Start | `scripts/start.ps1` (`--unsafe`, without `?ext=dbg`) |
+| Open a database | Prefer `scripts/open.ps1` for large files. Do not call `idb_open` directly through some clients. |
 
-两个 MCP 名字指向同一 13337 会把工具注册两遍，并和 idalib worker 抢端口。
+Two MCP names that point to the same 13337 register the tools twice and compete with the idalib worker for the port.
 
-## 安装
+## Installation
 
 ```powershell
-setx IDADIR "<你的 IDA 安装目录>"
+setx IDADIR "<your IDA installation directory>"
 
-# 必须用 mrexodia/ida-pro-mcp，不要装 PyPI 的 ida-mcp
+# You must use mrexodia/ida-pro-mcp. Do not install PyPI's ida-mcp.
 python -m pip install "git+https://github.com/mrexodia/ida-pro-mcp.git"
 
-# 激活 idalib（路径按本机 IDA 调整）
+# Activate idalib. Adjust the path for your local IDA installation.
 python "<IDADIR>\idalib\python\py-activate-idalib.py" -d "<IDADIR>"
 
-# 装插件 + 客户端配置
+# Install the plugin and configure the client.
 python -m ida_pro_mcp --install --transport streamable-http --scope global
 ```
 
-## 启动与保活
+## Start and keep alive
 
-`type: http` 的 MCP 条目不会代为拉起进程。13337 没监听时，客户端全部报 error。
+An MCP entry with `type: http` does not start the process for you. When 13337 is not listening, all clients report error.
 
-| 脚本 | 作用 |
+| Script | Function |
 |------|------|
-| `scripts/start.ps1` | 健康则 `OK:<n>:reuse` 并刷新 last-healthy；端口在听但 RPC 超时视为忙，不杀；只在无人监听、缺 `py_eval`、或 tools/list 连续失败超过 3 分钟（且无 `opening.lock`）时替换 managed supervisor；永不杀 `ida.exe` |
-| `scripts/watchdog.ps1` | 每分钟巡检；健康 reuse；GUI / `open.ps1` 开库锁 / last-healthy 未满 3 分钟 → reuse；**tools/list 连续失败超过 3 分钟才 `-Force`** |
-| `scripts/recover.ps1` | 立刻 `-Force` 重启 supervisor（不杀 `ida.exe`）。HTTP 客户端把 `idapro` 标成 error 时用这个 |
-| `scripts/install-autostart.ps1` | 注册计划任务 `reverse-skill-ida-mcp`（登录 + 每分钟） |
-| `scripts/start-gui.ps1` | idalib license 失败时开 GUI 插件 |
-| `scripts/open.ps1` | HTTP 直调 `idb_open`，绕过部分客户端 schema 校验 |
+| `scripts/start.ps1` | If healthy, output `OK:<n>:reuse` and refresh last-healthy. If the port is listening but RPC times out, treat it as busy and do not kill it. Replace the managed supervisor only when no process is listening, `py_eval` is missing, or tools/list fails continuously for more than 3 minutes and no `opening.lock` exists. Never kill `ida.exe`. |
+| `scripts/watchdog.ps1` | Check every minute. Reuse when healthy. Reuse when the GUI or `open.ps1` is opening a database or when last-healthy is less than 3 minutes old. Use `-Force` only after tools/list fails continuously for more than 3 minutes. |
+| `scripts/recover.ps1` | Restart the supervisor with `-Force` immediately (do not kill `ida.exe`). Use this when the HTTP client marks `idapro` as error. |
+| `scripts/install-autostart.ps1` | Register the scheduled task `reverse-skill-ida-mcp` (at login and every minute) |
+| `scripts/start-gui.ps1` | Open the GUI plugin when the idalib license fails |
+| `scripts/open.ps1` | Call `idb_open` directly over HTTP and bypass schema validation in some clients |
 
-日志：`%LOCALAPPDATA%\reverse-skill\ida-mcp\supervisor.log` 与 `watchdog.log`。
+Logs: `%LOCALAPPDATA%\reverse-skill\ida-mcp\supervisor.log` and `watchdog.log`.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File "skills\ida-reverse\scripts\start.ps1"
@@ -50,18 +50,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "skills\ida-reverse\scripts\
 powershell -NoProfile -ExecutionPolicy Bypass -File "skills\ida-reverse\scripts\install-autostart.ps1"
 ```
 
-GUI 占用 13337 但一时没回包时，`start.ps1` 输出 `WARN:gui_busy` 并退出，避免把正在分析的 IDA 干掉。
+If the GUI uses 13337 but does not return a response for a short time, `start.ps1` outputs `WARN:gui_busy` and exits. This prevents it from killing the IDA that is under analysis.
 
-## 客户端
+## Clients
 
-全部指向 Streamable HTTP：`http://127.0.0.1:13337/mcp`，服务器名 `idapro`。
+Point all clients to Streamable HTTP: `http://127.0.0.1:13337/mcp`, with server name `idapro`.
 
-改配置后必须新开会话。Cursor 在启动时若端口未监听，事后把服务拉起来也**不会自动重连**，需要在 MCP 面板手动刷新。
+Open a new session after you change the configuration. If the port is not listening when Cursor starts, Cursor will **not reconnect automatically** after the service starts. Refresh the service manually in the MCP panel.
 
-## 已知注意点
+## Known Notes
 
-1. System32 文件：`open.ps1` 会复制到临时路径（输出带 `(temp copy)`）
-2. `idb_open` 勿经部分客户端 MCP 直调
-3. `start.ps1` 优先 `python -m ida_pro_mcp.idalib_supervisor`，比 `.cmd` 包装更稳
-4. 正式安装与桌面便携包并存时，以 `IDADIR` 为准
-5. 不要加 `?ext=dbg`（默认不暴露调试器工具）
+1. System32 file: `open.ps1` copies to a temporary path (output includes `(temp copy)`)
+2. Do not call `idb_open` directly through MCP from some clients
+3. `start.ps1` prioritizes `python -m ida_pro_mcp.idalib_supervisor` because it is more stable than the `.cmd` wrapper
+4. When the formal installation and the desktop portable package coexist, use `IDADIR`
+5. Do not add `?ext=dbg` (debugger tools are not exposed by default)

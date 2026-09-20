@@ -1,48 +1,48 @@
-# [种子] PCAP 自定义二进制协议逆向
+# [Seed] PCAP custom binary protocol reverse engineering
 
-## 场景分类
-抓包分析 / 协议逆向
+## Scenario category
+Packet capture analysis / protocol reverse engineering
 
-## 目标概述
-某 IoT 设备/桌面客户端走 TCP 自定义二进制协议（非 HTTP），抓到一段 PCAP，需要还原帧结构、字段含义、加密层（如有），并写一个本地 client/server 复现。
+## Goal summary
+An IoT device or desktop client uses a custom TCP binary protocol, not HTTP. Recover the frame structure, field meanings, and encryption layer, if any, from a PCAP. Then write a local client/server reproduction.
 
-## 完整执行链路
+## Full execution path
 
-1. Wireshark 打开 PCAP，先做基础统计
-   - `Statistics → Conversations` 看 IP/端口对
-   - `Statistics → I/O Graphs` 看数据节奏
-2. 找出真正的应用层流（剥掉 TLS 之类标准层）
-3. 在某条 TCP 流上 → `Follow → TCP Stream` → 切到 RAW 模式 → 导出
-4. 二进制级观察：每帧前几字节是不是固定 magic / 长度字段？
+1. Open the PCAP in Wireshark and collect basic statistics.
+   - `Statistics → Conversations`: inspect IP and port pairs.
+   - `Statistics → I/O Graphs`: inspect the traffic timing.
+2. Find the real application-layer stream and remove standard layers such as TLS.
+3. On a TCP stream, select `Follow → TCP Stream`, switch to RAW mode, and export it.
+4. Inspect the bytes: do the first few bytes of each frame contain a fixed magic value or length field?
    ```bash
    xxd dump.bin | head -20
    ```
-5. 用 hex 模式找规律：固定头、长度、TLV、CRC
-6. 写 Python 解析器（struct + scapy）一帧一帧解
-7. 同步从二进制反编译反查协议字段（IDA / Ghidra 看 send/recv 周围 struct）
-8. 验证：自己起 client 发一帧 → 服务端响应一致
+5. Find patterns in hex mode: fixed header, length, TLV, and CRC.
+6. Write a Python parser with `struct` and scapy and decode one frame at a time.
+7. Cross-check protocol fields in the binary decompilation. Inspect structs around send/recv in IDA / Ghidra.
+8. Verify the result: start a local client, send a frame, and compare the server response.
 
-## 踩坑记录
+## Pitfall log
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Solution | Time |
 |------|------|---------|------|
-| Wireshark 不识别协议，只显示 "Data" | 是私有协议，没有解析器 | 写 Wireshark Lua dissector 或 直接 Python 离线分析 | 30min |
-| 看起来无规律，每帧都不同 | 有压缩或加密层 | 用熵分析（`ent dump.bin`）判断是否加密；找 nonce/IV 字段 | 1h |
-| 长度字段算不对 | 长度可能是 little-endian / big-endian / 含/不含自身 | 找几条不同长度的帧，列方程组解出来 | 40min |
-| TLS 抓到但解不了 | 客户端不留 SSLKEYLOGFILE | 在客户端进程层 hook（Frida 抓 ssl_read/ssl_write）抓明文 | 1.5h |
-| 数据正确但服务端不响应 | 协议带递增的 seq / nonce，重放被拒 | 搞清楚 seq 计算方式（通常前一帧的 hash 或递增计数器） | 50min |
+| Wireshark did not identify the protocol and showed only "Data" | The protocol is private and has no parser | Write a Wireshark Lua dissector or analyze it offline with Python | 30min |
+| The frames looked random and all differed | A compression or encryption layer was present | Use entropy analysis (`ent dump.bin`) to test for encryption and find nonce/IV fields | 1h |
+| The length field calculation was wrong | The length might be little-endian, big-endian, or include or exclude itself | Collect frames with different lengths and solve the equations | 40min |
+| TLS traffic was captured but could not be decrypted | The client did not keep `SSLKEYLOGFILE` | Hook the client process with Frida and capture plaintext from ssl_read/ssl_write | 1.5h |
+| The data was correct but the server did not respond | The protocol used an increasing seq/nonce and rejected replay | Determine the seq calculation, usually a previous-frame hash or an increasing counter | 50min |
 
-## 工具链发现
+## Toolchain findings
 
-- **Wireshark Lua Dissector** 用 < 100 行就能把私有协议变成 Wireshark 可视化
-- **scapy** 写 Python parser 时定义 `Packet` 子类即可
-- **Kaitai Struct** 用 YAML 描述协议结构，能生成多语言 parser（Python/Java/C++/JS），适合长期复用
-- **NetworkMiner** 比 Wireshark 更适合"事后取证"（自动重组文件、识别凭证）
-- **ent / binwalk -E** 看熵，>7.5 几乎肯定加密
+- **Wireshark Lua Dissector** can make a private protocol visible in Wireshark in fewer than 100 lines.
+- With **scapy**, define a `Packet` subclass to write a Python parser.
+- **Kaitai Struct** describes protocol structures in YAML and generates parsers in several languages (Python/Java/C++/JS). It suits repeated use.
+- **NetworkMiner** is better for "after-the-fact forensics" than Wireshark because it rebuilds files and identifies credentials automatically.
+- **ent / binwalk -E** measure entropy. Values above 7.5 usually indicate encryption.
 
-## 关键代码/命令
+## Key code / commands
 
-scapy 自定义协议示例（TLV）：
+Scapy custom protocol example (TLV):
 
 ```python
 from scapy.all import *
@@ -59,7 +59,7 @@ class MyMsg(Packet):
         XShortField("crc", 0),
     ]
 
-# 解析 PCAP
+# Parse the PCAP
 pkts = rdpcap('dump.pcap')
 for p in pkts:
     if TCP in p and p[TCP].dport == 9527 and p.payload:
@@ -67,7 +67,7 @@ for p in pkts:
         msg.show()
 ```
 
-Kaitai Struct YAML（长期项目首选）：
+Kaitai Struct YAML (preferred for long-term projects):
 
 ```yaml
 # myproto.ksy
@@ -91,43 +91,43 @@ seq:
     type: u2
 ```
 
-熵分析：
+Entropy analysis:
 
 ```bash
-binwalk -E dump.bin             # 熵图
-ent dump.bin                    # 数值
+binwalk -E dump.bin             # Entropy graph
+ent dump.bin                    # Numeric values
 ```
 
-## 对本包的改进建议
+## Improvement suggestions for this package
 
-- `reverse-engineering/platforms.md` 增加"自定义协议逆向 4 步法"章节
-- 新增 `reverse-engineering/references/kaitai-cheatsheet.md` 速查
-- bootstrap manifest 增加 scapy（pip）和 binwalk
+- Add a "four-step custom protocol reverse engineering" section to `reverse-engineering/platforms.md`.
+- Add `reverse-engineering/references/kaitai-cheatsheet.md` as a quick reference.
+- Add scapy (pip) and binwalk to the bootstrap manifest.
 
-## 可复用的模式/脚本片段
+## Reusable patterns / script fragments
 
-**自定义协议逆向 4 步法**：
+**Four-step custom protocol reverse engineering**:
 
 ```text
-1. 看节奏（I/O 图 + Conversations 找出会话边界）
-2. 找帧界（magic / length / 终止符）
-3. 拆字段（固定头、长度、payload、校验）
-4. 验加密（熵 + 找 nonce + 二进制反查 send 函数）
+1. Inspect timing (I/O graph + Conversations to find session boundaries)
+2. Find frame boundaries (magic / length / terminator)
+3. Split fields (fixed header, length, payload, checksum)
+4. Check encryption (entropy + find nonce + cross-check the binary send function)
 ```
 
-**找帧长度的小技巧**：
+**A tip for finding frame lengths**:
 
-把同流的所有 PSH 包导出 → 看每个 TCP segment 的总长度，看长度字段（位置 i, i+1, i+2 都试）是否能推出 segment 长度。
+Export every PSH packet in the stream → inspect the total length of each TCP segment and test whether the length field (positions i, i+1, or i+2) yields the segment length.
 
-## 进化动作
-- [ ] reverse-engineering/platforms.md 增加协议逆向章节
-- [ ] bootstrap-manifest 加 scapy / binwalk
-- [ ] 增加 Kaitai Struct 速查
+## Evolution actions
+- [ ] Add a protocol reverse-engineering section to reverse-engineering/platforms.md
+- [ ] Add scapy / binwalk to the bootstrap manifest
+- [ ] Add a Kaitai Struct quick reference
 
-## 环境信息
-- Kali / Ubuntu，Wireshark 4.x, Python 3.10+, scapy 2.5
-- 目标协议: 自定义 TCP 二进制（含 TLV / 长度前缀）
-- 加密层: 视情况而定（常见 AES-CTR / ChaCha20）
+## Environment information
+- Kali / Ubuntu, Wireshark 4.x, Python 3.10+, scapy 2.5
+- Target protocol: custom TCP binary protocol (with TLV / length prefix)
+- Encryption layer: depends on the case (common options are AES-CTR / ChaCha20)
 
-## 脱敏要求
-本条目为种子数据，基于公开协议逆向方法编写，不涉及真实产品。
+## Redaction requirements
+This seed entry is based on public protocol reverse-engineering methods and does not involve a real product.

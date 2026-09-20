@@ -145,17 +145,17 @@ $vLog = Join-Path $ScratchDir 'verify.log'
     Tee-Object -FilePath $vLog | Out-Null
 if ($LASTEXITCODE -eq 0) { Ok 'verify-routing-coherence exit 0' } else { Bad "verify exit $LASTEXITCODE" }
 
-# 8) Chinese route samples (P1)
+# 8) Route sample regression (P1)
 $mr = Join-Path $scriptDir 'master-route.ps1'
-$zhCases = @(
-    @{ Hint = '安卓 APK 加固 反编译'; Expect = 'apk-reverse' },
-    @{ Hint = '渗透测试 端口扫描 SQL注入'; Expect = 'pentest-tools' },
-    @{ Hint = '前端签名 JS逆向'; Expect = 'js-reverse' }
+$routeCases = @(
+    @{ Hint = 'android apk packer decompile'; Expect = 'apk-reverse' },
+    @{ Hint = 'pentest port scan sql injection'; Expect = 'pentest-tools' },
+    @{ Hint = 'frontend signature js reverse'; Expect = 'js-reverse' }
 )
-foreach ($zc in $zhCases) {
-    $raw = & $HostExe -NoProfile -ExecutionPolicy Bypass -File $mr -Hint $zc.Hint 2>&1 | Out-String
-    if ($raw -match [regex]::Escape($zc.Expect)) { Ok ("zh route -> {0}" -f $zc.Expect) }
-    else { Bad ("zh route miss {0}: {1}" -f $zc.Expect, ($raw.Substring(0, [Math]::Min(120, $raw.Length)))) }
+foreach ($rc in $routeCases) {
+    $raw = & $HostExe -NoProfile -ExecutionPolicy Bypass -File $mr -Hint $rc.Hint 2>&1 | Out-String
+    if ($raw -match [regex]::Escape($rc.Expect)) { Ok ("route sample -> {0}" -f $rc.Expect) }
+    else { Bad ("route sample miss {0}: {1}" -f $rc.Expect, ($raw.Substring(0, [Math]::Min(120, $raw.Length)))) }
 }
 
 # 9) case-guard: ready case exits 0; bare pending exits 2 even with -Force

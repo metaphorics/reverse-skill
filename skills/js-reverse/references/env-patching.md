@@ -1,6 +1,6 @@
-# 补环境规则
+# Environment patching rules
 
-- 只补页面证据已经证明需要的对象
-- 一次补一个最小因果单元
-- 先补值，再补函数壳，再补返回对象契约
-- 每次补丁都要重新执行并记录 first divergence 是否前移
+- Patch only objects that page evidence shows are necessary.
+- Patch one minimal causal unit at a time.
+- Patch values first. Then patch function stubs. Then patch return-object contracts.
+- Run again after each patch. Record whether first divergence moves earlier.

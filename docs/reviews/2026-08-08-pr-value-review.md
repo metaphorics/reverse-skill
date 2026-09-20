@@ -1,44 +1,44 @@
-# 2026-08-08 开放 PR 价值评估与合并报告
+# Open PR Value Assessment and Merge Report — 2026-08-08
 
-## 结论
+## Conclusion
 
-基于最新 `origin/main` 审查 8 个开放 PR。本轮合并 #59、#19、#22、#29；暂缓 #43、#37、#36、#23。合并后的 smoke 与 routing coherence 检查均通过。
+Based on the latest `origin/main`, this review covered eight open PRs. This round merged #59, #19, #22, and #29. It deferred #43, #37, #36, and #23. The smoke and routing-coherence checks passed after the merges.
 
-## 评估结果
+## Assessment Results
 
-| PR | 价值 | 风险/状态 | 决策 |
+| PR | Value | Risk or status | Decision |
 |---|---|---|---|
-| #59 | Rust cdylib 差分复现方法完整，可复用性高 | 仅 journal 与索引，无可执行代码 | 合并 |
-| #19 | Windows 24H2 工具链兼容经验覆盖广 | 仅 journal 与索引 | 合并 |
-| #22 | Electron/Bytenode/更新链分析方法完整 | 仅 journal 与索引 | 合并 |
-| #29 | Next.js 双 API serializer 与契约重建经验完整 | 仅 journal 与索引 | 合并 |
-| #43 | 路由单一事实源、回归基准、CI 与版本固定价值很高；客户端接入只能作为可选适配层 | 38 文件、与主线 4 个关键文件冲突，原提案含 OpenCode 专用配置 | 暂缓，建议 rebase 后专项审查；不得让核心绑定 OpenCode |
-| #37 | evidence graph/case review 能补齐交付审计 | 与主线路由校验和文档冲突 | 暂缓，建议 rebase 后运行其单测 |
-| #36 | MCP/自举安全加固方向正确 | 6 个关键文件冲突，部分能力已由近期主线吸收 | 暂缓，做差分去重 |
-| #23 | Bash parity 与展示材料有生态价值 | 92 文件、展示资产多、2 个脚本冲突 | 暂缓，建议拆分 PR |
+| #59 | Complete Rust cdylib differential-reproduction method with high reuse value | Journal and index only. No executable code. | Merge |
+| #19 | Broad Windows 24H2 toolchain compatibility experience | Journal and index only. | Merge |
+| #22 | Complete Electron, Bytenode, and update-chain analysis method | Journal and index only. | Merge |
+| #29 | Complete experience rebuilding a Next.js dual-API serializer and contract | Journal and index only. | Merge |
+| #43 | High value from a single routing source of truth, regression cases, CI, and version pins. Client integration can only be an optional adapter. | 38 files conflict with four key mainline files. The original proposal includes OpenCode-specific configuration. | Defer. Request a focused review after rebase. The core must not bind to OpenCode. |
+| #37 | Evidence graph and case review can complete the delivery audit. | Conflicts with mainline routing checks and documentation. | Defer. Rebase separately and run its unit tests. |
+| #36 | Correct direction for MCP and bootstrap security hardening. | Six key files conflict. Recent mainline changes already include some capabilities. | Defer. Remove duplicate changes. |
+| #23 | Bash parity and demonstration materials provide ecosystem value. | 92 files, many demonstration assets, and two script conflicts. | Defer. Split the PR. |
 
-## 决策图
+## Decision Diagram
 
 ```mermaid
 flowchart TD
-    A[开放 PR] --> B{仅文档与脱敏 journal?}
-    B -->|是| C{内容完整且方法可复用?}
-    C -->|是| D[合并并统一索引]
-    C -->|否| E[要求补充]
-    B -->|否| F{核心脚本冲突或变更面过大?}
-    F -->|是| G[暂缓并要求 rebase/拆分]
-    F -->|否| H[隔离运行测试后再决定]
+    A[Open PRs] --> B{Only documentation and redacted journal entries?}
+    B -->|yes| C{Is the content complete and reusable?}
+    C -->|yes| D[Merge and unify the index]
+    C -->|no| E[Request additions]
+    B -->|no| F{Core script conflict or excessive change surface?}
+    F -->|yes| G[Defer and request rebase or split]
+    F -->|no| H[Run isolated tests before deciding]
 ```
 
-## 验证
+## Verification
 
-- `skills/scripts/smoke.ps1`: ALL PASS（9 个脚本解析、8 个路由用例）。
-- `skills/scripts/verify-routing-coherence.ps1`: ALL ROUTING COHERENCE CHECKS PASSED。
-- 用户原有未提交 journal 在同步和合并期间通过 stash 隔离保存并恢复。
+- `skills/scripts/smoke.ps1`: ALL PASS. Nine scripts parsed and eight routing cases passed.
+- `skills/scripts/verify-routing-coherence.ps1`: ALL ROUTING COHERENCE CHECKS PASSED.
+- The user's existing uncommitted journal was isolated with a stash during synchronization and merging, then restored.
 
-## 后续建议
+## Follow-Up Recommendations
 
-1. 优先让 #43 rebase 到当前 `main`，重点复核 JSON 路由等价性、供应链 pin gate 与跨平台路径。
-2. 让 #37 单独 rebase，并运行 `skills/case-review/tests/test_review_case.py`。
-3. 对 #36 与已合并的安全修复逐文件比较，只提取尚未覆盖的测试或边界处理。
-4. 将 #23 拆成 Bash parity、插件元数据、演示资产三个独立 PR。
+1. Rebase #43 onto the current `main`. Review JSON routing equivalence, the supply-chain pin gate, and cross-platform paths.
+2. Rebase #37 separately and run `skills/case-review/tests/test_review_case.py`.
+3. Compare #36 with the merged security fixes file by file. Keep only uncovered tests or boundary handling.
+4. Split #23 into three independent PRs: Bash parity, plugin metadata, and demonstration assets.

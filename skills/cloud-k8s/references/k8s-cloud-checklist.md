@@ -1,16 +1,19 @@
-# Cloud / K8s 检查清单（精简）
+# Cloud / Kubernetes Checklist (Condensed)
 
 ## IMDS
-- [ ] SSRF 是否可达 169.254.169.254
-- [ ] 是否强制 IMDSv2
-- [ ] 返回的 IAM 角色权限面
 
-## K8s 高危
-- [ ] cluster-admin 绑定过多
-- [ ] secrets 明文环境变量
-- [ ] privileged + hostPID/hostPath 组合
-- [ ] 匿名 auth / insecure apiserver 端口
+- [ ] Can SSRF reach 169.254.169.254?
+- [ ] Is IMDSv2 enforced?
+- [ ] What IAM role permissions does the response expose?
 
-## 容器
-- [ ] 以 root 运行
-- [ ] 可加载内核模块 / docker.sock 挂载
+## High-Risk Kubernetes Findings
+
+- [ ] Are too many subjects bound to cluster-admin?
+- [ ] Are secrets exposed as plaintext environment variables?
+- [ ] Is privileged combined with hostPID or hostPath?
+- [ ] Is anonymous authentication enabled, or is the API server's insecure port exposed?
+
+## Containers
+
+- [ ] Does the container run as root?
+- [ ] Can it load kernel modules, or is docker.sock mounted?

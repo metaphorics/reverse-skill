@@ -2,81 +2,80 @@
 name: code-audit
 description: Use for authorized source-code security review and SAST workflows including Semgrep, CodeQL patterns, dangerous API hunting, and fix verification.
 ---
-
 # Source Code Security Audit
 
-## ACTION REQUIRED（读完后立刻执行）
+## ACTION REQUIRED (run immediately after reading)
 
-1. `NOW`: 读取 `../field-journal/precedent-pentest.md` 或代码审计授权
-2. `NOW`: 确认有**源码/仓库访问**（无源码二进制 → 转 RE skill）
-3. `NOW`: 明确语言栈与范围（目录/服务/PR diff）
-4. `NEXT`: tool-index；semgrep 等
-5. `ACT`: 威胁建模草图 → 自动扫描 → 人工验证
+1. `NOW`: Read `../field-journal/precedent-pentest.md` or the code-audit authorization.
+2. `NOW`: Confirm access to the source code or repository. For a binary without source, switch to the reverse-engineering skill.
+3. `NOW`: Define the language stack and scope (directory, service, or PR diff).
+4. `NEXT`: Read `tool-index`. Check Semgrep and other tools.
+5. `ACT`: Sketch the threat model. Run automated scans. Perform manual validation.
 
-## 适用场景
+## Applicable Scenarios
 
-- 白盒审计、PR/差分安全审查
-- Semgrep / CodeQL / Bandit / gosec 等 SAST
-- 危险 API、注入点、鉴权缺失、加密误用
-- 与 `supply-chain-security/` 分工：本 skill 偏**自有代码逻辑**，供应链偏依赖与管道
+- White-box audit and PR or differential security review
+- Semgrep, CodeQL, Bandit, gosec, and other SAST tools
+- Dangerous APIs, injection points, missing authorization, and cryptographic misuse
+- Division with `supply-chain-security/`: this skill focuses on owned-code logic. Supply-chain security focuses on dependencies and pipelines.
 
-## 工作流
+## Workflow
 
-### 1. 范围与威胁模型
+### 1. Scope and Threat Model
 
 ```text
-□ 信任边界：用户输入、文件、反序列化、SSRF、鉴权中间件
-□ 高价值资产：鉴权、支付、管理端、密钥处理
+□ Trust boundaries: user input, files, deserialization, SSRF, and authorization middleware
+□ High-value assets: authorization, payments, admin interfaces, and secret handling
 ```
 
-### 2. 自动扫描
+### 2. Automated Scan
 
 ```bash
 semgrep --config auto .
-# 或项目规则包
+# Or use the project rule package
 semgrep --config p/owasp-top-ten .
 ```
 
-### 3. 人工验证（MUST）
+### 3. Manual Validation (MUST)
 
 ```text
-□ 每个 SAST 命中：可达性？可利用性？误报？
-□ 鉴权：IDOR/越权、缺校验、错误的多租户隔离
-□ 注入：SQL/命令/模板/LDAP
-□ 加密：硬编码密钥、ECB、自定义 crypto
+□ For every SAST hit: check reachability, exploitability, and false-positive status
+□ Authorization: IDOR/broken access control, missing checks, and incorrect multi-tenant isolation
+□ Injection: SQL, command, template, and LDAP
+□ Cryptography: hard-coded keys, ECB, and custom crypto
 ```
 
-### 4. 产出
+### 4. Output
 
 ```text
-Finding：位置 + 数据流 + PoC + 修复建议
-可选 ATT&CK / CWE 编号
+Finding: location + data flow + PoC + remediation recommendation
+Optional ATT&CK / CWE number
 ```
 
-## 工具链
+## Toolchain
 
-| 工具 | 语言/场景 |
+| Tool | Language / scenario |
 |------|-----------|
-| Semgrep | 多语言快速规则 |
-| CodeQL | 深数据流（GitHub） |
+| Semgrep | Fast multi-language rules |
+| CodeQL | Deep data flow (GitHub) |
 | Bandit | Python |
 | gosec / staticcheck | Go |
 | SpotBugs / FindSecBugs | Java |
 
-## 参考
+## References
 
 - `references/sast-review-checklist.md`
-- `../supply-chain-security/` `../api-security/` `../llm-security/`（Agent 代码）
+- `../supply-chain-security/` `../api-security/` `../llm-security/` (agent code)
 
-## 路由上下文
+## Routing Context
 
-**上游**: MASTER R26  
-**角色**: `ops/role-map.md` cae  
-**下游**: 依赖漏洞 → supply-chain；运行时验证 → pentest-tools
+**Upstream**: MASTER R26
+**Role**: `ops/role-map.md` cae
+**Downstream**: dependency vulnerability -> supply-chain; runtime validation -> pentest-tools
 
-## 任务完成自检
+## Task Completion Self-Check
 
-- [ ] 是否人工验证而非只贴扫描器输出？
-- [ ] 是否含修复建议？
-- [ ] 是否限定在授权仓库范围？
-- [ ] Checklist？
+- [ ] Did I perform manual validation instead of only pasting scanner output?
+- [ ] Did I include remediation recommendations?
+- [ ] Did I stay within the authorized repository scope?
+- [ ] Checklist complete?

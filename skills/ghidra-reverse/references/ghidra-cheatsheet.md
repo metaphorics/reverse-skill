@@ -1,19 +1,22 @@
-# Ghidra 速查
+# Ghidra Quick Reference
 
-| 动作 | 快捷键 / 位置（默认） |
+| Action | Shortcut / Location (default) |
 |------|----------------------|
-| 反编译 | 双击函数 → Decompile |
-| 重命名 | L |
-| 添加注释 | ; |
-| Xrefs | 右键 → References |
-| 搜索字符串 | Search → For Strings |
-| 脚本 | Window → Script Manager |
+| Decompile | Double-click the function → Decompile |
+| Rename | L |
+| Add comment | ; |
+| Xrefs | Right-click → References |
+| Search strings | Search → For Strings |
+| Scripts | Window → Script Manager |
 
-Headless 文档：Ghidra docs → analyzeHeadless README。
+Headless documentation: Ghidra docs → analyzeHeadless README.
+
+
 
 ## PyGhidra
 
 ```bash
+
 
 # Launch a Python 3 script with the bundled interpreter (Ghidra 12.1.3, JDK 21)
 support/pyghidraRun script.py

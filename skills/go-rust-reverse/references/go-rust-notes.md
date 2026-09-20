@@ -1,11 +1,14 @@
 # Go/Rust Notes
 
 
-# Go/Rust 提示
 
-Go：先找 `runtime.main` / `main.main`，用 pclntab 恢复。  
-Rust：先收集 `src/` 路径字符串与 `Option`/`Result` 处理块。  
-两者均：优先字符串驱动，避免在运行时库中迷路。
+# Go/Rust Tips
+
+Go: First find `runtime.main` / `main.main`. Use pclntab for recovery.  
+Rust: First collect `src/` path strings and `Option`/`Result` handling blocks.  
+Both: Start with strings. Avoid getting lost in runtime libraries.
+
+
 
 ## Tool complement
 
@@ -14,6 +17,7 @@ and source layout out of a stripped Go binary. `GoReSym` (Mandiant, MIT,
 v3.4.1, auto-install) emits function/type JSON for IDA/Ghidra import. The two
 complement each other: redress for interactive projection and r2pipe, GoReSym
 for decompiler import. Neither replaces the other.
+
 
 
 ## redress command list
@@ -30,12 +34,13 @@ take the target binary as the final argument. Multiple flags combine.
   third-party packages, `--filepath` for on-disk source paths.
 - `redress types interface <bin>` — recovered interfaces (`--std`/`--vendor`
   widen the filter).
-- `redress types struct <bin> --methods` — recovered structs with method sets.
+- `redress types struct --methods <bin>` — recovered structs with method sets.
 - `redress types all <bin>` — every recovered type.
 - `redress source <bin>` — projected source tree layout.
 - `redress gomod <bin>` — embedded go.mod information.
 - `redress moduledata <bin>` — sections from the moduledata structure.
 - `redress r2 <bin>` — r2pipe mode for an open radare2 session.
+
 
 
 ## GoReSym import flow
@@ -46,15 +51,16 @@ take the target binary as the final argument. Multiple flags combine.
 3. Re-run per binary; the JSON is build-specific and never reused across builds.
 
 
+
 ## Go triage order
 
 1. Confirm the runtime: `file`, `rabin2 -I`, and strings for `go.buildid` /
    `runtime.main`. The `go-triage.sh` / `go-triage.ps1` scripts automate this
    with `--bin <path>`.
-2. Run `redress info`, then `redress packages --std --vendor`, then
-   `redress types struct --methods`.
+2. Run `redress info <bin>`, then `redress packages --std --vendor <bin>`, then `redress types struct --methods <bin>`.
 3. When IDA/Ghidra is the decompiler, generate GoReSym JSON and import it.
-4. When r2 is open, use `redress r2`.
+4. When r2 is open, use `redress r2 <bin>`.
+
 
 
 ## Rust notes

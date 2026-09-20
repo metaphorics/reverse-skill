@@ -1,24 +1,51 @@
 ---
 name: go-rust-reverse
-description: Reverse engineer stripped Go and Rust binaries. Identify runtime features, recover pclntab and module data with redress and GoReSym, analyze panic strings, and recover idiomatic code patterns from decompiled code.
+description: Use to reverse engineer Go and Rust binaries with symbols removed. Identify runtime features, recover pclntab and module data with redress and GoReSym, analyze panic strings, and recover language-specific code patterns from decompiled code.
 ---
 
 # Go / Rust Binary Reverse Engineering
 
-## ACTION REQUIRED（读完后立刻执行）
+## ACTION REQUIRED (Execute immediately after reading)
 
-1. `NOW`: 读取 `../field-journal/precedent-reverse.md`
-2. `NOW`: 确认样本为 Go/Rust 编译产物（`file`/字符串/运行时特征）
-3. `NEXT`: GoReSym / redress / 相关插件是否可用（首次扫描用 `scripts/go-triage.ps1` / `scripts/go-triage.sh --bin <path>`）
-4. `ACT`: 运行时识别 → 符号/元数据恢复 → 业务逻辑
+1. `NOW`: Read `../field-journal/precedent-reverse.md`
+2. `NOW`: Confirm that the sample was compiled from Go or Rust (use `file`, strings, and runtime features)
+3. `NEXT`: Check if GoReSym / related plugins are available
+4. `ACT`: Identify the runtime → recover symbols/metadata → analyze application logic
 
-## 适用场景
+## When to Use
 
-- 剥离符号的 Go 恶意软件/工具
-- Rust 发行二进制、panic 字符串驱动分析
-- 与通用 ida/ghidra 互补的语言专用方法
+- Analyze Go malware/tools with symbols removed
+- Analyze Rust release binaries with panic strings
+- Use language-specific methods with general ida/ghidra methods
 
-## 工作流
+
+## Workflow
+
+
+### Rust
+
+```text
+□ Examine panic strings, rust_begin_unwind, and crate paths for evidence
+□ Generic instantiation increases code size; first locate string xref references
+□ Use cross-references to analyze asynchronous/tokio state machines
+```
+
+### Dynamic Analysis
+
+```text
+□ You can still use Frida; examine the Go stack and scheduling
+□ First use log and configuration strings to select breakpoints
+```
+
+## Tools
+
+| Tool | Use | Bootstrap / license |
+|------|------|------|
+| redress v1.2.85 | Go package, type, source projection, and `r2` pipe integration | Auto-install; AGPL-3.0 |
+| GoReSym v3.4.1 | Go metadata JSON for IDA/Ghidra import | Auto-install; MIT |
+| IDA/Ghidra + Go/Rust plugins | Decompile code | See the owning skill |
+| radare2 6.2.2 | Fast string triage; `redress r2` integration | Bootstrap capability |
+| strings / rabin2 | Make an initial assessment | System tools |
 
 ### Identify the runtime
 
@@ -30,51 +57,28 @@ description: Reverse engineer stripped Go and Rust binaries. Identify runtime fe
 ### Go
 
 ```text
-□ 识别 go.buildid、runtime 符号残留、pclntab
-□ 先跑 `redress info <bin>`，再跑 `redress packages --std --vendor <bin>`；有方法集的结构体跑 `redress types struct --methods <bin>`
-□ IDA/Ghidra 反编译时跑 `GoReSym -p -t -d <bin> > goresym.json` 并导入；r2 打开时跑 `redress r2` 做 r2pipe 投影
-□ 注意 interface、slice、string 结构在反编译中的形态
-□ 网络/加密库路径：crypto/* net/http
+□ Identify go.buildid, remaining runtime symbols, and pclntab
+□ Run `redress info <bin>`, then `redress packages --std --vendor <bin>`, and `redress types struct --methods <bin>` for method-bearing structs
+□ Use `redress source <bin>` to project the source layout; when r2 is open, run `redress r2 <bin>` for the r2pipe projection
+□ When IDA/Ghidra is the decompiler, run `GoReSym -p -t -d <bin> > goresym.json` and import the JSON
+□ Examine interface, slice, and string structures in decompiled code
+□ Examine network/cryptographic library paths: crypto/* net/http
 ```
 
-### Rust
 
-```text
-□ panic 字符串、rust_begin_unwind、crate 路径暗示
-□ 范型实例化导致的代码膨胀；先定位字符串 xref
-□ 异步/tokio 状态机需结合交叉引用
-```
-
-### 动态
-
-```text
-□ 仍可用 Frida；注意 Go 栈与调度
-□ 优先日志与配置字符串驱动断点
-```
-
-## 工具链
-
-| 工具 | 用途 |
-|------|------|
-| redress（v1.2.85） | Go 包 / 类型 / 源码投影（自举） |
-| GoReSym（v3.4.1） | Go 元数据 JSON，供 IDA/Ghidra 导入（自举） |
-| IDA/Ghidra + Go/Rust 插件 | 反编译 |
-| radare2（6.2.2） | 快速字符串；`redress r2` 管道目标 |
-| strings / rabin2 | 分诊 |
-
-## 参考
+## References
 
 - `references/go-rust-notes.md`
 - `../reverse-engineering/go-reverse.md` `../ida-reverse/` `../ghidra-reverse/`
 - seed: `field-journal/seed-002_go-malware-stripped.md`
 
-## 路由上下文
+## Routing Context
 
-**上游**: MASTER R33  
-**下游**: 恶意样本流程 `malware-analysis`；通用 RE `reverse-engineering`
+**Upstream**: MASTER R33  
+**Downstream**: Malware sample workflow `malware-analysis`; general RE `reverse-engineering`
 
-## 任务完成自检
+## Task Completion Check
 
-- [ ] 是否恢复关键函数名或等价映射？
-- [ ] 是否标注语言运行时证据？
-- [ ] Checklist？
+- [ ] Confirm that you recovered key function names or an equivalent mapping.
+- [ ] Confirm that you recorded evidence of the language runtime.
+- [ ] Complete the checklist.

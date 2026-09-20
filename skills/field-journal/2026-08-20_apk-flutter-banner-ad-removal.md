@@ -1,66 +1,74 @@
-# 2026-08-20 Flutter APK 服务端驱动广告去除（第三方仿冒包）
+# 2026-08-20 Flutter APK server-driven ad removal (third-party counterfeit package)
 
-## 场景分类
-APK 逆向 / Flutter AOT 补丁
+## Scenario
 
-## 目标概述
-本地自有 APK（`{target_app}` 1.0.8，第三方仿冒包）去除服务端驱动的横幅/弹窗广告并重签名输出。
+APK reverse engineering and Flutter AOT patching
 
-## Scope 摘要（脱敏）
-- auth_basis: 用户本地自有文件，个人使用修改
-- network_profile: 纯静态分析 + 本地构建，无外部系统 ACT
+## Target summary
+
+Remove server-driven banner and popup ads from a locally owned APK (`{target_app}` 1.0.8, a third-party counterfeit package), then produce a re-signed build.
+
+## Scope summary (redacted)
+
+- auth_basis: user's local file, modified for personal use
+- network_profile: static analysis plus local build, with no external system activity
 - asset_types: [android_apk, flutter_aot_libapp.so]
 
-## 角色
+## Roles
+
 - lead_role: lead
 - specialists: []
 
-## 完整执行链路
+## Execution record
 
-1. 目标识别：`{target}.apk` — Flutter 3.4.4 (libapp.so 13MB) + 360加固壳（`com.frezrik.jiagu.StubApp`，真实 dex 加密于 classes.dex 尾部 payload 2.58MB）
-2. 静态侦察：apktool d / jadx → manifest 无第三方广告 SDK；扫描 libapp.so 字符串 → 发现服务端广告体系（`ad_slot_key`/`ad_show:`/`wcstream_*` 插槽、`system/banner/bannerListByMAcct` API）
-3. 工具链搭建：gitee 预编译 blutter 为 ARM64-Linux（不可用）→ 下载 blutter-unmgr 源码 → Windows MSVC 构建（VS2026 BuildTools + cmake + ninja）→ 编译 dartvm3.4.4_android_arm64 静态库（~15min）→ blutter.exe 分析 libapp.so → 输出 pp.txt/objs.txt/asm/ + frida 脚本
-4. 广告系统还原：类 `qya`（广告模型，11 字段）、`pya`（banner 列表）、`GBg`（Map<String,dynamic>→Map<String,List<qya>> 解析器）、全部插槽键与 API 端点
-5. 补丁设计（v2 修订）：**等长字符串替换**（31 个广告字符串 × 2 ABI）：JSON 键→垃圾串（解析 null）、插槽键→垃圾串（查表失败）、上报标签→垃圾串。**API 路径字符串保留不替换**（初版替换后真机 404 卡启动，见踩坑记录最后一条）。客户端自洽、服务端契约断裂。
-6. 字符串表格式适配：arm64 packed 表 `[0x80|(len<<1)][chars]`；armv7 object 表 `[len*2 u32le][chars]`。前缀校验 + 长串优先规避 substring 重叠（welfare_ad_top/welfare_ad、ad_click:/ad_click）。
-7. 重打包：Python zipfile 复制 1010 条目（替换 libapp.so×2、删除旧签名）→ zipalign -p 4 → apksigner v1+v2+v3（debug keystore）
-8. 验证：Blutter 重分析补丁后 libapp.so 通过（快照完好）；apksigner verify 通过；aapt badging 一致；zip 差异仅 libapp.so+签名；APK 内 0 广告字符串残留
-9. **真机运行时验证（补充）**：arm64 真机安装 → 正常进入主界面、广告消失；logcat 确认零 Flutter 异常（详见踩坑记录）
+1. Identify the target: `{target}.apk`, Flutter 3.4.4 (`libapp.so` 13MB) with 360 packer protection (`com.frezrik.jiagu.StubApp`; the real DEX is encrypted in a 2.58MB payload at the end of `classes.dex`).
+2. Perform static reconnaissance: `apktool d` and `jadx` show no third-party ad SDK in the manifest. Scan `libapp.so` strings and find the server-driven ad system (`ad_slot_key`/`ad_show:`/`wcstream_*` slots and the `system/banner/bannerListByMAcct` API).
+3. Build the toolchain: the prebuilt ARM64-Linux blutter package from Gitee does not run. Download the blutter-unmgr source. Build on Windows with MSVC (VS2026 BuildTools + cmake + ninja). Compile the `dartvm3.4.4_android_arm64` static library in about 15 minutes. Run `blutter.exe` on `libapp.so`. Output `pp.txt`, `objs.txt`, `asm/`, and Frida scripts.
+4. Recover the ad system: class `qya` (ad model, 11 fields), `pya` (banner list), `GBg` (`Map<String,dynamic>` to `Map<String,List<qya>>` parser), all slot keys, and API endpoints.
+5. Design the patch (v2 revision): use **equal-length string replacement** for 31 ad strings across 2 ABIs. Replace JSON keys with a garbage string so parsing returns null, slot keys with a garbage string so lookup fails, and reporting labels with a garbage string. **Keep API path strings unchanged**. The first version replaced them and caused a real-device 404 that stalled startup, as described in the last pitfall. The client stays internally consistent while the server contract breaks.
+6. Adapt to string-table formats: the arm64 packed table is `[0x80|(len<<1)][chars]`; the armv7 object table is `[len*2 u32le][chars]`. Validate prefixes and replace long strings first to avoid substring overlap (`welfare_ad_top/welfare_ad`, `ad_click:/ad_click`).
+7. Repackage: copy 1010 entries with Python zipfile, replace two `libapp.so` files, and remove old signatures. Run `zipalign -p 4`, then `apksigner` v1+v2+v3 with a debug keystore.
+8. Verify: Blutter reanalysis of the patched `libapp.so` passes with the snapshot intact. `apksigner verify` passes. AAPT badging is unchanged. The ZIP diff contains only `libapp.so` and signatures. The APK contains zero remaining ad strings.
+9. **Real-device runtime validation**: an arm64 device was used for installation. The main screen opened normally and ads disappeared. `logcat` confirmed zero Flutter exceptions, as detailed in the pitfalls.
 
-## Evidence 链摘要
-| E-id | source_type | 可复用命令模式 | 关联 Finding |
+## Evidence chain summary
+
+| E-id | source_type | Reusable command pattern | Related finding |
 |------|-------------|----------------|--------------|
 | E-001 | blutter_out/pp.txt | `[pp+0x210a8] String: "wcstream_banner_top"` | F-001 |
-| E-002 | 补丁脚本 | `work/patch_libapp.py` | F-001 |
-| E-003 | Blutter 重分析 | `python blutter.py <patched_dir> <out>` exit 0 | F-002 |
+| E-002 | patch script | `work/patch_libapp.py` | F-001 |
+| E-003 | Blutter reanalysis | `python blutter.py <patched_dir> <out>` exit 0 | F-002 |
 
-## Finding / Path 摘要
-- top_finding: 服务端驱动广告的 Flutter 应用，去除广告无需改代码逻辑——等长替换字符串表中的 JSON 键/插槽键即可，客户端内部自洽而服务端契约失效；**但 API 路径字符串不可替换**（启动流程请求 404 → jsonDecode 异常 → 卡启动）
+## Finding and path summary
+
+- top_finding: For a Flutter app with server-driven ads, remove ads without changing code logic. Equal-length replacement of JSON and slot keys keeps the client internally consistent and breaks the server contract. **Do not replace API path strings**. A startup request that returns 404 produces a `jsonDecode` exception and stalls startup.
 - path_type: solve
-- path_one_liner: 定位字符串表 → 等长替换广告 JSON 键/插槽键（保留 API 路径）→ 重打包签名 → 真机 logcat 验证
+- path_one_liner: locate the string table → replace ad JSON and slot keys while keeping API paths → repackage and sign → verify with real-device logcat
 
-## 踩坑记录
+## Pitfalls
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Resolution | Time |
 |------|------|---------|------|
-| 360加固：真实 Java dex 加密 | jadx 只见壳类（com.frezrik.jiagu + a.*） | 广告逻辑在 Flutter Dart 层（libapp.so），无需脱壳 | 0.5h |
-| gitee 预编译 blutter 无法运行 | 二进制为 ARM64-Linux（Termux 用） | 下载 blutter-unmgr 源码自行编译 x64 | 1h |
-| Windows 构建 cmake 找不到 cl | cmd 中 %PATH% 解析期展开，覆盖 vcvars 环境 | `cmd /V:ON` + `set PATH=...;!PATH!` 延迟展开 | 0.2h |
-| `string(REPLACE "/EHsc" ...)` CMake 报错 | CMAKE_CXX_FLAGS 为空时 REPLACE 参数不足（新版 CMake） | 打补丁加 `if(CMAKE_CXX_FLAGS)` 守卫（模板+生成文件） | 0.2h |
-| 混淆 app 广告函数 asm 缺失（size=-1） | Blutter 对混淆/复杂函数分析失败 | 放弃代码级补丁，改用字符串表替换 | 0.5h |
-| 手动找池条目引用失败 | 快照池条目为压缩指针编码，偏移相对池基址 | 放弃手工编码逆向，直接用 Blutter pp.txt 定位字符串对象 | 1h |
-| substring 误匹配 | "welfare_ad" 命中 "welfare_ad_top" 内部 | 长串优先替换 + 校验前缀字节（arm64: 0x80\|len<<1; armv7: len*2） | 0.3h |
-| ⚠️ **替换 API 路径后真机卡在启动 Logo** | 初版把 `system/banner/bannerListByMAcct` 也替换 → 启动拉取广告请求命中不存在端点 → 服务端 404（错误体非合法 JSON）→ 启动流程 `jsonDecode` 抛 `FormatException`（logcat `E flutter`）→ 进入主页的 Future 中断，UI 永久停留启动画面 | **API 路径/URL 字符串不替换**；只替换 JSON 键/插槽键/上报标签。定位用变量隔离（仅重签名对照包）+ `adb logcat -d \| grep "E flutter"`；MIUI 安装拦截需 `settings put global verifier_verify_adb_installs 0` | 1h |
+| 360 packer protection encrypted the real Java DEX | jadx showed only the shell classes (`com.frezrik.jiagu` and `a.*`) | The ad logic is in the Flutter Dart layer (`libapp.so`). Unpacking is not needed | 0.5h |
+| The prebuilt Gitee blutter binary would not run | The binary targeted ARM64-Linux for Termux | Download the blutter-unmgr source and build x64 locally | 1h |
+| Windows CMake could not find `cl` | `%PATH%` expanded early in `cmd`, overwriting the vcvars environment | Use `cmd /V:ON` with `set PATH=...;!PATH!` delayed expansion | 0.2h |
+| `string(REPLACE "/EHsc" ...)` failed in CMake | When `CMAKE_CXX_FLAGS` is empty, the newer CMake receives too few REPLACE arguments | Patch in an `if(CMAKE_CXX_FLAGS)` guard in the template and generated file | 0.2h |
+| The obfuscated ad function had no assembly (`size=-1`) | Blutter could not analyze the obfuscated or complex function | Abandon a code-level patch. Use string-table replacement instead | 0.5h |
+| Manual search for pool-entry references failed | Snapshot pool entries use compressed-pointer encoding with offsets relative to the pool base | Abandon manual encoding recovery. Locate string objects directly through Blutter `pp.txt` | 1h |
+| Substring false match | `welfare_ad` matched inside `welfare_ad_top` | Replace long strings first and validate prefix bytes (arm64: `0x80\|len<<1`; armv7: `len*2`) | 0.3h |
+| **Replacing the API path made the real device stall at the startup logo** | The first version also replaced `system/banner/bannerListByMAcct`. The startup ad request then hit a nonexistent endpoint and returned 404 with a non-JSON body. Startup `jsonDecode` raised `FormatException` (`logcat E flutter`), interrupting the Future that enters the main page and leaving the UI on the startup screen forever | **Do not replace API path or URL strings**. Replace only JSON keys, slot keys, and reporting labels. Isolate variables for comparison (only the re-signed control package). Use `adb logcat -d \| grep "E flutter"`. MIUI installation interception requires `settings put global verifier_verify_adb_installs 0` | 1h |
 
-## 工具链发现
-- blutter-unmgr (gitee.com/fest_1/blutter-unmgr)：预编译包是 ARM64-Linux；源码含 `blutter.py`（自动检测 Dart 版本 + 构建 + 运行一体化）
-- Blutter Windows 构建依赖：VS BuildTools(含 cl) + cmake(≥3.20) + ninja + ICU/capstone（init_env_win.py 自动下载）
-- CMakeLists REPLACE bug 需修补（见上）
+## Tool findings
 
-## 可复用模式
-**服务端驱动广告去除通用流程**（Flutter 或原生）：
-1. 反编译找广告 API 端点/模型键/插槽键字符串
-2. 确认字符串表格式（arm64 packed / armv7 object / 通用 length-prefixed）
-3. 等长 ASCII 替换 **JSON 键/插槽键/上报标签**（保偏移）→ 服务端契约断裂；**API 路径保留**
-4. 重打包 + zipalign + apksigner（注意先卸旧签名）
-5. 真机安装 + `adb logcat` 验证（关注 `E flutter` 未捕获异常，确保启动流程无 404）
+- blutter-unmgr (`gitee.com/fest_1/blutter-unmgr`) provides an ARM64-Linux prebuilt package. Its source contains `blutter.py`, which detects the Dart version, builds, and runs as one flow.
+- Blutter Windows build dependencies: VS BuildTools with `cl`, cmake (≥3.20), ninja, and ICU/Capstone. `init_env_win.py` downloads dependencies automatically.
+- The CMakeLists REPLACE bug requires the guard described above.
+
+## Reusable pattern
+
+**Generic server-driven ad-removal flow** for Flutter or native apps:
+1. Decompile and find ad API endpoint, model-key, and slot-key strings.
+2. Confirm the string-table format (arm64 packed, armv7 object, or generic length-prefixed).
+3. Perform equal-length ASCII replacement of **JSON keys, slot keys, and reporting labels** to preserve offsets and break the server contract. **Keep API paths.**
+4. Repackage, run zipalign, and sign with apksigner. Remove the old signature first.
+5. Install on a real device and verify with `adb logcat`. Check for uncaught `E flutter` exceptions and confirm that startup has no 404.

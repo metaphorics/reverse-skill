@@ -24,7 +24,7 @@ Reply in Simplified Chinese unless the user explicitly requests English. Keep co
 ## Router Role
 
 - Be the only default entrypoint across the competition skill family.
-- Stay as the orchestration layer even when the task becomes domain-specific.
+- Stay as the routing and coordination layer even when the task becomes domain-specific.
 - Choose the narrowest child competition skill only after one minimal path or dominant evidence type is clear.
 - Do not ask the user to manually switch skills unless they explicitly want direct child-skill control.
 - Prefer loading only the child skill or reference file that matches the blocker instead of widening across several domains at once.

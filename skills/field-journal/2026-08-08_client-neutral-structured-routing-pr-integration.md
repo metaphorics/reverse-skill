@@ -1,63 +1,63 @@
-# 2026-08-08 平台无关结构化路由 PR 集成
+# 2026-08-08 client-neutral structured-routing PR integration
 
-## 场景分类
+## Scenario
 
-代码审计 / 工具链维护 / 多平台路由
+Code audit, toolchain maintenance, and multi-platform routing
 
-## 目标概述
+## Target summary
 
-对多组高冲突 PR 做增量价值审查，并将有价值部分重构为平台无关核心后集成。
+Review the incremental value of several high-conflict PRs. Refactor valuable parts into a client-neutral core, then integrate them.
 
-## Scope 摘要（脱敏）
+## Scope summary (redacted)
 
 - auth_basis: repository_owner_authorized
 - network_profile: authorized_upstream_only
 - asset_types: [source_repository, pull_request_refs, local_tests]
 
-## 角色
+## Roles
 
 - lead_role: lead
 - specialists: [cae, doc]
 
-## 完整执行链路
+## Execution record
 
-1. 从远端抓取 PR refs，在隔离 worktree 中比较各 PR 与当前主线。
-2. 先按增量价值判断，再用 merge parent 保留来源关系，并按语义解决冲突。
-3. 将结构化路由从客户端接入中解耦，以 JSON 作为 PowerShell/Bash 共同事实源。
-4. 对大 PR 只取授权门禁和 Bash parity，排除客户端专属与生成资产。
-5. 运行全量路由、结构门禁、语言单测、语法与 manifest 校验。
+1. Fetch PR refs from the remote. Compare each PR with the current mainline in an isolated worktree.
+2. Judge incremental value first. Preserve source relationships with a merge parent, then resolve conflicts by meaning.
+3. Decouple structured routing from client integration. Use JSON as the shared source of truth for PowerShell and Bash.
+4. From large PRs, take only authorization gates and Bash parity. Exclude client-specific and generated assets.
+5. Run the full routing, structural-gate, language-unit, syntax, and manifest checks.
 
-## Evidence 链摘要（脱敏）
+## Evidence chain summary (redacted)
 
-| E-id | source_type | 可复用命令模式 | 关联 Finding |
+| E-id | source_type | Reusable command pattern | Related finding |
 |------|-------------|----------------|--------------|
 | E-001 | git diff | `git diff <main>...<pr-ref>` | F-001 |
 | E-002 | regression | `test-routing.ps1` + coherence + smoke | F-001 |
 | E-003 | unit tests | Python unittest + Node test + Bash parity | F-002 |
 
-## Finding / Path 摘要
+## Finding and path summary
 
-- top_finding: 客户端集成不是结构化路由的核心价值，单一事实源与自动门禁才是。
+- top_finding: client integration is not the core value of structured routing. A single source of truth and automatic gates are.
 - path_type: callflow
-- path_one_liner: 任意宿主 → 可选适配器 → routing.json → 跨平台 router → 统一回归门禁
+- path_one_liner: any host → optional adapter → routing.json → cross-platform router → unified regression gates
 
-## 踩坑记录
+## Pitfalls
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Resolution | Time |
 |------|------|---------|------|
-| 大 PR 同时混入客户端清单、GIF、脚本和文档 | 关注点未拆分 | 只合并最小跨平台子集 | 中 |
-| Bash router 与 PowerShell 各自硬编码 | 两份事实源必然漂移 | Bash 通过 Python 读取同一 JSON | 中 |
-| 新 pin gate 首次失败 | Kali manifest 保留浮动源 | pin manifest 且让实际安装命令使用 pin | 中 |
-| Gradle wrapper 下载 TLS 中断 | 外部网络握手异常 | 记录并在最终验证重试 | 低 |
-| Bash CaseName 可写出 work 根 | 选择性合并时漏掉 PowerShell 已有的路径约束 | 补跨平台等价校验与负向 CI | 中 |
-| 授权 URL 被标成 offline | Bash 默认值未与 PowerShell 对齐 | 网络目标默认 authorized_target_only；offline 仅本地样本 | 低 |
-| INDEX 在开发机通过、clean clone 失败 | 生成器扫描了被忽略的本地私有模块 | 只枚举 Git 已跟踪 SKILL.md | 中 |
+| A large PR mixed client inventories, GIFs, scripts, and documentation | The concerns were not separated | Merge only the smallest cross-platform subset | Medium |
+| Bash and PowerShell routers each used hardcoded values | Two sources of truth inevitably drift | Make Bash read the same JSON through Python | Medium |
+| The new pin gate failed first | The Kali manifest retained a floating source | Pin the manifest and make the real install command use the pin | Medium |
+| Gradle wrapper download failed during TLS | External network handshake error | Record it and retry during final validation | Low |
+| Bash CaseName could write outside the work root | Selective integration omitted a path constraint already present in PowerShell | Add an equivalent cross-platform check and a negative CI test | Medium |
+| An authorized URL was marked offline | The Bash default did not match PowerShell | Set the network default to `authorized_target_only`; reserve offline for local samples | Low |
+| INDEX passed on the development machine but failed in a clean clone | The generator scanned a local private module that Git ignored | Enumerate Git-tracked SKILL.md files only | Medium |
 
-## 工具链发现
+## Tool findings
 
-Git merge parent 能保留 PR 来源关系，同时允许在 merge commit 内做语义删减。供应链 gate 只有在 manifest 元数据与实际安装命令共同固定时才有效。
+A Git merge parent preserves the PR source relationship and still permits semantic deletion inside the merge commit. A supply-chain gate works only when manifest metadata and the real install command use the same fixed value.
 
-## 关键代码/命令
+## Key code and commands
 
 ```text
 git merge --no-ff --no-commit <pr-ref>
@@ -66,34 +66,34 @@ powershell -File skills/scripts/verify-routing-coherence.ps1
 bash skills/scripts/master-route.sh --hint "case review evidence graph"
 ```
 
-## 对本包的改进建议
+## Improvement suggestions for this package
 
-所有客户端适配器放在独立边界；禁止将客户端配置写进核心路由 PR。大型 PR 必须按核心、适配器、演示资产和文档拆分。
+Keep all client adapters behind a separate boundary. Do not put client configuration in a core routing PR. Split large PRs into core, adapters, demo assets, and documentation.
 
-## 可复用的模式/脚本片段
+## Reusable patterns and script fragments
 
-结构化路由 parity 测试至少覆盖普通路由、冲突优先级路由和最新新增路由，防止某个平台入口滞后。
+Structured-routing parity tests must cover ordinary routes, conflict-priority routes, and the latest new route. This prevents a platform entry point from falling behind.
 
-对同一 163 条基准做旧/新 A/B：旧硬编码实现 137/163（84.05%），结构化实现 163/163（100%）。只有这种同输入量化对比，才能证明重构是实质提升而非文件数量增长。
+Run an old/new A/B comparison on the same 163-case baseline. The old hardcoded implementation passed 137/163 (84.05%). The structured implementation passed 163/163 (100%). Only a quantified comparison on the same inputs proves a substantive refactor instead of file-count growth.
 
-## 进化动作
+## Follow-up actions
 
-- [x] 更新了路由矩阵
-- [ ] 更新了 tool-index
-- [x] 更新了 bootstrap-manifest
-- [x] 更新了子 skill 文档
-- [x] 新增了 pitfalls 记录
-- [ ] 无需更新
+- [x] Update the routing matrix
+- [ ] Update the tool index
+- [x] Update the bootstrap manifest
+- [x] Update the child skill documentation
+- [x] Add the pitfall record
+- [ ] No update needed
 
-## 环境信息
+## Environment
 
-- OS: Windows（主验证）+ Linux CI 定义
-- 工具版本: Git / PowerShell / Python 3 / Node.js / Bash
-- 目标平台/版本: client-neutral repository core
+- OS: Windows (primary validation) plus Linux CI definition
+- Tool versions: Git / PowerShell / Python 3 / Node.js / Bash
+- Target platform/version: client-neutral repository core
 
-## 脱敏要求
+## Redaction requirements
 
-本条目不包含真实目标、凭据、内部地址或个人身份信息。
+This entry contains no real target, credential, internal address, or personal identity information.
 
 ---
-<!-- [社区贡献] 已按仓库所有者指示准备推送主线。 -->
+<!-- [Community contribution] Prepared for a mainline push as directed by the repository owner. -->

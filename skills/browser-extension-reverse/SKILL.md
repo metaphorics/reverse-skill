@@ -5,70 +5,70 @@ description: Use for authorized reverse engineering of browser extensions (Chrom
 
 # Browser Extension Reverse Engineering
 
-## ACTION REQUIRED（读完后立刻执行）
+## ACTION REQUIRED (Do this immediately after reading)
 
-1. `NOW`: 读取 `../field-journal/precedent-reverse.md`
-2. `NOW`: 确认目标是**浏览器扩展**（crx/xpi/解压目录），不是普通网页 JS（普通 → `js-reverse/`）
-3. `NEXT`: 解压扩展；读 manifest
-4. `ACT`: 权限面 → 后台脚本 → 网络/存储钩子
+1. `NOW`: Read `../field-journal/precedent-reverse.md`
+2. `NOW`: Make sure that the target is a **browser extension** (crx/xpi/extracted directory), not regular web page JS (regular → `js-reverse/`)
+3. `NEXT`: Extract the extension; read manifest
+4. `ACT`: Permissions → Background scripts → Network/storage hooks
 
-## 适用场景
+## When to Use
 
-- Chrome/Edge MV2/MV3 扩展分析
-- Firefox 扩展
-- 恶意扩展 IOC、供应链扩展投毒调查
-- 扩展实现的签名/加密/代理逻辑还原
+- Chrome/Edge MV2/MV3 extension analysis
+- Firefox extensions
+- Investigation of malicious extension IOC and extension poisoning in a supply-chain attack
+- Recovery of signing/encryption/proxy logic implemented by extensions
 
-## 工作流
+## Workflow
 
-### 1. 包体
-
-```text
-□ crx 解压 / 从 profile 取扩展目录
-□ manifest.json：permissions、host_permissions、background、content_scripts
-□ 评估过度权限（<all_urls>、webRequest、debugger）
-```
-
-### 2. 逻辑
+### 1. Package
 
 ```text
-□ service_worker / background 入口
-□ content_script 注入点与世界（isolated）
-□ chrome.storage / IndexedDB 密钥
-□ 与 `js-reverse` 相同：Observe 网络与消息传递（runtime.sendMessage）
+□ Extract crx / Get the extension directory from the profile
+□ manifest.json: permissions, host_permissions, background, content_scripts
+□ Evaluate excessive permissions (<all_urls>, webRequest, debugger)
 ```
 
-### 3. 动态
+### 2. Logic
 
 ```text
-□ 开发者模式加载解压目录
-□ chrome://extensions 检查错误
-□ DevTools 附加 service worker
-□ 必要时 Frida/浏览器 CDP（jshookmcp）
+□ Find service_worker / background entry points
+□ Find content_script injection points and execution worlds (isolated)
+□ Find keys in chrome.storage / IndexedDB
+□ Same as `js-reverse`: Observe network traffic and message passing (runtime.sendMessage)
 ```
 
-## 工具链
+### 3. Dynamic Analysis
 
-| 工具 | 用途 |
+```text
+□ Load the extracted directory in developer mode
+□ Check for errors at chrome://extensions
+□ Attach DevTools to the service worker
+□ Use Frida/browser CDP (jshookmcp) if necessary
+```
+
+## Tools
+
+| Tool | Use |
 |------|------|
-| 解压/jq | manifest |
-| Chrome DevTools | worker 调试 |
-| js-reverse 工具链 | 深度 JS |
-| YARA | 恶意扩展规则 |
+| Extraction/jq | manifest |
+| Chrome DevTools | worker debugging |
+| js-reverse tools | Detailed JS analysis |
+| YARA | Rules for malicious extensions |
 
-## 参考
+## References
 
 - `references/extension-analysis.md`
-- field-journal 扩展恢复相关条目
+- field-journal entries related to extension recovery
 - `../js-reverse/` `../malware-analysis/`
 
-## 路由上下文
+## Routing Context
 
-**上游**: MASTER R30  
-**下游**: 复杂混淆 JS → `js-reverse`；投毒调查 → supply-chain / malware
+**Upstream**: MASTER R30  
+**Downstream**: JS with complex obfuscation → `js-reverse`; supply-chain attack investigation → supply-chain / malware
 
-## 任务完成自检
+## Task Completion Checks
 
-- [ ] 是否列出权限面与入口脚本？
-- [ ] 是否还原关键数据流？
-- [ ] Checklist？
+- [ ] Did you list the permissions and entry scripts?
+- [ ] Did you recover the key data flows?
+- [ ] Checklist?

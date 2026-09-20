@@ -46,7 +46,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'jadx'
             Skill = 'apk-reverse'
-            Purpose = 'Java 反编译'
+            Purpose = 'Java decompiler'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'jadx' },
@@ -56,7 +56,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'apktool'
             Skill = 'apk-reverse'
-            Purpose = 'APK 解包与重建'
+            Purpose = 'APK unpack and rebuild'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'apktool' },
@@ -67,7 +67,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'adb'
             Skill = 'apk-reverse'
-            Purpose = '设备连接与 logcat'
+            Purpose = 'device connection and logcat'
             VersionArgs = @('version')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'adb' },
@@ -77,7 +77,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'java'
             Skill = 'apk-reverse'
-            Purpose = '运行 jar 与 Java 工具链'
+            Purpose = 'Java toolchain and jar runner'
             VersionArgs = @('-version')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'java' }
@@ -86,7 +86,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'apksigner'
             Skill = 'apk-reverse'
-            Purpose = 'APK 签名'
+            Purpose = 'APK signing'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -96,7 +96,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'zipalign'
             Skill = 'apk-reverse'
-            Purpose = 'APK 对齐'
+            Purpose = 'APK alignment'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -106,7 +106,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'idalib-mcp'
             Skill = 'ida-reverse'
-            Purpose = 'IDA Pro idalib MCP HTTP/stdio 服务器'
+            Purpose = 'IDA Pro idalib MCP HTTP/stdio server'
             FixedVersion = 'v0.5.0'
             VersionArgs = @('--help')
             Fallbacks = @(
@@ -123,7 +123,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'ida-pro-mcp'
             Skill = 'ida-reverse'
-            Purpose = 'IDA Pro MCP CLI / 插件安装器'
+            Purpose = 'IDA Pro MCP CLI and plugin installer'
             FixedVersion = 'v0.5.0'
             VersionArgs = @('--help')
             Fallbacks = @(
@@ -139,7 +139,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'ida'
             Skill = 'ida-reverse'
-            Purpose = 'IDA Pro 主程序'
+            Purpose = 'IDA Pro main program'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -155,7 +155,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'binaryninja'
             Skill = 'binary-ninja-reverse'
-            Purpose = 'Binary Ninja 商业逆向平台（GUI/Python API）'
+            Purpose = 'Binary Ninja commercial reversing platform (manual license install)'
             FixedVersion = 'manual-license'
             VersionArgs = @('--version')
             Fallbacks = @(
@@ -169,7 +169,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'frida'
             Skill = 'apk-reverse'
-            Purpose = 'Frida 动态注入'
+            Purpose = 'Frida dynamic instrumentation'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'frida' },
@@ -179,7 +179,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'frida-ps'
             Skill = 'apk-reverse'
-            Purpose = 'Frida 进程枚举'
+            Purpose = 'Frida process enumeration'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -190,7 +190,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'r2'
             Skill = 'radare2'
-            Purpose = 'radare2 主分析器'
+            Purpose = 'radare2 main analyzer'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'r2' },
@@ -209,7 +209,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'rabin2'
             Skill = 'radare2'
-            Purpose = '二进制侦察'
+            Purpose = 'binary reconnaissance'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'rabin2' },
@@ -221,7 +221,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'rasm2'
             Skill = 'radare2'
-            Purpose = '汇编/反汇编'
+            Purpose = 'assembler and disassembler'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'rasm2' },
@@ -233,7 +233,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'radiff2'
             Skill = 'radare2'
-            Purpose = '二进制差分'
+            Purpose = 'binary diffing'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'radiff2' },
@@ -245,7 +245,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'rahash2'
             Skill = 'radare2'
-            Purpose = '哈希与校验'
+            Purpose = 'hashing and checksums'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'rahash2' },
@@ -257,7 +257,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'rax2'
             Skill = 'radare2'
-            Purpose = '进制与位运算转换'
+            Purpose = 'number-base and bitwise conversion'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'rax2' },
@@ -269,7 +269,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'r2pm'
             Skill = 'radare2'
-            Purpose = 'radare2 插件管理'
+            Purpose = 'radare2 plugin manager'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'r2pm' },
@@ -281,7 +281,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'r2xsql'
             Skill = 'radare2'
-            Purpose = 'radare2 SQL 查询工具'
+            Purpose = 'radare2 SQL query tool'
             VersionArgs = @('--version')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'r2xsql' },
@@ -293,7 +293,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'r2xsql-full'
             Skill = 'radare2'
-            Purpose = 'radare2 SQL 查询工具（完整版）'
+            Purpose = 'radare2 SQL query tool (full version)'
             VersionArgs = @('--version')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'r2xsql-full' },
@@ -305,7 +305,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'r2mcp'
             Skill = 'radare2'
-            Purpose = 'radare2 MCP 协议分析'
+            Purpose = 'radare2 MCP protocol analysis'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'r2mcp' },
@@ -317,7 +317,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'radius2'
             Skill = 'radare2'
-            Purpose = 'radare2 符号执行与动态分析'
+            Purpose = 'radare2 symbolic execution and dynamic analysis'
             VersionArgs = @('-v')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'radius2' },
@@ -329,7 +329,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'python'
             Skill = 'reverse-engineering'
-            Purpose = '辅助脚本执行'
+            Purpose = 'helper script execution'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -340,7 +340,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'pip'
             Skill = 'reverse-engineering'
-            Purpose = 'Python 包管理'
+            Purpose = 'Python package management'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -351,7 +351,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'node'
             Skill = 'js-reverse'
-            Purpose = '运行 Node 侧 JS 复现与 MCP 客户端'
+            Purpose = 'Node-side JS reproduction and MCP clients'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -361,7 +361,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'npx'
             Skill = 'js-reverse'
-            Purpose = '运行临时 npm 包与 MCP 入口'
+            Purpose = 'temporary npm packages and MCP entry points'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -371,7 +371,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'jshookmcp'
             Skill = 'js-reverse'
-            Purpose = '通过 npx 启动 @jshookmcp/jshook MCP（需 MCP 注册；npx 本身不代表该能力已安装）'
+            Purpose = '@jshookmcp/jshook MCP via npx'
             FixedVersion = '@jshookmcp/jshook@0.3.4'
             VersionArgs = @()
             Fallbacks = @()
@@ -379,7 +379,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'reqable-mcp'
             Skill = 'pentest-tools'
-            Purpose = '通过 npx 启动 Reqable 桌面客户端 MCP（需 MCP 注册与 Reqable；npx 本身不代表该能力已安装）'
+            Purpose = 'Reqable desktop-client MCP via npx'
             FixedVersion = 'reqable-mcp-server@1.0.1'
             VersionArgs = @()
             Fallbacks = @()
@@ -387,14 +387,14 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'xquik-mcp'
             Skill = 'threat-intelligence'
-            Purpose = '公开 X/Twitter 威胁情报采集的远程 MCP（需客户端登记与 OAuth）'
+            Purpose = 'remote MCP for public X threat intelligence'
             VersionArgs = @()
             Fallbacks = @()
         }
         [pscustomobject]@{
             Name = 'agent-browser'
             Skill = 'browser-automation'
-            Purpose = '浏览器自动化（Playwright）：打开页面、点击、填表、爬取、截图'
+            Purpose = 'browser automation (Playwright)'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -404,7 +404,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'analyzeHeadless'
             Skill = 'reverse-engineering'
-            Purpose = 'Ghidra 无头分析（免费 IDA 替代）'
+            Purpose = 'Ghidra headless analysis'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'analyzeHeadless' },
@@ -415,7 +415,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'ghidra-mcp'
             Skill = 'reverse-engineering'
-            Purpose = 'Ghidra 无头分析（ghidra-mcp 能力别名）'
+            Purpose = 'Ghidra headless analysis (ghidra-mcp capability alias)'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'analyzeHeadless' },
@@ -426,7 +426,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'jeb-pro'
             Skill = 'apk-reverse'
-            Purpose = 'JEB Pro 商业 Android / ARM 反编译器（需用户自备有效许可证）'
+            Purpose = 'commercial Android/ARM decompiler (manual license install)'
             VersionArgs = @()
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'jeb_wincon' },
@@ -437,7 +437,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'playwright'
             Skill = 'browser-automation'
-            Purpose = 'Playwright 浏览器引擎'
+            Purpose = 'Playwright browser engine'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -448,7 +448,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'proxycat'
             Skill = 'pentest-tools'
-            Purpose = '代理池管理与轮换'
+            Purpose = 'proxy pool management and rotation'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -469,7 +469,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'pentestswarm'
             Skill = 'pentest-tools'
-            Purpose = '群体智能自主渗透与 MCP 执行'
+            Purpose = 'swarm-intelligence autonomous penetration framework (Swarm AI)'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -479,7 +479,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'nmap'
             Skill = 'pentest-tools'
-            Purpose = '端口扫描与服务识别'
+            Purpose = 'port scanning and service identification'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -491,7 +491,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'binwalk'
             Skill = 'firmware-pentest'
-            Purpose = '固件提取与分析'
+            Purpose = 'firmware extraction and analysis'
             VersionArgs = @('--version')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'binwalk' }
@@ -500,7 +500,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'yara'
             Skill = 'malware-analysis'
-            Purpose = '恶意软件规则匹配引擎'
+            Purpose = 'malware rule-matching engine'
             VersionArgs = @('--version')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'yara' },
@@ -510,7 +510,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'pwntools'
             Skill = 'reverse-engineering'
-            Purpose = 'CTF pwn 利用开发框架'
+            Purpose = 'CTF pwn exploit development framework'
             FixedVersion = 'v0.5.0'
             VersionArgs = @()
             Fallbacks = @(
@@ -521,7 +521,7 @@ function Get-ReverseToolCatalog {
         [pscustomobject]@{
             Name = 'bkcrack'
             Skill = 'reverse-engineering'
-            Purpose = 'CTF ZIP/PKZIP ZipCrypto 已知明文攻击'
+            Purpose = 'CTF ZIP/PKZIP ZipCrypto known-plaintext attack'
             FixedVersion = 'v1.8.1'
             VersionArgs = @('--version')
             Fallbacks = @(

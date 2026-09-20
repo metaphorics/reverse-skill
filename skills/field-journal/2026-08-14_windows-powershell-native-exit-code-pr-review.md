@@ -1,67 +1,67 @@
-# 2026-08-14 Windows PowerShell 原生命令退出码 PR 审查
+# 2026-08-14 Windows PowerShell native-command exit-code PR review
 
-## 场景分类
+## Scenario
 
-其他（工具链、供应链引导脚本、开放 PR 审查）
+Other, toolchain, supply-chain bootstrap scripts, and open PR review
 
-## 目标概述
+## Target summary
 
-评估一个固定来源与提交的引导脚本 PR，并验证它在 Windows PowerShell 5.1 下是否保持 fail-closed 且不误拒绝合法 checkout。
+Evaluate a bootstrap-script PR from a fixed source and commit. Verify that it remains fail-closed on Windows PowerShell 5.1 without wrongly rejecting a valid checkout.
 
-## Scope 摘要（脱敏）
+## Scope summary (redacted)
 
-- auth_basis: 仓库维护者授权审查公开 PR 并提交 review
-- network_profile: 公开代码托管平台；取证阶段只读，结论确认后提交 review
-- asset_types: [公开源代码, CI 结果, Windows PowerShell 引导脚本]
+- auth_basis: repository maintainer authorized review of a public PR and submission of a review
+- network_profile: public code-hosting platform; read-only during evidence collection, review submitted after the conclusion was confirmed
+- asset_types: [public source code, CI results, Windows PowerShell bootstrap script]
 
-## 角色
+## Roles
 
 - lead_role: lead
 - specialists: [supply-chain-reviewer, windows-compatibility-reviewer]
 
-## 完整执行链路
+## Execution record
 
-1. 固定 PR head commit，读取变更、讨论、CI 和目标脚本，避免审查移动目标。
-2. 将安全目标拆成来源固定、提交固定、原子替换、脏目录拒绝、锁文件安装和平台兼容性六项。
-3. 确认 manifest 单一来源、staged checkout、dirty-tree fail-closed 与 frozen lockfile 的设计方向有效。
-4. 定位 checkout 验证函数，分别在 Windows PowerShell 5.1 中执行原生命令和带 `Select-Object` 的管道版本。
-5. 观察到两种执行都返回相同 commit 文本，但管道版本读取到 `-1` 的 `$LASTEXITCODE`，导致合法 checkout 被误拒绝。
-6. 运行供应链测试脚本，确认失败在进入预期的 dirty-tree 断言前发生，排除测试夹具本身的问题。
-7. 在 PR 上提交 changes-requested review，要求先保存原生命令退出码再处理输出，并增加 Windows PowerShell 5.1 验证。
-8. 将复现方法和审查准则脱敏回写，供后续 PowerShell 引导脚本审查复用。
+1. Pin the PR head commit. Read the change, discussion, CI, and target script. Do not review a moving target.
+2. Split the security goal into six items: fixed source, fixed commit, atomic replacement, dirty-directory rejection, lockfile installation, and platform compatibility.
+3. Confirm that the single manifest source, staged checkout, dirty-tree fail-closed behavior, and frozen lockfile are sound design directions.
+4. Locate the checkout verification function. Run the native command and the pipeline version with `Select-Object` separately in Windows PowerShell 5.1.
+5. Observe that both executions return the same commit text, but the pipeline version reads `$LASTEXITCODE` as `-1`. This wrongly rejects a valid checkout.
+6. Run the supply-chain test script. Confirm that the failure occurs before the expected dirty-tree assertion. Exclude a problem in the test fixture itself.
+7. Submit a changes-requested review on the PR. Require saving the native-command exit code before processing output and add Windows PowerShell 5.1 validation.
+8. Redact and write back the reproduction method and review criteria for later PowerShell bootstrap-script reviews.
 
-## Evidence 链摘要（脱敏）
+## Evidence chain summary (redacted)
 
-| E-id | severity | status | source_type | 可复用命令模式 | 关联 Finding |
+| E-id | severity | status | source_type | Reusable command pattern | Related finding |
 |------|----------|--------|-------------|----------------|--------------|
 | E-001 | info | observed | command | `powershell.exe -NoProfile -Command "& git -C {install_dir} rev-parse HEAD; $LASTEXITCODE"` | F-001 |
 | E-002 | medium | validated | command | `powershell.exe -NoProfile -Command "& git -C {install_dir} rev-parse HEAD \| Select-Object -First 1; $LASTEXITCODE"` | F-001 |
 | E-003 | medium | validated | command | `powershell.exe -NoProfile -File skills/scripts/tests/test-bootstrap-supply-chain.ps1` | F-001 |
 
-## Finding / Path 摘要
+## Finding and path summary
 
-- top_finding: Windows PowerShell 5.1 中，原生命令输出接入对象管道后再读取 `$LASTEXITCODE`，可能得到 `-1`，即使输出的 commit 与固定值完全一致，也会触发错误的 checkout verification failure。
+- top_finding: In Windows PowerShell 5.1, reading `$LASTEXITCODE` after native-command output enters the object pipeline can return `-1`. Even when the output commit exactly matches the pinned value, this triggers a false checkout verification failure.
 - path_type: callflow
-- path_one_liner: `git rev-parse` 成功 → 输出进入 `Select-Object` → `$LASTEXITCODE` 被改写 → 合法 checkout 被 fail-closed 分支误拒绝
+- path_one_liner: `git rev-parse` succeeds → output enters `Select-Object` → `$LASTEXITCODE` changes → the fail-closed branch wrongly rejects the valid checkout
 
-## 踩坑记录
+## Pitfalls
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Resolution | Time |
 |------|------|---------|------|
-| 所有现有 CI 通过但 Windows 仍有回归 | CI 覆盖了新版 PowerShell 和 Bash，未覆盖 Windows PowerShell 5.1 的原生命令管道语义 | 用 `powershell.exe` 运行最小复现与完整供应链测试 | 约 20 分钟 |
-| commit 文本相同却被判定不一致 | 验证逻辑同时依赖输出和延后读取的 `$LASTEXITCODE` | 原生命令返回后立即保存退出码，再单独规范化输出 | 约 10 分钟 |
-| PR 显示 clean 容易被误认为可直接合并 | mergeable 只说明 Git 合并状态，不证明目标运行时兼容 | 将 base 新鲜度、平台矩阵和本地复现作为独立门禁 | 约 5 分钟 |
+| All existing CI passed but Windows still regressed | CI covered newer PowerShell and Bash, not Windows PowerShell 5.1 native-command pipeline semantics | Use `powershell.exe` for a minimal reproduction and the full supply-chain test | About 20 minutes |
+| Identical commit text was judged inconsistent | Verification depended on output and a later read of `$LASTEXITCODE` | Save the exit code immediately after the native command. Normalize output separately | About 10 minutes |
+| A clean PR display looked mergeable | `mergeable` describes Git merge state, not target-runtime compatibility | Gate base freshness, the platform matrix, and local reproduction separately | About 5 minutes |
 
-## 工具链发现
+## Tool findings
 
-- GitHub API 适合固定 PR head、读取 CI 和提交状态；审查记录应绑定已验证的 commit。
-- `powershell.exe` 与 `pwsh` 不是可互换的测试入口。面向 Windows PowerShell 5.1 的脚本必须由对应宿主执行测试。
-- `$LASTEXITCODE` 是会变化的会话状态；任何后续管道或命令都可能让延后读取失去原生命令语义。
+- GitHub API works for pinning the PR head and reading CI and commit status. Bind the review record to the verified commit.
+- `powershell.exe` and `pwsh` are not interchangeable test entry points. Scripts for Windows PowerShell 5.1 must run in that host.
+- `$LASTEXITCODE` is mutable session state. A later pipeline or command can destroy the native-command meaning before a delayed read.
 
-## 关键代码/命令
+## Key code and commands
 
 ```powershell
-# 先捕获原生命令的输出，并立刻保存退出码。
+# Capture native-command output first, then save the exit code immediately.
 $output = & git -C $CheckoutPath rev-parse HEAD 2>$null
 $gitExitCode = $LASTEXITCODE
 $resolvedCommit = [string]($output | Select-Object -First 1)
@@ -71,37 +71,37 @@ if ($gitExitCode -ne 0 -or $resolvedCommit.Trim() -ne $PinnedCommit) {
 }
 ```
 
-## 对本包的改进建议
+## Improvement suggestions for this package
 
-- 为修改 PowerShell 引导脚本的 PR 增加 `powershell.exe` 5.1 测试任务，避免只由 `pwsh` 覆盖。
-- 在供应链审查清单中加入“原生命令退出码是否在下一条命令前保存”。
-- 合并前同时检查 PR head、最新 main 差异和目标平台测试，不用 GitHub 的 clean 状态替代运行时验证。
+- Add a `powershell.exe` 5.1 test job to PRs that modify PowerShell bootstrap scripts. Do not cover them with `pwsh` only.
+- Add a supply-chain checklist item that asks whether the native-command exit code is saved before the next command.
+- Before merge, check the PR head, the latest-main difference, and target-platform tests. Do not replace runtime validation with GitHub's clean state.
 
-## 可复用的模式/脚本片段
+## Reusable pattern
 
-对所有 PowerShell 原生命令采用三段式处理：执行并捕获输出、立即保存 `$LASTEXITCODE`、最后使用 PowerShell 管道解析输出。错误判定只能使用已保存的退出码。
+Use three stages for every PowerShell native command: execute and capture output, save `$LASTEXITCODE` immediately, then parse output with the PowerShell pipeline. Error decisions may use the saved exit code only.
 
-## 进化动作
+## Follow-up actions
 
-- [ ] 更新了路由矩阵
-- [ ] 更新了 tool-index
-- [ ] 更新了 bootstrap-manifest
-- [ ] 更新了子 skill 文档
-- [x] 新增了 pitfalls 记录
-- [ ] 无需更新
+- [ ] Update the routing matrix
+- [ ] Update the tool index
+- [ ] Update the bootstrap manifest
+- [ ] Update the child skill documentation
+- [x] Add the pitfall record
+- [ ] No update needed
 
-## 环境信息
+## Environment
 
 - OS: Windows
-- 工具版本: Windows PowerShell 5.1，Git 2.x
-- 目标平台/版本: PowerShell 兼容引导脚本，公开 PR head commit
+- Tool versions: Windows PowerShell 5.1, Git 2.x
+- Target platform/version: PowerShell-compatible bootstrap script, public PR head commit
 
-## 脱敏检查
+## Redaction check
 
-- [x] 无真实域名、IP、凭证、Token、Cookie 或 PII
-- [x] 本机安装路径已替换为 `{install_dir}`
-- [x] 未附带用户项目文件或私有仓库内容
+- [x] No real domain, IP, credential, Token, Cookie, or PII
+- [x] Local installation path replaced with `{install_dir}`
+- [x] No user project file or private repository content attached
 
 ---
-<!-- [进化统计] 本包累计完成项目: 18 | 本次新增模式: 1 | 本次修复工具链问题: 0 -->
-<!-- [社区贡献] 用户已授权通过独立 PR 回写本条脱敏经验。 -->
+<!-- [Evolution statistics] Completed projects in this package: 18 | New patterns this time: 1 | Toolchain issues fixed this time: 0 -->
+<!-- [Community contribution] The user authorized writing this redacted experience back through a separate PR. -->

