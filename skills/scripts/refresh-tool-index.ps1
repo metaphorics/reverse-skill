@@ -58,6 +58,8 @@ $scriptRefs = @{
     'yara' = @('malware-analysis/SKILL.md')
     'pwntools' = @('reverse-engineering/SKILL.md', 'reverse-engineering/patterns-ctf*.md')
     'bkcrack' = @('reverse-engineering/crypto-decode-tools.md', '../CTF-Sandbox-Orchestrator/competition-zip-archive/SKILL.md')
+    'redress' = @('go-rust-reverse/scripts/go-triage.ps1')
+    'goresym' = @('go-rust-reverse/scripts/go-triage.ps1')
 }
 
 $skillsRoot = Split-Path -Parent $PSScriptRoot
