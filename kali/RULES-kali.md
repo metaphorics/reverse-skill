@@ -196,8 +196,8 @@ bash "<package root>/kali/scripts/refresh-tool-index.sh"
 | Pentest Swarm AI | stdio | Autonomous swarm penetration testing (recon→classify→exploit→report) | `pentestswarm mcp serve` |
 | idapro | 13337-13350 | IDA Pro reverse-engineering tools | `bash kali/scripts/ida-start.sh` |
 | anything-analyzer | 23816 | Browser automation and HTTP capture | `cd ~/tools/anything-analyzer && pnpm dev` |
-| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.4` (stdio) |
-| ghidra | 8765 | Ghidra decompilation | Ghidra GUI starts listening automatically |
+| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.5` (stdio) |
+| ghidra | tool-index | Ghidra decompilation | Install Ghidra via bootstrap; community bridges need supply-chain review; confirm the port from tool-index |
 | burpsuite | 9876 | BurpSuite Web proxy | Start the BurpSuite extension |
 
 ### Recommended MCP priority (Kali 2026.1)

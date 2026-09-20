@@ -480,31 +480,16 @@ function Expand-TarIntoDirectory {
 function Ensure-GitHubTarInstall {
     param(
         [Parameter(Mandatory = $true)]$Definition,
-        [Parameter(Mandatory = $true)][string]$TargetPath,
-        [Parameter(Mandatory = $true)][string]$VerifyName
+        [Parameter(Mandatory = $true)][string]$TargetPath
     )
 
     $capabilityName = [string]$Definition.name
-    if ([string]::IsNullOrWhiteSpace($capabilityName)) { $capabilityName = $VerifyName }
-    $exeName = if ([string]::IsNullOrWhiteSpace($VerifyName)) { $capabilityName } else { $VerifyName }
+    if ([string]::IsNullOrWhiteSpace($capabilityName)) { throw "GitHub install needs a capability name." }
 
-    # Same capability-scoped contract as Ensure-GitHubZipInstall: catalog row wins,
-    # $exeName is an executable probe only, never a catalog key.
-    try {
-        $existing = Resolve-ReverseToolSpec -Name $capabilityName
-        if ($existing.Available) {
-            return $existing
-        }
-    } catch { }
-
-    $probePath = Get-FirstCommandPath -Names @($exeName)
-    if (-not [string]::IsNullOrWhiteSpace($probePath)) {
-        try {
-            $existing = Resolve-ReverseToolSpec -Name $capabilityName
-            if ($existing.Available) {
-                return $existing
-            }
-        } catch { }
+    # Same fail-fast contract as Ensure-GitHubZipInstall.
+    $existing = Resolve-ReverseToolSpec -Name $capabilityName
+    if ($existing.Available) {
+        return $existing
     }
 
     $releaseTag = if ($Definition.PSObject.Properties['releaseTag']) { [string]$Definition.releaseTag } else { '' }
@@ -542,32 +527,17 @@ function Ensure-DownloadDirectory {
 function Ensure-GitHubZipInstall {
     param(
         [Parameter(Mandatory = $true)]$Definition,
-        [Parameter(Mandatory = $true)][string]$TargetPath,
-        [Parameter(Mandatory = $true)][string]$VerifyName
+        [Parameter(Mandatory = $true)][string]$TargetPath
     )
 
     $capabilityName = [string]$Definition.name
-    if ([string]::IsNullOrWhiteSpace($capabilityName)) { $capabilityName = $VerifyName }
-    $exeName = if ([string]::IsNullOrWhiteSpace($VerifyName)) { $capabilityName } else { $VerifyName }
+    if ([string]::IsNullOrWhiteSpace($capabilityName)) { throw "GitHub install needs a capability name." }
 
-    # Availability is capability-scoped: the catalog row for $capabilityName lists
-    # the real executable (alias exes such as yr or wasm-objdump) in its Fallbacks.
-    # $exeName is an executable probe only, never a catalog key.
-    try {
-        $existing = Resolve-ReverseToolSpec -Name $capabilityName
-        if ($existing.Available) {
-            return $existing
-        }
-    } catch { }
-
-    $probePath = Get-FirstCommandPath -Names @($exeName)
-    if (-not [string]::IsNullOrWhiteSpace($probePath)) {
-        try {
-            $existing = Resolve-ReverseToolSpec -Name $capabilityName
-            if ($existing.Available) {
-                return $existing
-            }
-        } catch { }
+    # Fail fast on a missing catalog row: Step 3 requires the row, so its
+    # absence is an invariant failure, not a download-and-discover case.
+    $existing = Resolve-ReverseToolSpec -Name $capabilityName
+    if ($existing.Available) {
+        return $existing
     }
 
     $releaseTag = if ($Definition.PSObject.Properties['releaseTag']) { [string]$Definition.releaseTag } else { '' }
@@ -997,17 +967,11 @@ function Ensure-Capability {
     switch ($definition.bootstrapKind) {
         'github-release-zip' {
             # Generic handler for all github-release-zip capabilities
-            $verifyName = if ($definition.PSObject.Properties['verifyCommand'] -and -not [string]::IsNullOrWhiteSpace($definition.verifyCommand)) {
-                $definition.verifyCommand
-            } else { $Name }
-            return Ensure-GitHubZipInstall -Definition $definition -TargetPath $definition.installDir -VerifyName $verifyName
+            return Ensure-GitHubZipInstall -Definition $definition -TargetPath $definition.installDir
         }
         'github-release-tar' {
             # Generic handler for all github-release-tar capabilities (same contract as zip)
-            $verifyName = if ($definition.PSObject.Properties['verifyCommand'] -and -not [string]::IsNullOrWhiteSpace($definition.verifyCommand)) {
-                $definition.verifyCommand
-            } else { $Name }
-            return Ensure-GitHubTarInstall -Definition $definition -TargetPath $definition.installDir -VerifyName $verifyName
+            return Ensure-GitHubTarInstall -Definition $definition -TargetPath $definition.installDir
         }
         'git-clone' {
             return Ensure-GitCloneInstall -Definition $definition -TargetPath $definition.installDir

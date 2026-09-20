@@ -15,19 +15,24 @@ BIN=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --bin) BIN="$2"; shift 2 ;;
-        -*) echo "Unknown option: $1" >&2; exit 1 ;;
+        --bin)
+            if [[ $# -lt 2 ]]; then
+                printf 'ERR: --bin needs a path argument\n' >&2
+                exit 1
+            fi
+            BIN="$2"; shift 2 ;;
+        -*) printf 'Unknown option: %s\n' "$1" >&2; exit 1 ;;
         *) BIN="$1"; shift ;;
     esac
 done
 
 if [[ -z "$BIN" ]]; then
-    echo "Usage: $0 --bin <path>" >&2
+    printf 'Usage: %s --bin <path>\n' "$0" >&2
     exit 1
 fi
 
 if [[ ! -f "$BIN" ]]; then
-    echo "ERR: binary not found: $BIN" >&2
+    printf 'ERR: binary not found: %s\n' "$BIN" >&2
     exit 1
 fi
 
@@ -38,44 +43,44 @@ ensure_tool() {
     if command -v "$exe" &>/dev/null; then
         return 0
     fi
-    echo "INFO: Cannot find $exe. Trying automatic installation..." >&2
+    printf 'INFO: Cannot find %s. Trying automatic installation...\n' "$exe" >&2
     if [[ -x "$KALI_BOOTSTRAP" ]]; then
         bash "$KALI_BOOTSTRAP" "$name" --skip-refresh 2>/dev/null || true
     elif [[ -x "$LINUX_BOOTSTRAP" ]]; then
         bash "$LINUX_BOOTSTRAP" "$name" 2>/dev/null || true
     fi
     if ! command -v "$exe" &>/dev/null; then
-        echo "ERR: $exe installation failed. Install it manually." >&2
+        printf 'ERR: %s installation failed. Install it manually.\n' "$exe" >&2
         return 1
     fi
-    echo "INFO: $exe installation succeeded" >&2
+    printf 'INFO: %s installation succeeded\n' "$exe" >&2
 }
 
-echo "=== file ==="
+printf '=== file ===\n'
 if command -v file &>/dev/null; then
     file "$BIN"
 else
-    echo "file: not installed, skipping magic identification"
+    printf 'file: not installed, skipping magic identification\n'
 fi
 
-echo "=== runtime markers ==="
+printf '=== runtime markers ===\n'
 if command -v strings &>/dev/null; then
     if strings "$BIN" | grep -m5 -E 'go\.buildid|runtime\.main|rust_begin_unwind'; then
         true
     else
-        echo "no go.buildid / runtime.main / rust_begin_unwind markers"
+        printf 'no go.buildid / runtime.main / rust_begin_unwind markers\n'
     fi
 else
-    echo "strings: not installed, skipping marker scan"
+    printf 'strings: not installed, skipping marker scan\n'
 fi
 
 ensure_tool "redress" "redress"
-echo "=== redress info ==="
+printf '=== redress info ===\n'
 redress info "$BIN"
 
-echo "=== redress packages ==="
+printf '=== redress packages ===\n'
 redress packages "$BIN"
 
 ensure_tool "goresym" "GoReSym"
-echo "=== GoReSym (first 60 lines) ==="
-GoReSym "$BIN" | head -n 60
+printf '=== GoReSym (first 60 lines) ===\n'
+GoReSym "$BIN" | sed -n '1,60p'

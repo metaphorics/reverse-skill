@@ -238,18 +238,11 @@
       "canAutoInstall": true,
       "verifyCommand": "analyzeHeadless",
       "postInstallSteps": [
-        "Download the GhidraMCP plugin: https://github.com/LaurieWired/GhidraMCP/releases",
-        "Install the plugin zip into Ghidra: File → Install Extensions → select the downloaded zip",
-        "After a Ghidra project opens, the MCP server listens on localhost:8765 automatically"
+        "Install community MCP bridges only after the skill-supply-chain review",
+        "Confirm the MCP port from tool-index; do not assume a default"
       ],
-      "mcpNames": [
-        "ghidra"
-      ],
-      "mcpUrl": "http://localhost:8765/mcp",
-      "servicePort": 8765,
-      "verificationMode": "service-or-registration",
-      "preferApiDigest": true,
-      "note": "Ghidra releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity."
+      "note": "Ghidra releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity.",
+      "preferApiDigest": true
     },
     {
       "name": "seclists",
