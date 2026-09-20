@@ -192,6 +192,27 @@ install_git_commit() {
     fi
 }
 
+# Copy an extracted tree into place, stripping one level only when the
+# archive holds exactly one top-level directory (mirrors the Windows
+# Expand-TarIntoDirectory layout rule). Flat and multi-root archives copy
+# as-is, so root-level payloads are never discarded and empty finds never
+# collapse to "/.".
+flatten_single_top_dir() {
+    local src="$1"
+    local dest="$2"
+    local entries
+    entries=$(find "$src" -maxdepth 1 -mindepth 1 | wc -l)
+    if [[ "$entries" -eq 1 ]]; then
+        local single
+        single=$(find "$src" -maxdepth 1 -mindepth 1)
+        if [[ -d "$single" ]]; then
+            cp -a "$single"/. "$dest"/
+            return 0
+        fi
+    fi
+    cp -a "$src"/. "$dest"/
+}
+
 # Download and extract GitHub Release.
 # Args: repo asset_regex install_dir [release_tag] [expected_sha256]
 install_github_release() {
@@ -271,20 +292,22 @@ install_github_release() {
     # Extract according to file type
     case "$filename" in
         *.tar.gz|*.tgz)
-            tar -xzf "$tmp_file" -C "$install_dir" --strip-components=1 2>/dev/null \
-                || tar -xzf "$tmp_file" -C "$install_dir"
+            tmp_extract=$(mktemp -d /tmp/reverse-bootstrap-extract.XXXXXX)
+            if ! tar -xzf "$tmp_file" -C "$tmp_extract"; then
+                log_err "Extraction failed: $filename"
+                cleanup_github_release
+                return 1
+            fi
+            flatten_single_top_dir "$tmp_extract" "$install_dir"
             ;;
         *.zip)
             tmp_extract=$(mktemp -d /tmp/reverse-bootstrap-extract.XXXXXX)
-            unzip -qo "$tmp_file" -d "$tmp_extract"
-            # If there is one top-level directory, strip it
-            local top_dirs
-            top_dirs=$(find "$tmp_extract" -maxdepth 1 -mindepth 1 -type d)
-            if [[ $(printf '%s\n' "$top_dirs" | wc -l) -eq 1 ]]; then
-                cp -a "$top_dirs"/. "$install_dir/"
-            else
-                cp -a "$tmp_extract"/. "$install_dir/"
+            if ! unzip -qo "$tmp_file" -d "$tmp_extract"; then
+                log_err "Extraction failed: $filename"
+                cleanup_github_release
+                return 1
             fi
+            flatten_single_top_dir "$tmp_extract" "$install_dir"
             ;;
         *.deb)
             if [[ $EUID -eq 0 ]]; then
