@@ -239,8 +239,6 @@
       "verifyCommand": "analyzeHeadless",
       "postInstallSteps": [
         "Install community MCP bridges only after the skill-supply-chain review",
-        "下载 GhidraMCP 插件: https://github.com/LaurieWired/GhidraMCP/releases",
-        "将插件 zip 安装到 Ghidra: File → Install Extensions → 选择下载的 zip",
         "Confirm the MCP port from tool-index; do not assume a default"
       ],
       "preferApiDigest": true

@@ -606,7 +606,7 @@ EOF
                 install_apt_package "ghidra" 2>/dev/null \
                     || install_github_release "NationalSecurityAgency/ghidra" "^ghidra_.*_PUBLIC_.*\\.zip$" "$HOME/tools/ghidra"
             fi
-            log_warn "GhidraMCP 插件需手动安装: https://github.com/LaurieWired/GhidraMCP/releases"
+            log_warn "本分支只装 Ghidra。社区 MCP 桥接需先过 skill-supply-chain 评审；端口以 tool-index 为准。"
             ;;
         nuclei)
             if command -v go &>/dev/null; then
