@@ -27,11 +27,20 @@ description: 在 CLI 环境下做 Android APK 逆向时使用。适用于 APK �
 - 用 Frida 做 Java/native 动态 Hook
 - APK 内含 `.so` 时切到 native 分析
 
+<<<<<<< ours — heading `CLI Tools Verified on This Machine` (T+F, confidence: medium)
+// refused_by: rename_vs_edit_guard · collision: none (both sides edited, nowhere the same lines)
 ## 当前机器已验证可用的 CLI 工具
 
 - `jadx` `1.5.5`
 - `apktool` `3.0.2`
 - `frida-ps` `17.9.6`
+=======
+## CLI Tools Verified on This Machine
+
+- `jadx` `1.5.6`
+- `apktool` `3.0.3`
+- `frida-tools` `14.10.4` (`frida` core `17.18.0`)
+>>>>>>> theirs — heading `CLI Tools Verified on This Machine` (T+F, confidence: medium)
 - `adb`
 - `java`
 
@@ -209,6 +218,26 @@ adb logcat
 adb pull /data/local/tmp/file .
 ```
 
+<<<<<<< ours — heading ``apktool`` (S+F, confidence: low)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+### `apktool`
+
+Use it for:
+
+- Unpacking APKs
+- Viewing and modifying `AndroidManifest.xml`
+- Viewing and modifying smali
+- Rebuilding APKs
+
+Common commands (Apktool 3 is AAPT2-only and 64-bit only; the legacy `-api` flag is gone):
+
+```bash
+apktool d app.apk -o apktool_out
+apktool b apktool_out -o rebuilt.apk
+```
+
+>>>>>>> theirs — heading ``apktool`` (S+F, confidence: low)
 ## 推荐工作流
 
 ### 1. Triage
@@ -354,7 +383,12 @@ apktool d app.apk -o apktool_out
 # 重建 APK
 apktool b apktool_out -o rebuilt.apk
 
+<<<<<<< ours — heading `Devices and processes` (T, confidence: high)
+// refused_by: merge_ladder_exhausted · collision: none (both sides edited, nowhere the same lines)
 # 设备与进程
+=======
+# Devices and processes
+>>>>>>> theirs — heading `Devices and processes` (T, confidence: high)
 adb devices
 frida-ps -U
 
@@ -413,3 +447,4 @@ frida -U -f com.example.app -l hook.js
 - [ ] 我是否产出了可复现证据（命令/脚本/截图/报告）？
 - [ ] 我是否完成并回写了 RULES 要求的 Checklist 项？
 - [ ] 若命中隐藏图标/格机/持久化线索：是否按 U–AV cookbook 记录 E-android-* Evidence（授权范围内）？
+// weave: run 'weave explain skills/apk-reverse/SKILL.md' for per-hunk detail, 'weave check' to verify your resolution

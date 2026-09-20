@@ -449,3 +449,33 @@ radare2-skills 项目（radareorg/radare2-skills）提供了更完整的生态�
 - [ ] 我是否基于 `tool-index` 使用了真实工具路径？
 - [ ] 我是否产出了可复现证据（命令/脚本/截图/报告）？
 - [ ] 我是否完成并回写了 RULES 要求的 Checklist 项？
+<<<<<<< ours — heading `radare2-skills Ecosystem` (S+F, confidence: low)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+## radare2-skills Ecosystem
+
+The radare2-skills project (radareorg/radare2-skills) provides a more complete ecosystem of tools and workflows:
+
+- **r2xsql**: Query binary imports / strings / functions with SQL
+- **r2mcp / r2http**: MCP tools and an HTTP stateful command channel
+- **radius2**: Symbolic execution and symbolic dynamic analysis
+- **r2pm**: Plugin management and extensions
+- **decompiler plugins**: The radare2 plugin mechanism
+
+**Use strategy**:
+- When the user mentions `r2xsql`, `r2mcp`, `r2http`, `radius2`, `r2pm`, `rabin2`, `rasm2`, `radiff2`, `rahash2`, or `rax2`, route to this skill (`radare2/SKILL.md`) first
+- These tools are only ecosystem accelerators and **cannot bypass**: authorization gates, `tool-index` checks, Evidence import, or write mode confirmation
+- Provide a minimal reproducible command example:
+  - `r2xsql -s <file> -q "SELECT ..."`
+  - `curl.exe -sS --data-binary 'aaa' http://127.0.0.1:9393/cmd`
+  - `radius2 -p <binary> ...`
+  - `r2pm -ci <plugin>`
+  - `r2pm -ci r2frida` (dynamic instrumentation bridge, 6.2.2, tracks radare2 6.2.2)
+
+This skill keeps the original hard gates and evidence chain integrity. Do not skip any authorization or Evidence step.
+rizin is a radare2 fork and stays out of bootstrap; use r2pm plugins on radare2 6.2.2.
+
+---
+
+>>>>>>> theirs — heading `radare2-skills Ecosystem` (S+F, confidence: low)
+// weave: run 'weave explain skills/radare2/SKILL.md' for per-hunk detail, 'weave check' to verify your resolution

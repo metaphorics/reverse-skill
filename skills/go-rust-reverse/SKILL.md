@@ -1,6 +1,11 @@
 ---
 name: go-rust-reverse
+<<<<<<< ours — scope `description: Use to reverse engineer Go and R...` in preamble `(preamble)` (S, confidence: medium)
+// refused_by: statement_fold · collision: `description: Use to reverse engineer Go and Rust binaries with …`
 description: Use for reverse engineering stripped Go and Rust binaries including runtime recognition, pclntab/moduel data recovery, panic strings, and idiomatic decompilation recovery.
+=======
+description: Reverse engineer Go and Rust binaries with symbols removed. Identify runtime features, recover pclntab and module data with redress and GoReSym, analyze panic strings, and recover language-specific code patterns from decompiled code.
+>>>>>>> theirs — scope `description: Use to reverse engineer Go and R...`
 ---
 
 # Go / Rust Binary Reverse Engineering
@@ -18,7 +23,25 @@ description: Use for reverse engineering stripped Go and Rust binaries including
 - Rust 发行二进制、panic 字符串驱动分析
 - 与通用 ida/ghidra 互补的语言专用方法
 
+<<<<<<< ours — heading `ACTION REQUIRED (Execute immediately after reading)` (S+F, confidence: low)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+## ACTION REQUIRED (Execute immediately after reading)
+
+1. `NOW`: Read `../field-journal/precedent-reverse.md`
+2. `NOW`: Confirm that the sample was compiled from Go or Rust (use `file`, strings, and runtime features)
+3. `NEXT`: Check if redress, GoReSym, and related plugins are available (run `scripts/go-triage.ps1` / `scripts/go-triage.sh --bin <path>` for the first scan)
+4. `ACT`: Identify the runtime → recover symbols/metadata → analyze application logic
+
+>>>>>>> theirs — heading `ACTION REQUIRED (Execute immediately after reading)` (S+F, confidence: low)
 ## 工作流
+
+### Identify the runtime
+
+```text
+□ Run file, rabin2 -I, and strings for go.buildid / runtime.main (Go) or rust_begin_unwind (Rust)
+□ The go-triage.sh / go-triage.ps1 scripts automate this scan with --bin <path>
+```
 
 ### Go
 
@@ -53,6 +76,46 @@ description: Use for reverse engineering stripped Go and Rust binaries including
 | radare2 | 快速字符串 |
 | strings / rabin2 | 分诊 |
 
+<<<<<<< ours — heading `Go` (S+F, confidence: low)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+### Go
+
+```text
+□ Run redress info <bin>, then redress packages --std --vendor <bin>
+□ Run redress types struct --methods <bin> for structs with method sets
+□ When IDA/Ghidra is the decompiler, run GoReSym -p -t -d <bin> > goresym.json and import it
+□ When r2 is open, run redress r2 for r2pipe projection
+□ Examine interface, slice, and string structures in decompiled code
+□ Examine network/cryptographic library paths: crypto/* net/http
+```
+
+>>>>>>> theirs — heading `Go` (S+F, confidence: low)
+<<<<<<< ours — heading `Dynamic Analysis` (T+F, confidence: medium)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+### Dynamic Analysis
+
+```text
+□ Frida still applies; examine the Go stack and scheduling
+□ First use log and configuration strings to select breakpoints
+```
+
+>>>>>>> theirs — heading `Dynamic Analysis` (T+F, confidence: medium)
+<<<<<<< ours — heading `Tools` (T+F, confidence: medium)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+## Tools
+
+| Tool | Version | License | Use |
+|------|---------|---------|-----|
+| redress | v1.2.85 | AGPL-3.0 | Recover Go packages, types, source projection; auto-install |
+| GoReSym | v3.4.1 | MIT | Recover Go metadata JSON for IDA/Ghidra; auto-install |
+| IDA/Ghidra + Go/Rust plugins | as installed | — | Decompile code |
+| radare2 | 6.2.2 | — | Find strings quickly; redress r2pipe target |
+| strings / rabin2 | as installed | — | Make an initial assessment |
+
+>>>>>>> theirs — heading `Tools` (T+F, confidence: medium)
 ## 参考
 
 - `references/go-rust-notes.md`
@@ -69,3 +132,4 @@ description: Use for reverse engineering stripped Go and Rust binaries including
 - [ ] 是否恢复关键函数名或等价映射？
 - [ ] 是否标注语言运行时证据？
 - [ ] Checklist？
+// weave: run 'weave explain skills/go-rust-reverse/SKILL.md' for per-hunk detail, 'weave check' to verify your resolution

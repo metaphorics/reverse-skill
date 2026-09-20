@@ -670,4 +670,3 @@
     }
   ]
 }
-// weave: run 'weave explain kali/scripts/bootstrap-manifest.json' for per-hunk detail, 'weave check' to verify your resolution

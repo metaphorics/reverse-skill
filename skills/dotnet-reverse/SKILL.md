@@ -52,6 +52,23 @@ metadata:
 
 > 前置：Windows 主机装 dnSpyEx + de4dot（choco 或 release）；Linux/macOS 用 `ilspycmd` + `dotnet runtime`。详见 `references/sharp-tools.md` 的安装矩阵。
 
+<<<<<<< ours — heading `Toolchain Mapping` (S+F, confidence: low)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+## Toolchain Mapping
+
+| Capability | First Choice | Notes |
+|------|------|------|
+| Decompilation + debugging + patching | **dnSpyEx** | Primary choice, the only GUI with an IL editor; old dnSpy is no longer maintained, use the Ex branch |
+| Lightweight CLI / headless decompilation | **ILSpy v11.0** (`ilspycmd`, manual `dotnet tool install -g ilspycmd`) | Suitable for batch work and scripting on Linux/macOS |
+| Deobfuscation | **de4dot** | Default choice for common packers such as the ConfuserEx family and SmartAssembly |
+| Obfuscator identification | **Detect It Easy (DIE)** / **file** | Identify the packer type first, then select the de4dot parameters |
+| Programmatic IL operations | **dnlib** | Write C# scripts to batch-edit metadata / string decryptors |
+| Direct AI operations | **dnSpy MCP** | Includes tools such as `dnspy_decompile` / `dnspy_inspect_il` |
+
+> Prerequisite: Install dnSpyEx + de4dot on a Windows host with choco or from a release; use `ilspycmd` + `dotnet runtime` on Linux/macOS. See the installation matrix in `references/sharp-tools.md`.
+
+>>>>>>> theirs — heading `Toolchain Mapping` (S+F, confidence: low)
 ## 六阶段工作流
 
 ### 1. Identify（识别 .NET）
@@ -190,3 +207,4 @@ File → Save Module → 替换原文件
 - [ ] 关键逻辑是否用 IL 视图验证（而非只看 C# 伪代码）？
 - [ ] 产物（clean 样本 / 配置 / patch diff）是否落盘且可复现？
 - [ ] 是否提供了下一步菜单或报告出口？
+// weave: run 'weave explain skills/dotnet-reverse/SKILL.md' for per-hunk detail, 'weave check' to verify your resolution

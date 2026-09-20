@@ -95,7 +95,10 @@ Detailed quick notes that support [`SKILL.md`](SKILL.md). Read this file after t
 Disassemble with `marshal.load()` + `dis.dis()`. Header: 8 bytes (2.x), 12 (3.0-3.6), 16 (3.7+). See [languages.md](languages.md#python-bytecode-reversing-disdis-output).
 
 ### WASM
+
+wabt 1.0.42 provides the toolchain (bootstrap `wabt` capability).
 ```bash
+wasm-objdump -x main.wasm  # Section listing: imports/exports
 wasm2c checker.wasm -o checker.c
 gcc -O3 checker.c wasm-rt-impl.c -o checker
 

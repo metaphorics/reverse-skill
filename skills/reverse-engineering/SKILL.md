@@ -45,7 +45,7 @@ Quick reference for RE challenges. For detailed techniques, see supporting files
 
 **Python packages (all platforms):**
 ```bash
-pip install frida-tools angr qiling uncompyle6 capstone lief z3-solver
+pip install frida-tools angr qiling capstone lief z3-solver
 # For Python 3.9+ bytecode: build pycdc from source
 git clone https://github.com/zrax/pycdc && cd pycdc && cmake . && make
 ```
@@ -175,6 +175,7 @@ pdf @ main         # Disassemble main
 
 # Ghidra (headless)
 analyzeHeadless project/ tmp -import binary -postScript script.py
+# Scripting: see ghidra-reverse (PyGhidra via support/pyghidraRun; Jython is legacy)
 
 # IDA
 ida64 binary       # Open in IDA64

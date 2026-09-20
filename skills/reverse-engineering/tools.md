@@ -278,6 +278,13 @@ Notes:
 
 ## WASM Analysis
 
+wabt 1.0.42 provides the toolchain (bootstrap `wabt` capability).
+```bash
+wasm-objdump -x module.wasm         # Section listing: imports/exports
+wasm2wat module.wasm -o module.wat  # Binary → text
+```
+wasm-decompile was removed upstream in wabt 1.0.42; use wasm2wat/wasm2c output instead.
+
 ### Decompile to C
 ```bash
 wasm2c checker.wasm -o checker.c

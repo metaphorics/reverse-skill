@@ -21,6 +21,18 @@ description: Use for authorized digital forensics including memory dumps, disk t
 - 主机伪影：Prefetch、Shimcache、Event Log、浏览器历史
 - 应急响应 IOC 提炼（联合 `malware-analysis/` / `threat-hunting/`）
 
+<<<<<<< ours — heading `Use cases` (S+F, confidence: low)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+## Use cases
+
+- Memory dump analysis (Volatility 3 v2.28.2)
+- Disk / E01 / dropped-file timelines
+- PCAP attribution and protocol reconstruction (pair with `protocol-reverse/`)
+- Host artifacts: Prefetch, Shimcache, Event Log, browser history
+- IR IOC extraction (pair with `malware-analysis/` / `threat-hunting/`)
+
+>>>>>>> theirs — heading `Use cases` (S+F, confidence: low)
 ## 工作流
 
 ### 1. 保全
@@ -65,6 +77,20 @@ vol -f mem.dmp windows.cmdline
 | Eric Zimmerman 工具集 | Windows 伪影 |
 | Autopsy / FTK Imager | 磁盘 |
 
+<<<<<<< ours — heading `Toolchain` (T+F, confidence: medium)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+## Toolchain
+
+| Tool | Use |
+|------|------|
+| Volatility 3 v2.28.2 | Memory |
+| Timeline Explorer / Plaso | Super timeline |
+| tshark | PCAP |
+| Eric Zimmerman toolset | Windows artifacts |
+| Autopsy / FTK Imager | Disk |
+
+>>>>>>> theirs — heading `Toolchain` (T+F, confidence: medium)
 ## 参考
 
 - `references/forensics-triage.md`
@@ -81,3 +107,4 @@ vol -f mem.dmp windows.cmdline
 - [ ] 时间线是否可复核？
 - [ ] IOC 是否脱敏分级？
 - [ ] Checklist？
+// weave: run 'weave explain skills/digital-forensics/SKILL.md' for per-hunk detail, 'weave check' to verify your resolution

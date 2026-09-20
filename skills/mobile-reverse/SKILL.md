@@ -129,7 +129,12 @@ Java.perform(function() {
 });
 ```
 
+<<<<<<< ours — heading `SSL Pinning` (T, confidence: high)
+// refused_by: merge_ladder_exhausted · collision: none (both sides edited, nowhere the same lines)
 ### 反调试
+=======
+### SSL Pinning
+>>>>>>> theirs — heading `SSL Pinning` (T, confidence: high)
 
 ```bash
 # Android
@@ -198,3 +203,27 @@ Interceptor.attach(Module.findExportByName("libcommonCrypto.dylib", "CCCrypt"), 
 - [ ] 我是否基于 `tool-index` 使用了真实工具路径？
 - [ ] 我是否产出了可复现证据（命令/脚本/截图/报告）？
 - [ ] 我是否完成并回写了 RULES 要求的 Checklist 项？
+<<<<<<< ours — heading `Toolchain` (S+F, confidence: low)
+// refused_by: modify_delete_guard · collision: none (no common ancestor text)
+=======
+## Toolchain
+
+| Tool | Platform | Purpose |
+|------|:--:|------|
+| JADX-GUI | A | Java decompilation |
+| apktool | A | APK unpacking/rebuilding |
+| Ghidra | A+I | Multi-architecture decompilation |
+| Hopper | I | iOS-specific disassembly |
+| Frida (frida-tools 14.10.4) | A+I | Dynamic instrumentation |
+| Objection 1.12.5 | A+I | Frida REPL extension |
+| MobSF | A+I | Automatic SAST+DAST |
+| class-dump | I | ObjC class export |
+| frida-ios-dump | I | IPA decryption |
+| jtool2 | I | Mach-O analysis |
+| Burp Suite | A+I | HTTP interception |
+| mitmproxy | A+I | Script-controlled proxy |
+
+> A=Android, I=iOS
+
+>>>>>>> theirs — heading `Toolchain` (S+F, confidence: low)
+// weave: run 'weave explain skills/mobile-reverse/SKILL.md' for per-hunk detail, 'weave check' to verify your resolution

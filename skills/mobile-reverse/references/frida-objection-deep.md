@@ -149,12 +149,24 @@ ios plist cat Info.plist          # 读取 plist
 # 1. 解包 APK
 apktool d app.apk -o app_unpacked
 
+<<<<<<< ours — heading `2. Download frida-gadget. Put it in the lib directory.` (T+F, confidence: medium)
+// refused_by: rename_vs_edit_guard · collision: none (1 contested hunk(s), neither side deleted the other's lines)
 # 2. 下载 frida-gadget 并放入 lib 目录
 cp frida-gadget-17.x.x-android-arm64.so \
+=======
+# 2. Download frida-gadget. Put it in the lib directory.
+cp frida-gadget-17.18.0-android-arm64.so \
+>>>>>>> theirs — heading `2. Download frida-gadget. Put it in the lib directory.` (T+F, confidence: medium)
    app_unpacked/lib/arm64-v8a/libfrida-gadget.so
 
 # 3. 在 smali 中注入 System.loadLibrary("frida-gadget")
+<<<<<<< ours — heading `Frida + Objection Advanced Use` (T+S, confidence: medium)
+// refused_by: rename_vs_edit_guard · collision: none (1 contested hunk(s), neither side deleted the other's lines)
 # 修改主 Activity 的 onCreate 或 attachBaseContext
+=======
+# Frida + Objection Advanced Use
+Pinned toolchain: frida-tools 14.10.4 (frida core 17.18.0), objection 1.12.5.
+>>>>>>> theirs — heading `Frida + Objection Advanced Use` (T+S, confidence: medium)
 
 # 4. 重建并签名
 apktool b app_unpacked -o app_patched.apk
@@ -216,3 +228,4 @@ Interceptor.replace(SecTrustEvaluate, new NativeCallback(function(trust, result)
 ```
 
 Source: Frida docs, Objection wiki, OWASP MSTG
+// weave: run 'weave explain skills/mobile-reverse/references/frida-objection-deep.md' for per-hunk detail, 'weave check' to verify your resolution
