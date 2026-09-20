@@ -577,7 +577,8 @@ function Get-ReverseToolCatalog {
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'wasm-objdump' },
                 [pscustomobject]@{ Type = 'command'; Value = 'wasm2wat' },
-                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\wabt\wasm-objdump.exe') }
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\wabt\wasm-objdump.exe') },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-Path $userProfile 'Tools\wabt\bin\wasm-objdump.exe') }
             )
         }
         [pscustomobject]@{

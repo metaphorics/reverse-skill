@@ -238,20 +238,15 @@
       "canAutoInstall": true,
       "verifyCommand": "analyzeHeadless",
       "postInstallSteps": [
+        "Install community MCP bridges only after the skill-supply-chain review",
         "下载 GhidraMCP 插件: https://github.com/LaurieWired/GhidraMCP/releases",
         "将插件 zip 安装到 Ghidra: File → Install Extensions → 选择下载的 zip",
-        "MCP server 在 Ghidra 项目打开后自动监听 localhost:8765"
+        "Confirm the MCP port from tool-index; do not assume a default"
       ],
-      "mcpNames": [
-        "ghidra"
-      ],
-      "mcpUrl": "http://localhost:8765/mcp",
-      "servicePort": 8765,
-      "verificationMode": "service-or-registration",
-      "preferApiDigest": true,
-      "note": "Ghidra 发版频繁，不 pin assetSha256；改用 GitHub API digest（sha256:...）动态校验，格式已实测兼容 Assert-DownloadedFileIntegrity。"
+      "preferApiDigest": true
     },
     {
+      "note": "Ghidra 发版频繁，不 pin assetSha256；改用 GitHub API digest（sha256:...）动态校验，格式已实测兼容 Assert-DownloadedFileIntegrity。",
       "name": "seclists",
       "bootstrapKind": "git-clone",
       "repo": "https://github.com/danielmiessler/SecLists.git",

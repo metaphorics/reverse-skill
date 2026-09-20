@@ -107,9 +107,6 @@ GENERATED_AT=$(date '+%Y-%m-%d %H:%M:%S %z')
             anything-analyzer)
                 if test_tcp_port 23816 2>/dev/null; then service_online="✓"; fi
                 ;;
-            ghidra-mcp)
-                if test_tcp_port 8765 2>/dev/null; then service_online="✓"; fi
-                ;;
             burpsuite-mcp)
                 if test_tcp_port 9876 2>/dev/null; then service_online="✓"; fi
                 ;;

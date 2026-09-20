@@ -204,8 +204,8 @@ After task completion (vulnerability verified / reverse complete / flag captured
 |---------|------|---------|---------|
 | idapro | 13337-13350 | IDA Pro 72 reverse tools | Auto-start (IDA plugin), port increments per instance |
 | anything-analyzer | 23816 | Browser automation + HTTP capture | `pnpm dev` (project dir) |
-| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.4` (stdio) |
-| ghidra | 8765 | Ghidra free decompiler | Ghidra GUI auto-listens after launch |
+| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.5` (stdio) |
+| ghidra | tool-index | Ghidra free decompiler | Install Ghidra via bootstrap; community bridges need supply-chain review; confirm the port from tool-index |
 | burpsuite | 9876 | BurpSuite 78-tool full control (Proxy/Intruder/Repeater/Scanner/Collaborator) | Burp extension auto-loads |
 
 ---

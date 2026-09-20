@@ -268,16 +268,11 @@
       "canAutoInstall": true,
       "verifyCommand": "ghidra",
       "postInstallSteps": [
+        "Install community MCP bridges only after the skill-supply-chain review",
         "下载 GhidraMCP 插件: https://github.com/LaurieWired/GhidraMCP/releases",
         "将插件 zip 安装到 Ghidra: File → Install Extensions → 选择下载的 zip",
-        "MCP server 在 Ghidra 项目打开后自动监听 localhost:8765"
+        "Confirm the MCP port from tool-index; do not assume a default"
       ],
-      "mcpNames": [
-        "ghidra"
-      ],
-      "mcpUrl": "http://localhost:8765/mcp",
-      "servicePort": 8765,
-      "verificationMode": "service-or-registration",
       "kaliNote": "apt install ghidra 或从 GitHub 下载",
       "preferApiDigest": true
     },
@@ -656,7 +651,7 @@
       "docsUrl": "https://github.com/WebAssembly/wabt",
       "canAutoInstall": true,
       "verifyCommand": "wasm-objdump",
-      "kaliNote": "Kali installs wabt through apt (distro build). Upstream is 1.0.42 with wasm-objdump/wasm2wat/wasm2c; wasm-decompile was removed upstream in 1.0.42, so its presence follows the distro build."
+      "kaliNote": "Kali installs wabt through apt (distro build; apt reported 1.0.36+dfsg+~cs1.0.36-2ubuntu1 on the surveyed host). Upstream is 1.0.42 with wasm-objdump/wasm2wat/wasm2c; wasm-decompile was removed upstream in 1.0.42, so its presence follows the distro build."
     },
     {
       "name": "objection",

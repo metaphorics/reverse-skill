@@ -30,7 +30,7 @@ for arg in "$@"; do
         --start-services) START_SERVICES=true ;;
         --skip-refresh) SKIP_REFRESH=true ;;
         --list|-l)
-            echo "jadx apktool jeb-pro frida frida-ps idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer idapro r2 rabin2 adb agent-browser ghidra-mcp seclists proxycat burpsuite-mcp nmap pentestswarm bkcrack redress goresym capa yara-x unblob wabt objection"
+            printf '%s\n' "jadx apktool jeb-pro frida frida-ps idalib-mcp jshookmcp reqable-mcp xquik-mcp anything-analyzer idapro r2 rabin2 adb agent-browser ghidra-mcp seclists proxycat burpsuite-mcp nmap pentestswarm bkcrack redress goresym capa yara-x unblob wabt objection"
             echo "mcp-kali-server metasploitmcp hexstrike-ai adaptixc2 atomic-operator sstimap xsstrike wpprobe fluxion gef coercer evil-winrm-py netexec responder bloodhound certipy"
             exit 0
             ;;
@@ -46,7 +46,7 @@ if [[ ${#CAPABILITIES[@]} -eq 0 ]]; then
     echo ""
     echo "  [逆向分析]"
     echo "    jadx apktool jeb-pro frida frida-ps idalib-mcp r2 rabin2 adb gef"
-    echo "    redress goresym capa yara-x unblob wabt objection"
+    printf '%s\n' "    redress goresym capa yara-x unblob wabt objection"
     echo ""
     echo "  [渗透测试 - 经典工具]"
     echo "    nmap sqlmap hashcat hydra gobuster ffuf msfconsole nuclei"
@@ -406,10 +406,6 @@ install_manifest_release() {
 ensure_capability() {
     local name="$1"
 
-    # Check whether it is already available (verifyCommand-aware: yara-x probes yr,
-    # wabt probes wasm-objdump, goresym probes GoReSym)
-    local verify_cmd
-    verify_cmd=$(manifest_field "$name" verifyCommand 2>/dev/null) || verify_cmd="$name"
     # 检查是否已可用（verifyCommand 感知：yara-x 探测 yr、wabt 探测 wasm-objdump、goresym 探测 GoReSym）
     local verify_cmd
     verify_cmd=$(manifest_field "$name" verifyCommand 2>/dev/null) || verify_cmd="$name"

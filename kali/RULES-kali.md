@@ -1,4 +1,4 @@
-﻿# 逆向/渗透/安全任务自动路由规则（Kali Linux 版）
+# 逆向/渗透/安全任务自动路由规则（Kali Linux 版）
 
 > **本文件是 Kali 路径适配层，不是第二套行为链。** 行为与授权以仓库根 `RULES.md` 为准。
 > 核心知识库（`skills/config/routing.json`、SKILL.md、references）与 Windows 版共享。
@@ -196,8 +196,8 @@ bash "<本包根目录>/kali/scripts/refresh-tool-index.sh"
 | Pentest Swarm AI | stdio | 群体智能自主渗透（recon→classify→exploit→report） | `pentestswarm mcp serve` |
 | idapro | 13337-13350 | IDA Pro 逆向工具 | `bash kali/scripts/ida-start.sh` |
 | anything-analyzer | 23816 | 浏览器自动化 + HTTP 捕获 | `cd ~/tools/anything-analyzer && pnpm dev` |
-| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.4`（stdio） |
-| ghidra | 8765 | Ghidra 免费反编译 | Ghidra GUI 启动后自动监听 |
+| jshookmcp | — | JS Hook/CDP/Network/AST | `npx -y @jshookmcp/jshook@0.3.5`（stdio） |
+| ghidra | 见 tool-index | Ghidra 免费反编译 | bootstrap 装 Ghidra；社区桥接先过 supply-chain 评审 |
 | burpsuite | 9876 | BurpSuite Web 代理 | BurpSuite 扩展启动 |
 
 ### MCP 优先级建议（Kali 2026.1）
