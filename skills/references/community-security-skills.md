@@ -37,6 +37,16 @@
 | [appsecsanta AI pentesting agents 2026](https://appsecsanta.com/research/ai-pentesting-agents-2026) | Categories of 39+ open-source AI pentest agent architectures | Multiple agents are not required. Use role-map. |
 | Snyk evaluation “More skills ≠ better” | Skill stacking can reduce audit quality | Reinforce the **deep skill + routing** strategy |
 
+### 1.2 Third search additions (2026-09-20)
+
+| Repository / resource | Positioning | Package use |
+|-------------|------|----------|
+| [goretk/redress](https://github.com/goretk/redress) | Go stripped-binary CLI (info/packages/types/source/r2) | Absorbed into `go-rust-reverse`; bootstrap the release binary, never vendor AGPL sources |
+| [mandiant/capa](https://github.com/mandiant/capa) | Capability detection, static + dynamic | Absorbed into `malware-analysis` Phase 1 triage |
+| [VirusTotal/yara-x](https://github.com/VirusTotal/yara-x) | Current YARA engine (`yr` CLI) | New rules in `malware-analysis` Phase 4; existing `.yar` stays on classic yara |
+| [onekey-sec/unblob](https://github.com/onekey-sec/unblob) | Firmware extraction fallback | Absorbed into `firmware-pentest` Stage 4, ahead of binwalk |
+| [WebAssembly/wabt](https://github.com/WebAssembly/wabt) | wasm-objdump/wasm2wat/wasm2c toolkit | Absorbed into `reverse-engineering` WASM sections; 1.0.42 removed wasm-decompile |
+
 ## 2. Security standards and threats (2025–2026)
 
 | Source | Key point | Package use |

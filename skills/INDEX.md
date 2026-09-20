@@ -27,7 +27,7 @@
 | [email-security](email-security/SKILL.md) | Use for authorized email security review including phishing analysis, header authentication (SPF/DKIM/DMARC), BEC patterns, and mailbox token abuse research. |
 | [firmware-pentest](firmware-pentest/SKILL.md) | Firmware and IoT penetration chain. Start with a .bin or .img and complete reverse engineering → extraction → emulation → exploitation. |
 | [ghidra-reverse](ghidra-reverse/SKILL.md) | Use for free/open reverse engineering with Ghidra (headless or GUI), including decompile, cross-refs, and optional Ghidra MCP workflows when IDA is unavailable. |
-| [go-rust-reverse](go-rust-reverse/SKILL.md) | Use to reverse engineer Go and Rust binaries with symbols removed. Identify runtime features, recover pclntab and module data, analyze panic strings, and rec... |
+| [go-rust-reverse](go-rust-reverse/SKILL.md) | Reverse engineer Go and Rust binaries with symbols removed. Identify runtime features, recover pclntab and module data with redress and GoReSym, analyze pani... |
 | [hardware-security](hardware-security/SKILL.md) | Use for authorized hardware and embedded interface security research including UART/JTAG discovery, debug pad triage, secure boot overview, and offline firmw... |
 | [ida-reverse](ida-reverse/SKILL.md) | IDA Pro reverse engineering support skill. Use this skill when the user mentions reverse engineering, decompilation, analysis of binary files, PE, ELF, APK, ... |
 | [identity-federation](identity-federation/SKILL.md) | Use for authorized assessment of federated identity systems including SAML, OIDC, OAuth2 flows, SSO misconfiguration, and token confusion issues. |

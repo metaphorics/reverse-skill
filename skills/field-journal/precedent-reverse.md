@@ -231,14 +231,15 @@ install_name_tool -change old.dylib new.dylib target        — Change dylib dep
 
 | Tool | Verified version | Path |
 |------|----------|------|
-| jadx | 1.5.5 | `jadx` (PATH) |
-| apktool | 3.0.2 | `apktool` (PATH) |
-| Frida | 17.9.6 | `frida` / `frida-ps` (PATH) |
+| jadx | 1.5.6 | `jadx` (PATH) |
+| apktool | 3.0.3 | `apktool` (PATH) |
+| Frida tools | 14.10.4 (`frida` core 17.18.0) | `frida` / `frida-ps` (PATH) |
 | adb | latest | `adb` (PATH / Android SDK) |
 | IDA Pro | 9.0 | See tool-index.md |
-| r2 / rabin2 | latest | `r2` / `rabin2` (PATH) |
-| Ghidra | 11.4 | See tool-index.md |
-| GoReSym | latest | `GoReSym` (PATH) |
+| r2 / rabin2 | 6.2.2 | `r2` / `rabin2` (PATH) |
+| Ghidra | 12.1.3 | See tool-index.md |
+| GoReSym | v3.4.1 | `GoReSym` (PATH) |
+| redress | v1.2.85 | `redress` (PATH) |
 | dnSpy | latest | See tool-index.md |
 | objection | latest | `objection` (PATH) |
 | class-dump | latest | See tool-index.md |

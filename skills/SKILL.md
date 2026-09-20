@@ -156,11 +156,11 @@ Kali:
 bash <package-root>/kali/scripts/bootstrap-reverse.sh tool-name --start-services
 ```
 
-Supported capabilities (use `scripts/bootstrap-manifest.json` as the authority): jadx, apktool, jeb-pro, binaryninja, frida, frida-ps, idalib-mcp, reqable-mcp, jshookmcp, xquik-mcp, anything-analyzer, idapro, r2, rabin2, adb, agent-browser, ghidra-mcp, seclists, proxycat, burpsuite-mcp, nmap, pentestswarm, binwalk, yara, pwntools, bkcrack
+Supported capabilities (use `scripts/bootstrap-manifest.json` as the authority): jadx, apktool, jeb-pro, binaryninja, frida, frida-ps, idalib-mcp, reqable-mcp, jshookmcp, xquik-mcp, anything-analyzer, idapro, r2, rabin2, adb, agent-browser, ghidra-mcp, seclists, proxycat, burpsuite-mcp, nmap, pentestswarm, binwalk, yara, pwntools, bkcrack, redress, goresym, capa, yara-x, unblob, wabt, objection
 
 > JEB Pro is registered as a **manual license install** capability. Bootstrap only prints guidance. It never downloads or bypasses a commercial license. Reqable MCP records only the fixed-version official runtime. The user must still install the Reqable desktop client.
 >
-> A tool absent from the manifest (such as unblob/EMBA) `MUST` use manual installation steps in the skill documentation. Do not pretend bootstrap supports it.
+> A tool absent from the manifest (such as EMBA) `MUST` use manual installation steps in the skill documentation. Do not pretend bootstrap supports it.
 
 Bootstrap refreshes `tool-index` after completion.
 
