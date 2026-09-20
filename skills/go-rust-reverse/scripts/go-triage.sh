@@ -65,8 +65,9 @@ fi
 
 printf '=== runtime markers ===\n'
 if command -v strings &>/dev/null; then
-    if strings "$BIN" | grep -m5 -E 'go\.buildid|runtime\.main|rust_begin_unwind'; then
-        true
+    markers=$(strings "$BIN" | grep -E 'go\.buildid|runtime\.main|rust_begin_unwind' | sed -n '1,5p' || true)
+    if [[ -n "$markers" ]]; then
+        printf '%s\n' "$markers"
     else
         printf 'no go.buildid / runtime.main / rust_begin_unwind markers\n'
     fi
