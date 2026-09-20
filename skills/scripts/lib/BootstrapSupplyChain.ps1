@@ -215,3 +215,4 @@ function Assert-DownloadedFileIntegrity {
 
     Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
     throw ("[integrity] No pinned digest for {0}; refusing to install unpinned asset (manifest assetSha256 and GitHub API digest both absent; file deleted)" -f (Split-Path -Leaf $Path))
+}

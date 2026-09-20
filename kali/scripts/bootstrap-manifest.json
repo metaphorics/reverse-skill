@@ -272,7 +272,8 @@
         "Confirm the MCP port from tool-index; do not assume a default"
       ],
       "kaliNote": "apt install ghidra or download from GitHub",
-      "preferApiDigest": true
+      "preferApiDigest": true,
+      "note": "Ghidra releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity."
     },
     {
       "name": "seclists",

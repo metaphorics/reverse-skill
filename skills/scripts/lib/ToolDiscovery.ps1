@@ -577,7 +577,8 @@ function Get-ReverseToolCatalog {
             VersionArgs = @('--help')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'unblob' },
-                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python312\Scripts\unblob.exe') }
+                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python312\Scripts\unblob.exe') },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python313\Scripts\unblob.exe') }
             )
         }
         [pscustomobject]@{
@@ -599,7 +600,8 @@ function Get-ReverseToolCatalog {
             VersionArgs = @('--help')
             Fallbacks = @(
                 [pscustomobject]@{ Type = 'command'; Value = 'objection' },
-                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python312\Scripts\objection.exe') }
+                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python312\Scripts\objection.exe') },
+                [pscustomobject]@{ Type = 'path'; Value = (Join-ReverseOptionalPath -Path $localAppData -ChildPath 'Programs\Python\Python313\Scripts\objection.exe') }
             )
         }
     )

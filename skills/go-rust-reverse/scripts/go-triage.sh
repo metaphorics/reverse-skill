@@ -44,9 +44,10 @@ ensure_tool() {
         return 0
     fi
     printf 'INFO: Cannot find %s. Trying automatic installation...\n' "$exe" >&2
-    if [[ -x "$KALI_BOOTSTRAP" ]]; then
+    # Scripts are invoked via bash, so test readability, not the exec bit (tracked 100644).
+    if [[ -f "$KALI_BOOTSTRAP" ]]; then
         bash "$KALI_BOOTSTRAP" "$name" --skip-refresh 2>/dev/null || true
-    elif [[ -x "$LINUX_BOOTSTRAP" ]]; then
+    elif [[ -f "$LINUX_BOOTSTRAP" ]]; then
         bash "$LINUX_BOOTSTRAP" "$name" 2>/dev/null || true
     fi
     # Bootstrap runs in a child shell, so its PATH changes are lost here.

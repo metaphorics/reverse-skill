@@ -241,10 +241,10 @@
         "Install community MCP bridges only after the skill-supply-chain review",
         "Confirm the MCP port from tool-index; do not assume a default"
       ],
-      "preferApiDigest": true
+      "preferApiDigest": true,
+      "note": "Ghidra releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity."
     },
     {
-      "note": "Ghidra releases often, so assetSha256 is not pinned. Verify integrity dynamically with the GitHub API digest (sha256:...). The format is tested and works with Assert-DownloadedFileIntegrity.",
       "name": "seclists",
       "bootstrapKind": "git-clone",
       "repo": "https://github.com/danielmiessler/SecLists.git",
